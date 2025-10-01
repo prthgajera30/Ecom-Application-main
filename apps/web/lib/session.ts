@@ -6,3 +6,9 @@ export function getSessionId(): string {
   }
   return sid;
 }
+
+
+export function clearSessionId() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem("sid");
+}

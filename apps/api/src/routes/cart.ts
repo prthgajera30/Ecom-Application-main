@@ -13,6 +13,12 @@ function getUserId(req: any) {
   return (req.user && req.user.userId) || undefined;
 }
 
+function attachUser(session: any, userId?: string) {
+  if (session && userId && session.userId !== userId) {
+    session.userId = userId;
+  }
+}
+
 function normalizeCart(cart: any) {
   const map = new Map<string, number>();
   for (const it of cart.items || []) {
@@ -21,7 +27,6 @@ function normalizeCart(cart: any) {
   cart.items = Array.from(map.entries()).map(([productId, qty]) => ({ productId, qty }));
   return cart;
 }
-
 
 async function emitCartNudge(req: any, { sessionId, userId, productId }: { sessionId?: string; userId?: string; productId?: string }) {
   if (!sessionId) return;
@@ -42,9 +47,7 @@ async function buildCartResponse(sessionId: string) {
   const session = await Session.findOne({ sessionId });
   const cart = normalizeCart(session?.cart || { items: [] });
   const productIds = cart.items.map((item: any) => item.productId);
-  const products = productIds.length
-    ? await Product.find({ _id: { $in: productIds } }).exec()
-    : [];
+  const products = productIds.length ? await Product.find({ _id: { $in: productIds } }).exec() : [];
   const productMap: Record<string, any> = {};
   for (const doc of products) {
     const obj = typeof doc.toObject === 'function' ? doc.toObject() : doc;
@@ -73,10 +76,12 @@ router.post('/cart/add', async (req, res) => {
   const userId = getUserId(req);
   let session = await Session.findOne({ sessionId });
   if (!session) {
-    session = await Session.create({ sessionId, cart: { items: [{ productId, qty }] }, updatedAt: new Date() });
+    session = await Session.create({ sessionId, userId, cart: { items: [{ productId, qty }] }, updatedAt: new Date() });
   } else {
     const existing = session.cart?.items?.find((i: any) => i.productId === productId);
-    if (existing) existing.qty += qty; else session.cart.items.push({ productId, qty });
+    if (existing) existing.qty += qty;
+    else session.cart.items.push({ productId, qty });
+    attachUser(session, userId);
     session.updatedAt = new Date();
     normalizeCart(session.cart);
     await session.save();
@@ -98,13 +103,15 @@ async function handleUpdate(req: any, res: any) {
   const session = await Session.findOne({ sessionId });
   const userId = getUserId(req);
   if (!session) return res.json({ items: [], products: {} });
+  attachUser(session, userId);
   let eventType: 'add_to_cart' | 'remove_from_cart' = 'add_to_cart';
   if (qty === 0) {
     session.cart.items = session.cart.items.filter((i: any) => i.productId !== productId);
     eventType = 'remove_from_cart';
   } else {
     const it = session.cart.items.find((i: any) => i.productId === productId);
-    if (it) it.qty = qty; else session.cart.items.push({ productId, qty });
+    if (it) it.qty = qty;
+    else session.cart.items.push({ productId, qty });
   }
   session.updatedAt = new Date();
   normalizeCart(session.cart);
@@ -128,6 +135,7 @@ router.post('/cart/remove', async (req, res) => {
   const session = await Session.findOne({ sessionId });
   const userId = getUserId(req);
   if (!session) return res.json({ items: [], products: {} });
+  attachUser(session, userId);
   session.cart.items = session.cart.items.filter((i: any) => i.productId !== productId);
   session.updatedAt = new Date();
   await session.save();

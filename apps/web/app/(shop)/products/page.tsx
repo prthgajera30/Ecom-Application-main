@@ -1,7 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { apiGet, apiPost } from '../../../lib/api';
+import { apiGet } from '../../../lib/api';
+import { useCartState } from '../../../context/CartContext';
+import { ApiError } from '../../../lib/api';
 
 type Product = {
   _id: string;
@@ -26,11 +28,12 @@ export default function ProductsPage() {
   const [items, setItems] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [feedback, setFeedback] = useState('');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sort, setSort] = useState<string>('');
+  const [errorsByProduct, setErrorsByProduct] = useState<Record<string, string>>({});
+  const { addItem, pending } = useCartState();
 
   useEffect(() => {
     apiGet<Category[]>('/categories').then(setCategories).catch(() => setCategories([]));
@@ -62,10 +65,18 @@ export default function ProductsPage() {
     fetchProducts();
   }, [debouncedSearch, selectedCategory, sort]);
 
-  async function add(pid: string) {
-    await apiPost('/cart/add', { productId: pid, qty: 1 });
-    setFeedback('Added to cart');
-    setTimeout(() => setFeedback(''), 1200);
+  async function add(product: Product) {
+    setErrorsByProduct((current) => {
+      const next = { ...current };
+      delete next[product._id];
+      return next;
+    });
+    try {
+      await addItem(product._id, 1);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Unable to add this product right now.';
+      setErrorsByProduct((current) => ({ ...current, [product._id]: message }));
+    }
   }
 
   const activeCategoryName = useMemo(() => categories.find((c) => c._id === selectedCategory)?.name, [categories, selectedCategory]);
@@ -128,8 +139,6 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {feedback && <div className="rounded-full bg-emerald-500/20 px-4 py-2 text-sm text-emerald-200">{feedback}</div>}
-
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {loading
           ? Array.from({ length: 6 }).map((_, idx) => (
@@ -141,33 +150,45 @@ export default function ProductsPage() {
                 </div>
               </div>
             ))
-          : items.map((product) => (
-              <div key={product._id} className="card group overflow-hidden">
-                <Link href={`/product/${product.slug}`} className="block">
-                  <div className="relative h-48 overflow-hidden">
-                    {product.images?.[0] ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.title}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
+          : items.map((product) => {
+              const pendingAdd = Boolean(pending[`add:${product._id}`]);
+              return (
+                <div key={product._id} className="card group overflow-hidden">
+                  <Link href={`/product/${product.slug}`} className="block">
+                    <div className="relative h-48 overflow-hidden">
+                      {product.images?.[0] ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
+                    </div>
+                    <div className="space-y-2 p-5">
+                      <h3 className="text-lg font-semibold text-white line-clamp-1">{product.title}</h3>
+                      <p className="text-sm text-indigo-100/70">${(product.price / 100).toFixed(2)}</p>
+                    </div>
+                  </Link>
+                  <div className="border-t border-white/10 bg-white/5 p-4">
+                    <button
+                      className="btn-primary w-full justify-center disabled:opacity-60"
+                      onClick={() => add(product)}
+                      disabled={pendingAdd}
+                    >
+                      {pendingAdd ? 'Adding…' : 'Add to cart'}
+                    </button>
+                    {errorsByProduct[product._id] && (
+                      <p className="mt-2 rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100">
+                        {errorsByProduct[product._id]}
+                      </p>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
                   </div>
-                  <div className="space-y-2 p-5">
-                    <h3 className="text-lg font-semibold text-white line-clamp-1">{product.title}</h3>
-                    <p className="text-sm text-indigo-100/70">${(product.price / 100).toFixed(2)}</p>
-                  </div>
-                </Link>
-                <div className="border-t border-white/10 bg-white/5 p-4">
-                  <button className="btn-primary w-full" onClick={() => add(product._id)}>
-                    Add to cart
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
       </div>
 
       {!loading && items.length === 0 && (
@@ -178,3 +199,4 @@ export default function ProductsPage() {
     </div>
   );
 }
+

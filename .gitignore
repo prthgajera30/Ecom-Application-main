@@ -24,3 +24,4 @@ infra/env.prod
 .idea/
 .DS_Store
 Thumbs.db
+apps/web/test-results/
