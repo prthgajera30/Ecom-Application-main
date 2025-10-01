@@ -25,7 +25,7 @@ const io = new SocketIOServer(server, {
 (app as any).set('io', io);
 
 const logger = pino({ level: process.env.NODE_ENV === 'production' ? 'info' : 'debug' });
-app.use(pinoHttp({ logger }));
+app.use(pinoHttp({ logger: logger as any }));
 app.use(helmet());
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json({ type: ['application/json','application/*+json'] }));
