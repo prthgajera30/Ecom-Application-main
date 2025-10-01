@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 # Dev image
 FROM base AS dev
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
-COPY apps/api/package.json apps/api/tsconfig.json apps/api/jest.config.js ./
+COPY apps/api/package.json apps/api/pnpm-lock.yaml apps/api/tsconfig.json apps/api/jest.config.js ./
 RUN pnpm install --no-frozen-lockfile --prefer-offline
 COPY apps/api ./
 EXPOSE 4000
