@@ -1,14 +1,9 @@
 {
-  "extends": "../../packages/config/tsconfig.base.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "jsx": "preserve",
     "allowJs": true,
     "baseUrl": ".",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
     "noEmit": true,
     "incremental": true,
     "esModuleInterop": true,
