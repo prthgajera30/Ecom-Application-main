@@ -17,8 +17,8 @@ services:
 
   web:
     build:
-      context: ../
-      dockerfile: ../apps/web/Dockerfile
+      context: ..
+      dockerfile: apps/web/Dockerfile
     container_name: ecommerce_web
     environment:
       NEXT_PUBLIC_API_BASE: "/api"
@@ -34,8 +34,8 @@ services:
 
   api:
     build:
-      context: ../
-      dockerfile: ../apps/api/Dockerfile
+      context: ..
+      dockerfile: apps/api/Dockerfile
     container_name: ecommerce_api
     environment:
       NODE_ENV: development
@@ -59,8 +59,8 @@ services:
 
   recs:
     build:
-      context: ../
-      dockerfile: ../apps/recs/Dockerfile
+      context: ..
+      dockerfile: apps/recs/Dockerfile
       target: dev
     container_name: ecommerce_recs
     environment:
