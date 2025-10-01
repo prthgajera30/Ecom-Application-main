@@ -14,7 +14,6 @@ import cartRoutes from './routes/cart';
 import checkoutRoutes from './routes/checkout';
 import ordersRoutes from './routes/orders';
 import recsRoutes from './routes/recs';
-import { fileURLToPath } from 'url';
 
 export const app = express();
 const server = http.createServer(app);
@@ -72,14 +71,7 @@ export async function start() {
   });
 }
 
-const isMain = (() => {
-  try {
-    const thisFile = fileURLToPath(import.meta.url);
-    return process.argv[1] && thisFile === process.argv[1];
-  } catch {
-    return false;
-  }
-})();
+const isMain = typeof require !== 'undefined' && require.main === module;
 
 if (isMain) {
   start().catch((e) => {
