@@ -1,0 +1,24 @@
+
+# node_modules handled per package
+node_modules
+**/node_modules
+**/.pnpm-store
+.pnpm-store
+
+# build output
+apps/web/.next
+apps/web/out
+apps/api/dist
+
+# python artifacts
+**/__pycache__
+**/*.pyc
+
+# misc
+.git
+.gitignore
+.vscode
+.DS_Store
+.env*
+*.log
+coverage

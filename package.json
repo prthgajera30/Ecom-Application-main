@@ -1,0 +1,26 @@
+{
+  "name": "ecommerce-personalization",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev:api": "pnpm --filter ./apps/api dev",
+    "dev:web": "pnpm --filter ./apps/web dev",
+    "dev:recs": "node scripts/run-recs-dev.mjs",
+    "dev": "concurrently -n api,web,recs -c green,cyan,yellow \"pnpm dev:api\" \"pnpm dev:web\" \"pnpm dev:recs\"",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "migrate": "tsx scripts/migrate.ts",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "tsx": "^4.19.1"
+  },
+  "pnpm": {
+    "packages": {
+      "apps/*": {},
+      "packages/*": {}
+    }
+  }
+}

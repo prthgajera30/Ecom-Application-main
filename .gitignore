@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnpm-store
+
+# Builds
+apps/web/.next/
+apps/web/out/
+apps/api/dist/
+coverage/
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+
+# Environment
+.env
+.env.*
+infra/env.prod
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

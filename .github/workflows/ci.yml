@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@9.0.0 --activate
+      - name: API install and typecheck
+        run: |
+          cd ecommerce-personalization/apps/api
+          pnpm install
+          pnpm build
+          pnpm test -- -i
+      - name: Web build
+        run: |
+          cd ecommerce-personalization/apps/web
+          pnpm install
+          pnpm build
+      - name: Recs tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install recs deps and test
+        run: |
+          cd ecommerce-personalization/apps/recs
+          python -m pip install -r requirements.txt
+          pytest -q

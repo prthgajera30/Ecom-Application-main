@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-base: #0f172a;
+  --bg-glow-1: rgba(99, 102, 241, 0.25);
+  --bg-glow-2: rgba(236, 72, 153, 0.2);
+  --surface: rgba(15, 23, 42, 0.75);
+  --surface-strong: rgba(15, 23, 42, 0.92);
+  --surface-border: rgba(148, 163, 184, 0.25);
+  --text-primary: #f8fafc;
+  --text-muted: #cbd5f5;
+  --brand: #6366f1;
+  --brand-dark: #4f46e5;
+  --accent: #f97316;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  @apply min-h-screen font-sans antialiased text-[var(--text-primary)];
+  background: radial-gradient(circle at top left, var(--bg-glow-1), transparent 45%),
+    radial-gradient(circle at 20% 80%, var(--bg-glow-2), transparent 40%),
+    var(--bg-base);
+}
+
+a {
+  @apply transition-colors duration-200;
+}
+
+a:hover {
+  @apply text-indigo-300;
+}
+
+.card {
+  @apply rounded-2xl border border-[var(--surface-border)] bg-[var(--surface)] shadow-lg shadow-black/20 backdrop-blur;
+}
+
+.card-elevated {
+  @apply rounded-3xl border border-white/10 bg-[var(--surface-strong)] shadow-2xl shadow-indigo-950/40 backdrop-blur-xl;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[var(--brand)] to-indigo-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:from-indigo-500 hover:to-[var(--brand-dark)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-indigo-900;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/40 focus-visible:ring-offset-indigo-900;
+}
+
+.badge {
+  @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1 text-xs font-medium uppercase tracking-wide text-indigo-100;
+}
+
+.section-title {
+  @apply text-2xl md:text-3xl font-semibold tracking-tight text-white;
+}
+
+.section-subtitle {
+  @apply text-base text-[var(--text-muted)] max-w-2xl;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(99,102,241,0.6), rgba(236,72,153,0.6));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(99,102,241,0.8), rgba(236,72,153,0.8));
+}
+
+.glow-ring {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2), transparent 60%);
+}
