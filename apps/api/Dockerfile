@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 FROM base AS dev
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 COPY apps/api/package.json apps/api/tsconfig.json apps/api/jest.config.js ./
-RUN pnpm install --prefer-frozen-lockfile || true
+RUN pnpm install --no-frozen-lockfile --prefer-offline
 COPY apps/api ./
 EXPOSE 4000
 CMD ["pnpm","dev"]
@@ -14,8 +14,8 @@ CMD ["pnpm","dev"]
 # Prod build
 FROM base AS build
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
-COPY apps/api/package.json apps/api/tsconfig.json ./
-RUN pnpm install --frozen-lockfile
+COPY apps/api/package.json apps/api/pnpm-lock.yaml apps/api/tsconfig.json apps/api/jest.config.js ./
+RUN pnpm install --frozen-lockfile --prefer-offline
 COPY apps/api ./
 RUN pnpm prisma generate
 RUN pnpm build
