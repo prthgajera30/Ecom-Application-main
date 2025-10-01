@@ -4,16 +4,16 @@ WORKDIR /usr/src/app
 
 FROM base AS dev
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
-COPY apps/web/package.json apps/web/tsconfig.json apps/web/next.config.js ./
-RUN pnpm install --prefer-frozen-lockfile || true
+COPY apps/web/package.json apps/web/pnpm-lock.yaml apps/web/tsconfig.json apps/web/next.config.js ./
+RUN pnpm install --no-frozen-lockfile --prefer-offline
 COPY apps/web ./
 EXPOSE 3000
 CMD ["pnpm","dev"]
 
 FROM base AS build
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
-COPY apps/web/package.json apps/web/tsconfig.json apps/web/next.config.js ./
-RUN pnpm install --frozen-lockfile
+COPY apps/web/package.json apps/web/pnpm-lock.yaml apps/web/tsconfig.json apps/web/next.config.js ./
+RUN pnpm install --frozen-lockfile --prefer-offline
 COPY apps/web ./
 RUN pnpm build
 
