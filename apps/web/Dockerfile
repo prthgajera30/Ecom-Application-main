@@ -24,4 +24,4 @@ COPY --from=build /usr/src/app/.next ./.next
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/package.json ./package.json
 EXPOSE 3000
-CMD ["pnpm","start"]
+CMD ["node","node_modules/next/dist/bin/next","start","-p","3000"]
