@@ -3,18 +3,20 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/bootstrap.sh [--prod] [--dev] [--no-seed]
+Usage: scripts/bootstrap.sh [--prod] [--dev] [--no-seed] [--no-build]
 
 Options:
-  --prod     Use infra/docker-compose.prod.yml (default is dev stack).
-  --dev      Explicitly use infra/docker-compose.yml.
-  --no-seed  Skip database seeding after migrations.
-  -h, --help Show this help message.
+  --prod      Use infra/docker-compose.prod.yml (default is dev stack).
+  --dev       Explicitly use infra/docker-compose.yml.
+  --no-seed   Skip database seeding after migrations.
+  --no-build  Skip "docker compose build" (containers rebuild only if needed by up).
+  -h, --help  Show this help message.
 USAGE
 }
 
 MODE="dev"
 SEED="yes"
+BUILD="yes"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -28,6 +30,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-seed)
       SEED="no"
+      shift
+      ;;
+    --no-build)
+      BUILD="no"
       shift
       ;;
     -h|--help)
@@ -81,7 +87,12 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[bootstrap] Pulling (if available), building, and starting containers..."
+if [[ "$BUILD" == "yes" ]]; then
+  echo "[bootstrap] Building images..."
+  compose build --pull
+fi
+
+echo "[bootstrap] Starting containers..."
 compose up -d --build
 
 echo "[bootstrap] Waiting for Postgres to become ready..."
@@ -118,3 +129,4 @@ else
 fi
 
 echo "[bootstrap] Tail logs with: docker compose -f $COMPOSE_FILE logs -f"
+
