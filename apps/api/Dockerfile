@@ -27,6 +27,8 @@ RUN pnpm build
 FROM node:20-alpine AS prod
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
+COPY --from=build /usr/src/app/package.json ./package.json
+COPY --from=build /usr/src/app/prisma ./prisma
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/node_modules ./node_modules
 EXPOSE 4000
