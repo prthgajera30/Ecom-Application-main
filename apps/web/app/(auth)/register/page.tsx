@@ -17,8 +17,9 @@ export default function RegisterPage() {
     try {
       await register(email, password);
       router.push('/');
-    } catch (e) {
-      setMsg('Register failed');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'We couldn’t create your account right now. Please try again.';
+      setMsg(message);
     }
   }
 

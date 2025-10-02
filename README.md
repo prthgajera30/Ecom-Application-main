@@ -33,7 +33,7 @@ pnpm seed
 docker compose -f infra/docker-compose.yml --project-name ecommerce up --build
 ```
 
-### Scripted bootstrap
+### Scripted bootstrap (rebuilds, migrates, seeds)
 
 ```bash
 # Dev stack (port 80 via nginx)
@@ -41,6 +41,10 @@ docker compose -f infra/docker-compose.yml --project-name ecommerce up --build
 
 # Production-style stack (nginx on :8085)
 ./scripts/bootstrap.sh --prod
+
+# Optional flags
+#   --no-build  skip docker compose build
+#   --no-seed   skip demo data
 ```
 
 ## Scripts

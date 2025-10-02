@@ -17,8 +17,9 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push('/');
-    } catch (e) {
-      setMsg('Login failed');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'We couldn’t sign you in. Please try again.';
+      setMsg(message);
     }
   }
 
