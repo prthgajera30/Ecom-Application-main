@@ -28,8 +28,8 @@ FROM node:20-alpine AS prod
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
 COPY --from=build /usr/src/app/package.json ./package.json
-COPY --from=build /usr/src/app/prisma ./prisma
-COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/node_modules ./node_modules
+COPY --from=build /usr/src/app/dist ./dist
+COPY apps/api/prisma ./prisma
 EXPOSE 4000
 CMD ["node","dist/index.js"]
