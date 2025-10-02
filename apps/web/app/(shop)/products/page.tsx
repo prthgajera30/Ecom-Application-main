@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet } from '../../../lib/api';
@@ -25,7 +25,7 @@ const sortOptions = [
   { value: 'popular', label: 'Most Popular' },
 ];
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [items, setItems] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -36,17 +36,18 @@ export default function ProductsPage() {
   const [sort, setSort] = useState<string>('');
   const [errorsByProduct, setErrorsByProduct] = useState<Record<string, string>>({});
   const { addItem, pending } = useCartState();
+  const lastSearchParam = useRef<string | null>(null);
 
   useEffect(() => {
     apiGet<Category[]>('/categories').then(setCategories).catch(() => setCategories([]));
   }, []);
 
   useEffect(() => {
-    // Initialize search from URL (supports homepage search box)
-    const initial = searchParams.get('search');
-    if (initial) setSearch(initial);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const paramValue = searchParams.get('search');
+    if (lastSearchParam.current === paramValue) return;
+    lastSearchParam.current = paramValue;
+    setSearch(paramValue ?? '');
+  }, [searchParams]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 250);
@@ -206,6 +207,35 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function ProductsPageSkeleton() {
+  return (
+    <div className="space-y-8">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20 backdrop-blur">
+        <div className="h-16 w-full animate-pulse rounded-2xl bg-white/10" />
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div key={idx} className="card animate-pulse overflow-hidden">
+            <div className="h-48 w-full bg-white/10" />
+            <div className="space-y-2 p-5">
+              <div className="h-4 w-2/3 rounded-full bg-white/10" />
+              <div className="h-4 w-1/4 rounded-full bg-white/10" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<ProductsPageSkeleton />}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }
 
