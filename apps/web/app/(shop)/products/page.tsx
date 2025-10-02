@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet } from '../../../lib/api';
 import { useCartState } from '../../../context/CartContext';
@@ -25,6 +26,7 @@ const sortOptions = [
 ];
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +39,13 @@ export default function ProductsPage() {
 
   useEffect(() => {
     apiGet<Category[]>('/categories').then(setCategories).catch(() => setCategories([]));
+  }, []);
+
+  useEffect(() => {
+    // Initialize search from URL (supports homepage search box)
+    const initial = searchParams.get('search');
+    if (initial) setSearch(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

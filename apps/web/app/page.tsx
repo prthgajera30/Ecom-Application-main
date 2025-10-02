@@ -1,9 +1,11 @@
 "use client";
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiGet, ApiError } from '../lib/api';
 import { getSocket } from '../lib/ws';
 import { useCartState } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 type Recommendation = {
   score: number;
@@ -29,54 +31,56 @@ type Category = { _id: string; name: string; slug?: string };
 
 const heroChecklist = [
   {
-    title: 'Signal-first architecture',
-    description: 'Sockets, analytics, and personalization share a single source of truth so every shopper sees up-to-date context.',
-    icon: '🛰️',
+    title: 'Fast delivery',
+    description: 'Pulse Prime brings millions of items to your door with two-day shipping.',
+    icon: '🚚',
   },
   {
-    title: 'Production-grade flows',
-    description: 'Next.js app router, type-safe APIs, and Prisma orders ensure portfolio demos feel like a launch-ready store.',
-    icon: '🛠️',
+    title: 'Easy returns',
+    description: 'Start a return in seconds and drop off packages at convenient locations nationwide.',
+    icon: '🔁',
   },
   {
-    title: 'Insights baked in',
-    description: 'Feature flags, recommendations, and trend tabs help product teams experiment without extra scaffolding.',
-    icon: '📈',
+    title: 'Trusted reviews',
+    description: 'Shop authentic products backed by verified ratings from millions of customers.',
+    icon: '⭐',
   },
 ];
 
 const workflowMoments = [
   {
-    label: 'Observe',
-    caption: 'Real-time telemetry',
-    description: 'Every click, add-to-cart, and checkout pings the websocket hub so your UI reacts instantly.',
+    label: 'Discover',
+    caption: 'Trending now',
+    description: 'Browse curated storefronts, lightning deals, and seasonal collections updated all day.',
   },
   {
-    label: 'Personalize',
-    caption: 'Recommendations-on-demand',
-    description: 'Match shoppers to inventory with lightweight APIs that return curated tiles in <250 ms.',
+    label: 'Save',
+    caption: 'Lists & Subscribe',
+    description: 'Create wish lists, set up Subscribe & Save, and get notified before essentials run out.',
   },
   {
-    label: 'Convert',
-    caption: 'Checkout orchestration',
-    description: 'Stripe-backed flows keep payments snappy while orders hydrate dashboards for follow-up experiences.',
+    label: 'Checkout',
+    caption: '1-click secure',
+    description: 'Fast, secure payments with real-time tracking from warehouse to doorstep.',
   },
 ];
 
 const stats = [
-  { value: '3.2x', label: 'Faster onboarding for shoppers exploring trends' },
-  { value: '250ms', label: 'Median personalization latency end-to-end' },
-  { value: '0 ops', label: 'DevOps required for demo-ready launches' },
+  { value: '50K+', label: 'Prime-eligible products ready to ship' },
+  { value: '2 hr', label: 'Average delivery window across major cities' },
+  { value: '24/7', label: 'Customer support and order tracking' },
 ];
 
 const communityLogos = [
-  { name: 'Next.js', badge: 'App Router 14' },
-  { name: 'Stripe', badge: 'Checkout Ready' },
-  { name: 'Prisma', badge: 'Typed Models' },
-  { name: 'Socket.io', badge: 'Realtime' },
+  { name: 'Pulse Prime', badge: '2-Day Delivery' },
+  { name: 'Pulse Fresh', badge: 'Groceries' },
+  { name: 'Pulse Home', badge: 'Smart Living' },
+  { name: 'Pulse Media', badge: 'Streaming' },
 ];
 
 export default function Page() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [health, setHealth] = useState<string>('loading…');
   const [connected, setConnected] = useState<boolean>(false);
   const [featured, setFeatured] = useState<Product[]>([]);
@@ -85,6 +89,7 @@ export default function Page() {
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [categoryProducts, setCategoryProducts] = useState<Record<string, Product[]>>({});
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const [homeSearch, setHomeSearch] = useState('');
   const rotationRef = useRef<number>(Date.now());
   const { addItem, pending } = useCartState();
   const [productErrors, setProductErrors] = useState<Record<string, string>>({});
@@ -174,21 +179,32 @@ export default function Page() {
     setActiveCategory(categoryId);
   };
 
+  const submitHomeSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = homeSearch.trim();
+    if (!q) {
+      router.push('/products');
+      return;
+    }
+    const params = new URLSearchParams({ search: q });
+    router.push(`/products?${params.toString()}`);
+  };
+
   const liveSnapshot = useMemo(
     () => [
       {
-        label: 'API health',
-        value: health,
+        label: 'Store status',
+        value: health === 'OK' ? 'Online' : 'Check back soon',
         tone: health === 'OK' ? 'text-emerald-300 bg-emerald-500/10' : 'text-rose-200 bg-rose-500/10',
       },
       {
-        label: 'Websocket',
-        value: connected ? 'Connected' : 'Offline',
+        label: 'Live updates',
+        value: connected ? 'Realtime' : 'Paused',
         tone: connected ? 'text-sky-200 bg-sky-500/10' : 'text-rose-200 bg-rose-500/10',
       },
       {
-        label: 'Featured items',
-        value: featured.length ? `${featured.length}+ curated` : 'Loading…',
+        label: 'Deals today',
+        value: featured.length ? `${featured.length}+ active` : 'Loading…',
         tone: 'text-indigo-200 bg-indigo-500/10',
       },
     ],
@@ -203,23 +219,33 @@ export default function Page() {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
           <div className="space-y-10">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-indigo-100/80">
-              Pulse Commerce Studio
+              Pulse Market
             </span>
             <div className="space-y-4">
               <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Stage a portfolio storefront that feels like a live product launch.
+                Everything you love. Delivered fast.
               </h1>
               <p className="max-w-2xl text-base text-indigo-100/80">
-                Swap sample data, recompute recommendations, and watch real-time events flow without wiring a single backend. Drag this project into interviews and ship ideas faster than slide decks.
+                From daily essentials to the latest tech, enjoy Prime perks on every order.
               </p>
             </div>
+            <form onSubmit={submitHomeSearch} className="md:max-w-xl">
+              <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-indigo-900/10">
+                <span className="text-lg">🔍</span>
+                <input
+                  value={homeSearch}
+                  onChange={(e) => setHomeSearch(e.target.value)}
+                  placeholder="Search millions of products, e.g. headphones or sneakers"
+                  className="w-full bg-transparent text-sm text-white placeholder:text-indigo-100/50 focus:outline-none"
+                />
+                <button type="submit" className="btn-primary px-4 py-1.5 text-sm">Search</button>
+              </div>
+            </form>
             <div className="flex flex-wrap gap-3">
-              <Link href="/products" className="btn-primary">
-                Explore catalog
-              </Link>
-              <Link href="/orders" className="btn-secondary">
-                View order history
-              </Link>
+              <Link href="/products?sort=price" className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-indigo-100/80 transition hover:bg-white/20">Today's Deals</Link>
+              <Link href="/products?sort=popular" className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-indigo-100/80 transition hover:bg-white/20">Best Sellers</Link>
+              <Link href="/products" className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-indigo-100/80 transition hover:bg-white/20">New Arrivals</Link>
+              <Link href="/orders" className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-indigo-100/80 transition hover:bg-white/20">Your Orders</Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {heroChecklist.map((item) => (
@@ -247,8 +273,8 @@ export default function Page() {
           <div className="relative">
             <div className="mx-auto max-w-lg space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40">
               <div>
-                <h3 className="text-lg font-semibold text-white">Live signal snapshot</h3>
-                <p className="text-xs text-indigo-100/70">Directly from the API so you can demo resilience during interviews.</p>
+                <h3 className="text-lg font-semibold text-white">Store status</h3>
+                <p className="text-xs text-indigo-100/70">Live indicators so you always know shipping and deals are ready.</p>
               </div>
               <div className="space-y-3">
                 {liveSnapshot.map((item) => (
@@ -259,7 +285,7 @@ export default function Page() {
                 ))}
               </div>
               <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <span className="text-xs font-semibold uppercase tracking-wide text-indigo-100/60">Workflow blueprint</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-indigo-100/60">Pulse shopping perks</span>
                 <div className="space-y-3">
                   {workflowMoments.map((moment) => (
                     <div key={moment.label} className="rounded-xl border border-white/5 bg-white/10 px-4 py-3 text-sm text-indigo-100/80">
@@ -288,8 +314,8 @@ export default function Page() {
       <section className="space-y-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="section-title">Trending collections</h2>
-            <p className="section-subtitle">Glide between audiences and categories to showcase how the storefront adapts.</p>
+            <h2 className="section-title">Shop by category</h2>
+            <p className="section-subtitle">Browse popular categories and quickly add items to your cart.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {categories.slice(0, 6).map((category) => (
@@ -346,7 +372,7 @@ export default function Page() {
             </div>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-indigo-100/70">
-              {activeCategoryName ? `No items in ${activeCategoryName} yet—try another audience.` : 'Pick a category to preview personalized tiles.'}
+              {activeCategoryName ? `No items in ${activeCategoryName} yet—try another category.` : 'Pick a category to preview items.'}
             </div>
           )}
         </div>
@@ -355,8 +381,8 @@ export default function Page() {
       <section className="space-y-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="section-title">Featured arrivals</h2>
-            <p className="section-subtitle">Hand-picked inventory seeded into the catalog so you can explore the storefront experience.</p>
+            <h2 className="section-title">Featured products</h2>
+            <p className="section-subtitle">Hand-picked items from our catalog.</p>
           </div>
           <Link href="/products" className="btn-secondary">View all products</Link>
         </div>
@@ -393,8 +419,8 @@ export default function Page() {
         <section className="space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="section-title">Because you viewed</h2>
-              <p className="section-subtitle">Recommendations generated from the realtime event pipeline. Scores refresh as you browse.</p>
+              <h2 className="section-title">Recommended for you</h2>
+              <p className="section-subtitle">Personalized picks based on your browsing.</p>
             </div>
             <Link href="/cart" className="btn-secondary">Go to cart</Link>
           </div>
@@ -448,22 +474,27 @@ export default function Page() {
       )}
 
       <section className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-xl shadow-indigo-950/30">
-        <div className="space-y-3">
-          <span className="badge">Launch-ready blueprint</span>
-          <h2 className="text-3xl font-semibold text-white">Cut the time it takes to demo a full-stack shop.</h2>
-          <p className="mx-auto max-w-2xl text-sm text-indigo-100/70">
-            Fork the repo, swap the seeded catalog, and connect your own analytics. Pulse Commerce was built for product designers, engineers, and founders who want to impress without a months-long build.
-          </p>
-        </div>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/register" className="btn-primary">
-            Create an account
-          </Link>
-          <Link href="https://github.com/" className="btn-secondary" target="_blank" rel="noreferrer">
-            View GitHub project
-          </Link>
-        </div>
+        {(!user) ? (
+          <div className="space-y-4">
+            <h2 className="text-3xl font-semibold text-white">Sign in for your best experience</h2>
+            <p className="mx-auto max-w-2xl text-sm text-indigo-100/70">Track orders, save items, and get better recommendations.</p>
+            <div className="mt-2 flex flex-wrap justify-center gap-3">
+              <Link href="/login" className="btn-secondary">Sign in</Link>
+              <Link href="/register" className="btn-primary">Create account</Link>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <h2 className="text-3xl font-semibold text-white">Welcome back</h2>
+            <p className="mx-auto max-w-2xl text-sm text-indigo-100/70">Jump to your orders or keep shopping today's deals.</p>
+            <div className="mt-2 flex flex-wrap justify-center gap-3">
+              <Link href="/orders" className="btn-secondary">Your orders</Link>
+              <Link href="/products?sort=price" className="btn-primary">Today's deals</Link>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
 }
+

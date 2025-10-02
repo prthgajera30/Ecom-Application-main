@@ -27,8 +27,20 @@ pnpm seed
 
 ## Docker (prod-like) startup
 
+### Manual compose
+
 ```bash
 docker compose -f infra/docker-compose.yml --project-name ecommerce up --build
+```
+
+### Scripted bootstrap
+
+```bash
+# Dev stack (port 80 via nginx)
+./scripts/bootstrap.sh
+
+# Production-style stack (nginx on :8085)
+./scripts/bootstrap.sh --prod
 ```
 
 ## Scripts
