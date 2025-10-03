@@ -1,64 +1,113 @@
 # E-commerce Personalization Monorepo
 
-One-command dev environment for a real-time personalized e-commerce app: Next.js storefront, Node.js API gateway, Flask recommendations microservice, PostgreSQL, MongoDB, Stripe Checkout, and Socket.IO.
+This repository houses the personalized commerce API (Node + Prisma + Mongo), Next.js storefront, and optional Python recommendation service. It is designed to work immediately after cloning: run a single setup command and you are ready to develop.
 
-## Quick start (local dev without Docker)
+## Quick start
 
-Prereqs: Node 20 + pnpm, Python 3.11, local PostgreSQL and MongoDB running.
-
+### macOS / Linux
 ```bash
-cd ecommerce-personalization
-pnpm install
-# Create local envs (copy examples and adjust as needed)
-# apps/api/.env -> see values in infra/.env.example but use localhost
-# apps/web/.env -> NEXT_PUBLIC_API_BASE=http://127.0.0.1:4000/api
-
-# Start services in parallel (API, Web, Recs):
-pnpm dev
-
-# In another terminal, apply migrations and seed
-pnpm migrate
-pnpm seed
+corepack enable
+pnpm run setup
+pnpm run dev
 ```
 
-- Web (Next.js): http://localhost:3000
-- API (Express): http://localhost:4000/api
-- Recs (Flask): http://127.0.0.1:5000/health
-
-## Docker (prod-like) startup
-
-### Manual compose
-
-```bash
-docker compose -f infra/docker-compose.yml --project-name ecommerce up --build
+### Windows (PowerShell)
+```powershell
+corepack enable
+pnpm run setup
+pnpm run dev
 ```
 
-### Scripted bootstrap (rebuilds, migrates, seeds)
+> `pnpm run dev` starts the API on port 4000 and the web app on port 3000. The recommendation service is optional and can be launched manually (see below).
 
-```bash
-# Dev stack (port 80 via nginx)
-./scripts/bootstrap.sh
+## Requirements
 
-# Production-style stack (nginx on :8085)
-./scripts/bootstrap.sh --prod
+- **Node.js 20+** (the repo ships an `.nvmrc`, `package.json` `engines`, and Volta pin to keep versions consistent)
+- **pnpm 9** via Corepack (`corepack enable` prepares pnpm automatically)
+- **Docker Desktop** (or compatible Docker Engine) for PostgreSQL/Mongo containers
+- **Git long path support on Windows**: `git config --system core.longpaths true` and enable *Enable Win32 long paths* in Group Policy (`gpedit.msc`)
 
-# Optional flags
-#   --no-build  skip docker compose build
-#   --no-seed   skip demo data
+## What `pnpm run setup` does
+
+1. Enables Corepack and makes sure pnpm 9.12.3 is available
+2. Installs every workspace dependency (`pnpm install --recursive`)
+3. Creates `.env`, `apps/api/.env`, and `apps/web/.env` from their `.example` templates if they do not exist
+4. Spins up PostgreSQL and MongoDB via `docker compose up -d db mongo`
+5. Waits for PostgreSQL to pass health checks (`scripts/db-wait.{sh,ps1}`)
+6. Generates Prisma clients across the workspace (`pnpm -r --if-present prisma:generate`)
+7. Applies database migrations for the API (`pnpm --filter @apps/api prisma:migrate`)
+8. Seeds demo data the first time only, then writes `.first-run-done` to skip future seeds
+9. Prints the next step: `pnpm run dev`
+
+Seeding is **idempotent**. Delete `.first-run-done` if you want to re-seed.
+
+## Environment configuration
+
+- **Root `.env`**: created from `.env.example`. Holds shared values (`DATABASE_URL`, `MONGO_URL`, port defaults, `NEXT_PUBLIC_API_BASE`, etc.).
+- **API `.env`** (`apps/api/.env`): overrides for Prisma, Mongo, Stripe secrets, and the API port. Template at `apps/api/.env.example`.
+- **Web `.env`** (`apps/web/.env`): public configuration for the Next.js app. Template at `apps/web/.env.example`.
+
+If you edit a template, re-run `pnpm run setup` (or copy the files manually) to propagate new keys.
+
+## Common commands
+
+| Command | Description |
+| --- | --- |
+| `pnpm run setup` | End-to-end bootstrap (install, DB up, migrate, first-run seed) |
+| `pnpm run dev` | Start API and web apps concurrently |
+| `pnpm run build` | Build every workspace that defines a `build` script |
+| `pnpm run lint` | Run linters for packages that define a `lint` script |
+| `pnpm run db:up` | Launch Postgres and Mongo containers (`docker-compose` based) |
+| `pnpm run db:wait` | Wait for the Postgres container to become healthy |
+| `pnpm run db:migrate` | Apply Prisma migrations (`prisma migrate deploy`) |
+| `pnpm run db:seed` | Run the idempotent Prisma + Mongo seed |
+| `pnpm run first-run` | Run migrations and seed only if `.first-run-done` is missing |
+
+### API package scripts
+
+Inside `apps/api`:
+
+- `pnpm prisma:generate`
+- `pnpm prisma:migrate`
+- `pnpm prisma:seed`
+- `pnpm prisma:studio`
+
+### Web package scripts
+
+Inside `apps/web`:
+
+- `pnpm dev`
+- `pnpm build`
+- `pnpm start`
+
+## Optional recommendations service
+
+The Python service in `apps/recs` is optional. To experiment with it:
+
+1. Create a Python 3.11 virtual environment.
+2. Install dependencies: `pip install -r requirements.txt`.
+3. Start it: `flask --app app.py run --host=0.0.0.0 --port=5000`.
+4. Update `RECS_URL` in your env files if you change the host/port.
+
+## Troubleshooting
+
+- **Docker is not running / port already in use**: make sure Docker Desktop is started and no other Postgres/Mongo instances occupy ports 5432/27017.
+- **`pnpm run setup` fails waiting for Postgres**: `docker compose logs db` to inspect container logs; remove the `postgres_data` volume if initialization failed.
+- **Need to re-run the seed**: delete `.first-run-done` and re-run `pnpm run first-run` (or `pnpm run setup`).
+- **Cleanup install issues**: `pnpm store prune && rm -rf node_modules pnpm-lock.yaml && pnpm install --recursive`.
+- **Windows path errors**: ensure long paths are enabled (see Requirements section).
+
+## Repository structure
+
+```
+apps/
+  api/    # Node API + Prisma (Postgres) + MongoDB models
+  web/    # Next.js 14 storefront
+  recs/   # Optional Python recommendation service
+packages/
+  ui/     # Shared React components
+  config/ # Shared tooling configuration
+scripts/  # Cross-platform automation (setup, db-wait, migrate-and-seed, runner)
 ```
 
-## Scripts
-
-```bash
-# Seed demo data in local dev
-yarn seed # or pnpm seed
-
-# Run tests
-pnpm -r test
-```
-
-See `docs/ARCHITECTURE.md`, `docs/API_CONTRACTS.md`, and `docs/RUNBOOK.md`.
-
-## Environments
-
-Copy `infra/.env.example` to `.env` for local overrides if needed. Secrets should be injected via environment (not committed).
+Happy hacking!

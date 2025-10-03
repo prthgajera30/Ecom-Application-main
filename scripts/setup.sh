@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+log() {
+  printf '\n==> %s\n' "$1"
+}
+
+log "Ensuring Corepack is enabled"
+if command -v corepack >/dev/null 2>&1; then
+  corepack enable >/dev/null 2>&1 || true
+else
+  echo "Corepack is not available. Install Node.js 20 or newer (it ships with Corepack)."
+  exit 1
+fi
+
+log "Checking toolchain versions"
+node_version="$(node --version)"
+echo "Node ${node_version}"
+major="${node_version#v}"
+major="${major%%.*}"
+if [ "${major}" -lt 20 ]; then
+  echo "Node.js 20 or newer is required. Current: ${node_version}"
+  exit 1
+fi
+if ! command -v pnpm >/dev/null 2>&1; then
+  corepack prepare pnpm@9.12.3 --activate
+fi
+echo "pnpm $(pnpm --version)"
+
+log "Installing workspace dependencies"
+pnpm install --recursive
+
+log "Creating environment files if missing"
+if [ ! -f .env ]; then
+  cp .env.example .env
+  echo "  - Created .env from .env.example"
+fi
+if [ ! -f apps/api/.env ]; then
+  cp apps/api/.env.example apps/api/.env
+  echo "  - Created apps/api/.env from template"
+fi
+if [ ! -f apps/web/.env ]; then
+  cp apps/web/.env.example apps/web/.env
+  echo "  - Created apps/web/.env from template"
+fi
+
+log "Starting PostgreSQL and MongoDB containers"
+docker compose up -d db mongo
+
+log "Waiting for PostgreSQL to become ready"
+./scripts/db-wait.sh
+
+log "Generating Prisma clients"
+pnpm -r --if-present prisma:generate || true
+
+log "Applying migrations"
+pnpm --filter @apps/api prisma:migrate
+
+if [ ! -f .first-run-done ]; then
+  log "First run detected – seeding database"
+  pnpm --filter @apps/api prisma:seed
+  touch .first-run-done
+else
+  log "Seed already applied (remove .first-run-done to rerun)"
+fi
+
+log "Setup complete. Next steps: pnpm run dev"
