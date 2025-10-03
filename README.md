@@ -21,7 +21,7 @@ pnpm migrate
 pnpm seed
 ```
 
-- If this is your first run, make sure PostgreSQL and MongoDB are reachable before invoking `pnpm migrate`. For a zero-config setup, you can start the databases via Docker with `docker compose -f infra/docker-compose.yml up postgres mongo -d`.
+- If this is your first run, make sure PostgreSQL and MongoDB are reachable before invoking `pnpm migrate`. The migration helper will automatically attempt to launch `postgres` and `mongo` from `infra/docker-compose.yml` when Docker Compose is available; otherwise, start your local services (for example, Windows users without Docker can install PostgreSQL and MongoDB locally and point `POSTGRES_URL`/`MONGO_URL` at `localhost`).
 
 - Web (Next.js): http://localhost:3000
 - API (Express): http://localhost:4000/api
