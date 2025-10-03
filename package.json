@@ -7,7 +7,7 @@
     "dev:api": "pnpm --filter ./apps/api dev",
     "dev:web": "pnpm --filter ./apps/web dev",
     "dev:recs": "node scripts/run-recs-dev.mjs",
-    "dev": "concurrently -n api,web,recs -c green,cyan,yellow \"pnpm dev:api\" \"pnpm dev:web\" \"pnpm dev:recs\"",
+    "dev": "node scripts/run-dev.mjs",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "migrate": "tsx scripts/migrate.ts",
