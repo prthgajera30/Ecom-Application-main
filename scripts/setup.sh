@@ -44,6 +44,11 @@ if [ ! -f apps/web/.env ]; then
   echo "  - Created apps/web/.env from template"
 fi
 
+if command -v docker >/dev/null 2>&1 && [ ! -f .first-run-done ]; then
+  log "Resetting Docker database volumes for a clean first run"
+  docker compose down --volumes --remove-orphans >/dev/null 2>&1 || true
+fi
+
 log "Starting PostgreSQL and MongoDB containers"
 should_wait=1
 if command -v docker >/dev/null 2>&1; then
@@ -109,7 +114,7 @@ if ! run_migrations; then
   if printf '%s' "$output" | grep -q 'P1000'; then
     if should_auto_reset; then
       echo "Prisma reported an authentication failure (P1000). Resetting the Docker Postgres volume and retrying once..."
-      docker compose down --volumes
+      docker compose down --volumes --remove-orphans
       docker compose up -d db mongo
       if ./scripts/db-wait.sh; then
         if run_migrations; then
@@ -128,6 +133,29 @@ if ! run_migrations; then
       fi
       echo "Prisma migrations failed with P1000. Ensure your DATABASE_URL credentials match the running Postgres instance."
       echo "You can set AUTO_RESET_DB_ON_P1000=1 to allow the setup script to reset the Docker volume automatically."
+      exit 1
+    fi
+  elif printf '%s' "$output" | grep -q 'P3018'; then
+    if should_auto_reset; then
+      echo "Prisma reported a migration failure (P3018). Resetting the Docker Postgres volume and retrying once..."
+      docker compose down --volumes --remove-orphans
+      docker compose up -d db mongo
+      if ./scripts/db-wait.sh; then
+        if run_migrations; then
+          echo "Migrations succeeded after resetting the Postgres volume."
+        else
+          echo "Prisma migrations failed after retrying. Verify your migration SQL and rerun setup."
+          exit 1
+        fi
+      else
+        echo "Postgres did not become healthy after resetting the volume. Check container logs and rerun setup."
+        exit 1
+      fi
+    else
+      if [ -n "$AUTO_RESET_BLOCK_REASON" ]; then
+        echo "Automatic Docker reset was skipped because ${AUTO_RESET_BLOCK_REASON}."
+      fi
+      echo "Prisma migrations failed with P3018. Inspect the failing migration or reset the database volume (docker compose down --volumes) before rerunning."
       exit 1
     fi
   else

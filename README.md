@@ -32,14 +32,14 @@ pnpm run dev
 1. Enables Corepack and makes sure pnpm 9.12.3 is available
 2. Installs every workspace dependency (`pnpm install --recursive`)
 3. Creates `.env`, `apps/api/.env`, and `apps/web/.env` from their `.example` templates if they do not exist
-4. Spins up PostgreSQL and MongoDB via `docker compose up -d db mongo` (if Docker is available; otherwise it reminds you to start your own services)
+4. On the very first run, clears any existing Docker volumes to avoid credential mismatches, then spins up PostgreSQL and MongoDB via `docker compose up -d db mongo` (if Docker is available; otherwise it reminds you to start your own services)
 5. Waits for PostgreSQL to pass health checks (`scripts/db-wait.{sh,ps1}`) or confirms the TCP port is open when you are running a local database
 6. Generates Prisma clients across the workspace (`pnpm -r --if-present prisma:generate`)
 7. Applies database migrations for the API (`pnpm --filter @apps/api prisma:migrate`)
 8. Seeds demo data the first time only, then writes `.first-run-done` to skip future seeds
 9. Prints the next step: `pnpm run dev`
 
-During the first run, if Prisma reports an authentication error (`P1000`) the setup scripts automatically reset the Docker Postgres volume and retry once. Set `AUTO_RESET_DB_ON_P1000=0` (or `false`) before running the script to opt out of this behavior.
+During the first run, if Prisma reports an authentication (`P1000`) or migration (`P3018`) error the setup scripts automatically reset the Docker Postgres volume and retry once. Set `AUTO_RESET_DB_ON_P1000=0` (or `false`) before running the script to opt out of this behavior.
 
 Seeding is **idempotent**. Delete `.first-run-done` if you want to re-seed.
 
@@ -94,7 +94,7 @@ The Python service in `apps/recs` is optional. To experiment with it:
 
 - **Docker is not running / port already in use**: make sure Docker Desktop is started and no other Postgres/Mongo instances occupy ports 5432/27017. If you prefer local database services, start them manually before running `pnpm run setup` and the script will skip Docker.
 - **`pnpm run setup` fails waiting for Postgres**: `docker compose logs db` to inspect container logs; remove the `postgres_data` volume if initialization failed.
-- **`pnpm run setup` fails with Prisma error P1000 (authentication)**: on the first run the script automatically resets the Docker Postgres volume and retries once. If it still fails (or you disabled this via `AUTO_RESET_DB_ON_P1000=0`), align `DATABASE_URL` with the running instance or manually reset the volume with `docker compose down --volumes` before rerunning setup.
+- **`pnpm run setup` fails with Prisma error P1000 (authentication) or P3018 (migration failure)**: on the first run the script automatically resets the Docker Postgres volume and retries once. If it still fails (or you disabled this via `AUTO_RESET_DB_ON_P1000=0`), align `DATABASE_URL` with the running instance, inspect the SQL in `apps/api/prisma/migrations`, or manually reset the volume with `docker compose down --volumes` before rerunning setup.
 - **Need to re-run the seed**: delete `.first-run-done` and re-run `pnpm run first-run` (or `pnpm run setup`).
 - **Cleanup install issues**: `pnpm store prune && rm -rf node_modules pnpm-lock.yaml && pnpm install --recursive`.
 - **Windows path errors**: ensure long paths are enabled (see Requirements section).

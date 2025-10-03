@@ -40,21 +40,27 @@ if ($result.Code -ne 0) {
         } catch {}
     }
     $sawP1000 = $result.Text -match 'P1000'
+    $sawP3018 = $result.Text -match 'P3018'
     $autoResetBlockReason = $null
     if (-not $autoResetEnabled) { $autoResetBlockReason = 'AUTO_RESET_DB_ON_P1000 is disabled' }
     elseif (-not $isFirstRun) { $autoResetBlockReason = 'setup has already completed once' }
     elseif (-not $hasDocker) { $autoResetBlockReason = 'docker is not available' }
     elseif (-not $composeRunning) { $autoResetBlockReason = 'docker compose db service is not running' }
 
-    if ($result.Code -ne 0 -and $sawP1000 -and $isFirstRun -and $autoResetEnabled -and $composeRunning) {
-        Write-Warning 'Prisma reported an authentication failure (P1000). Resetting the Docker Postgres volume and retrying once...'
-        Invoke-CheckedCommand 'docker' @('compose', 'down', '--volumes')
+    if ($result.Code -ne 0 -and ($sawP1000 -or $sawP3018) -and $isFirstRun -and $autoResetEnabled -and $composeRunning) {
+        $reason = if ($sawP3018) { 'migration failure (P3018)' } else { 'authentication failure (P1000)' }
+        Write-Warning "Prisma reported a $reason. Resetting the Docker Postgres volume and retrying once..."
+        Invoke-CheckedCommand 'docker' @('compose', 'down', '--volumes', '--remove-orphans')
         Invoke-CheckedCommand 'docker' @('compose', 'up', '-d', 'db', 'mongo')
         Invoke-CheckedCommand 'powershell' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', './scripts/db-wait.ps1')
         $result = Invoke-Migrate
     } elseif ($sawP1000) {
         if ($autoResetBlockReason) { Write-Warning "Automatic Docker reset was skipped because $autoResetBlockReason." }
         Write-Error 'Prisma migrations failed with P1000. Ensure your DATABASE_URL credentials match the running Postgres instance. Set AUTO_RESET_DB_ON_P1000=1 to allow the script to reset the Docker volume automatically.'
+        exit $result.Code
+    } elseif ($sawP3018) {
+        if ($autoResetBlockReason) { Write-Warning "Automatic Docker reset was skipped because $autoResetBlockReason." }
+        Write-Error 'Prisma migrations failed with P3018. Inspect the failing migration or reset the Docker volume (docker compose down --volumes) before rerunning.'
         exit $result.Code
     }
 
