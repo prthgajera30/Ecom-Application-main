@@ -21,6 +21,8 @@ pnpm migrate
 pnpm seed
 ```
 
+- If this is your first run, make sure PostgreSQL and MongoDB are reachable before invoking `pnpm migrate`. For a zero-config setup, you can start the databases via Docker with `docker compose -f infra/docker-compose.yml up postgres mongo -d`.
+
 - Web (Next.js): http://localhost:3000
 - API (Express): http://localhost:4000/api
 - Recs (Flask): http://127.0.0.1:5000/health
