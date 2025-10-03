@@ -45,10 +45,26 @@ if [ ! -f apps/web/.env ]; then
 fi
 
 log "Starting PostgreSQL and MongoDB containers"
-docker compose up -d db mongo
+should_wait=1
+if command -v docker >/dev/null 2>&1; then
+  if docker compose up -d db mongo; then
+    log "Waiting for PostgreSQL to become ready"
+    if ! ./scripts/db-wait.sh; then
+      echo "Postgres did not become healthy. Inspect containers or start your local database manually."
+      exit 1
+    fi
+  else
+    echo "Docker Compose failed to start the containers. Ensure Docker Desktop is running or manage Postgres/Mongo manually."
+    should_wait=0
+  fi
+else
+  echo "Docker is not installed or not on PATH. Start Postgres and Mongo manually before continuing."
+  should_wait=0
+fi
 
-log "Waiting for PostgreSQL to become ready"
-./scripts/db-wait.sh
+if [ "$should_wait" -eq 0 ]; then
+  log "Skipping Docker health checks; make sure your databases are running before migrations."
+fi
 
 log "Generating Prisma clients"
 pnpm -r --if-present prisma:generate || true

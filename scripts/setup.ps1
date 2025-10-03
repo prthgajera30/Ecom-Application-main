@@ -45,10 +45,24 @@ if (-not (Test-Path 'apps/web/.env')) {
 }
 
 Write-Step "Starting PostgreSQL and MongoDB containers"
-docker compose up -d db mongo | Out-Null
+$shouldWait = $true
+if (Get-Command docker -ErrorAction SilentlyContinue) {
+    try {
+        docker compose up -d db mongo | Out-Null
+        Write-Step "Waiting for PostgreSQL to become ready"
+        powershell -ExecutionPolicy Bypass -File ./scripts/db-wait.ps1
+    } catch {
+        Write-Warning "Docker Compose failed to start the containers. Ensure Docker Desktop is running or manage Postgres/Mongo manually."
+        $shouldWait = $false
+    }
+} else {
+    Write-Warning "Docker is not installed or not on PATH. Start Postgres and Mongo manually before continuing."
+    $shouldWait = $false
+}
 
-Write-Step "Waiting for PostgreSQL to become ready"
-powershell -ExecutionPolicy Bypass -File ./scripts/db-wait.ps1
+if (-not $shouldWait) {
+    Write-Step "Skipping Docker health checks; verify your databases are running before migrations"
+}
 
 Write-Step "Generating Prisma clients"
 pnpm -r --if-present prisma:generate | Out-Null

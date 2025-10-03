@@ -11,14 +11,14 @@
     "pnpm": "9.12.3"
   },
   "scripts": {
-    "setup": "node ./scripts/run-script.mjs setup",
+    "setup": "./scripts/setup.sh || powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/setup.ps1",
     "install:all": "pnpm install --recursive",
     "db:up": "docker compose up -d db mongo",
-    "db:wait": "node ./scripts/run-script.mjs db-wait",
+    "db:wait": "./scripts/db-wait.sh || powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/db-wait.ps1",
     "db:migrate": "pnpm --filter @apps/api prisma:migrate",
     "db:seed": "pnpm --filter @apps/api prisma:seed",
-    "first-run": "node ./scripts/run-script.mjs migrate-and-seed",
-    "dev": "pnpm -r --parallel --filter ./apps/api --filter ./apps/web dev",
+    "first-run": "./scripts/migrate-and-seed.sh || powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/migrate-and-seed.ps1",
+    "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
     "postinstall": "pnpm -r --if-present prisma:generate || true"

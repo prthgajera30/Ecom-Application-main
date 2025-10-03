@@ -32,8 +32,8 @@ pnpm run dev
 1. Enables Corepack and makes sure pnpm 9.12.3 is available
 2. Installs every workspace dependency (`pnpm install --recursive`)
 3. Creates `.env`, `apps/api/.env`, and `apps/web/.env` from their `.example` templates if they do not exist
-4. Spins up PostgreSQL and MongoDB via `docker compose up -d db mongo`
-5. Waits for PostgreSQL to pass health checks (`scripts/db-wait.{sh,ps1}`)
+4. Spins up PostgreSQL and MongoDB via `docker compose up -d db mongo` (if Docker is available; otherwise it reminds you to start your own services)
+5. Waits for PostgreSQL to pass health checks (`scripts/db-wait.{sh,ps1}`) or confirms the TCP port is open when you are running a local database
 6. Generates Prisma clients across the workspace (`pnpm -r --if-present prisma:generate`)
 7. Applies database migrations for the API (`pnpm --filter @apps/api prisma:migrate`)
 8. Seeds demo data the first time only, then writes `.first-run-done` to skip future seeds
@@ -57,7 +57,7 @@ If you edit a template, re-run `pnpm run setup` (or copy the files manually) to 
 | `pnpm run dev` | Start API and web apps concurrently |
 | `pnpm run build` | Build every workspace that defines a `build` script |
 | `pnpm run lint` | Run linters for packages that define a `lint` script |
-| `pnpm run db:up` | Launch Postgres and Mongo containers (`docker-compose` based) |
+| `pnpm run db:up` | Launch Postgres and Mongo containers (`docker compose`) |
 | `pnpm run db:wait` | Wait for the Postgres container to become healthy |
 | `pnpm run db:migrate` | Apply Prisma migrations (`prisma migrate deploy`) |
 | `pnpm run db:seed` | Run the idempotent Prisma + Mongo seed |
@@ -91,7 +91,7 @@ The Python service in `apps/recs` is optional. To experiment with it:
 
 ## Troubleshooting
 
-- **Docker is not running / port already in use**: make sure Docker Desktop is started and no other Postgres/Mongo instances occupy ports 5432/27017.
+- **Docker is not running / port already in use**: make sure Docker Desktop is started and no other Postgres/Mongo instances occupy ports 5432/27017. If you prefer local database services, start them manually before running `pnpm run setup` and the script will skip Docker.
 - **`pnpm run setup` fails waiting for Postgres**: `docker compose logs db` to inspect container logs; remove the `postgres_data` volume if initialization failed.
 - **Need to re-run the seed**: delete `.first-run-done` and re-run `pnpm run first-run` (or `pnpm run setup`).
 - **Cleanup install issues**: `pnpm store prune && rm -rf node_modules pnpm-lock.yaml && pnpm install --recursive`.
@@ -107,7 +107,7 @@ apps/
 packages/
   ui/     # Shared React components
   config/ # Shared tooling configuration
-scripts/  # Cross-platform automation (setup, db-wait, migrate-and-seed, runner)
+  scripts/  # Cross-platform automation (setup, db-wait, migrate-and-seed)
 ```
 
 Happy hacking!
