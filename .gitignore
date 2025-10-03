@@ -2,7 +2,7 @@
 node_modules/
 **/node_modules/
 .pnpm-store
-.venv/
+**/.venv/
 
 # Builds
 apps/web/.next/

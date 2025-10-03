@@ -61,6 +61,7 @@ If you edit a template, re-run `pnpm run setup` (or copy the files manually) to 
 | `pnpm run db:wait` | Wait for the Postgres container to become healthy |
 | `pnpm run db:migrate` | Apply Prisma migrations (`prisma migrate deploy`) |
 | `pnpm run db:seed` | Run the idempotent Prisma + Mongo seed |
+| `pnpm run migrate` | Convenience wrapper that starts Docker (when available) then runs migrations + seed |
 | `pnpm run first-run` | Run migrations and seed only if `.first-run-done` is missing |
 
 ### API package scripts
@@ -84,10 +85,8 @@ Inside `apps/web`:
 
 The Python service in `apps/recs` is optional. To experiment with it:
 
-1. Create a Python 3.11 virtual environment.
-2. Install dependencies: `pip install -r requirements.txt`.
-3. Start it: `flask --app app.py run --host=0.0.0.0 --port=5000`.
-4. Update `RECS_URL` in your env files if you change the host/port.
+1. Run `pnpm run dev:recs` (this script will create a virtual environment, install requirements when they change, and start Flask).
+2. Update `RECS_URL` in your env files if you change the host/port.
 
 ## Troubleshooting
 
