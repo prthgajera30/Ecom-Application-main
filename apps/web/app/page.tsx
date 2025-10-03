@@ -84,6 +84,8 @@ export default function Page() {
   const [health, setHealth] = useState<string>('loading…');
   const [connected, setConnected] = useState<boolean>(false);
   const [featured, setFeatured] = useState<Product[]>([]);
+  const [lightningDeals, setLightningDeals] = useState<Product[]>([]);
+  const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [recommended, setRecommended] = useState<Recommendation[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('');
@@ -101,6 +103,12 @@ export default function Page() {
     apiGet<{ items: Product[] }>('/products?limit=6')
       .then((d) => setFeatured(d.items || []))
       .catch(() => setFeatured([]));
+    apiGet<{ items: Product[] }>('/products?limit=4&sort=price_asc')
+      .then((d) => setLightningDeals(d.items || []))
+      .catch(() => setLightningDeals([]));
+    apiGet<{ items: Product[] }>('/products?limit=4&sort=popular')
+      .then((d) => setBestSellers(d.items || []))
+      .catch(() => setBestSellers([]));
     apiGet<{ items: Recommendation[] }>('/recommendations?k=6')
       .then((d) => setRecommended(d.items || []))
       .catch(() => setRecommended([]));
@@ -156,9 +164,12 @@ export default function Page() {
   const activeCategoryProducts = categoryProducts[activeCategory] || [];
   const activeCategoryName = categories.find((cat) => cat._id === activeCategory)?.name;
 
-  const pendingAdd = (productId: string) => Boolean(pending[`add:${productId}`]);
+  const pendingAdd = (productId: string, variantId?: string | null) => {
+    const key = variantId ? `add:${productId}::${variantId}` : `add:${productId}`;
+    return Boolean(pending[key]);
+  };
 
-  const quickAdd = async (productId: string) => {
+  const quickAdd = async (productId: string, variant?: ProductVariant) => {
     rotationRef.current = Date.now();
     setProductErrors((current) => {
       if (!current[productId]) return current;
@@ -167,7 +178,14 @@ export default function Page() {
       return next;
     });
     try {
-      await addItem(productId, 1);
+      await addItem(productId, 1, variant
+        ? {
+            variantId: variant.variantId,
+            variantLabel: variant.label,
+            variantOptions: variant.options,
+            unitPrice: variant.price,
+          }
+        : undefined);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Unable to add this product right now.';
       setProductErrors((current) => ({ ...current, [productId]: message }));
@@ -340,35 +358,43 @@ export default function Page() {
           )}
           {activeCategoryProducts.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {activeCategoryProducts.map((product) => (
-                <div key={product._id} className="group flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
-                  <Link href={`/product/${product.slug}`} className="relative h-32 overflow-hidden rounded-xl">
-                    {product.images?.[0] ? (
-                      <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-indigo-100/60">No image</div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/80 via-transparent" />
-                  </Link>
-                  <div className="space-y-2 text-sm text-indigo-100/80">
-                    <div className="text-base font-semibold text-white line-clamp-1">{product.title}</div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span>${(product.price / 100).toFixed(2)}</span>
-                      <button
-                        type="button"
-                        onClick={() => quickAdd(product._id)}
-                        className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 disabled:opacity-60"
-                        disabled={pendingAdd(product._id)}
-                      >
-                        {pendingAdd(product._id) ? 'Adding…' : 'Quick add'}
-                      </button>
+              {activeCategoryProducts.map((product) => {
+                const variant = getDefaultVariant(product);
+                const price = variant?.price ?? product.price;
+                const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
+                return (
+                  <div key={product._id} className="group flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+                    <Link href={`/product/${product.slug}`} className="relative h-32 overflow-hidden rounded-xl">
+                      {product.images?.[0] ? (
+                        <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-xs text-indigo-100/60">No image</div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/80 via-transparent" />
+                    </Link>
+                    <div className="space-y-2 text-sm text-indigo-100/80">
+                      <div className="text-base font-semibold text-white line-clamp-1">{product.title}</div>
+                      {product.brand && (
+                        <div className="text-[11px] text-indigo-100/60">{product.brand}</div>
+                      )}
+                      <div className="flex items-center justify-between text-xs">
+                        <span>${(price / 100).toFixed(2)}</span>
+                        <button
+                          type="button"
+                          onClick={() => quickAdd(product._id, variant)}
+                          className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 disabled:opacity-60"
+                          disabled={addBusy}
+                        >
+                          {addBusy ? 'Adding…' : 'Quick add'}
+                        </button>
+                      </div>
+                      {productErrors[product._id] && (
+                        <p className="rounded-full bg-rose-500/15 px-2 py-1 text-[11px] text-rose-100">{productErrors[product._id]}</p>
+                      )}
                     </div>
-                    {productErrors[product._id] && (
-                      <p className="rounded-full bg-rose-500/15 px-2 py-1 text-[11px] text-rose-100">{productErrors[product._id]}</p>
-                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-indigo-100/70">
@@ -377,6 +403,116 @@ export default function Page() {
           )}
         </div>
       </section>
+
+      {lightningDeals.length > 0 && (
+        <section className="space-y-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="section-title">Lightning deals</h2>
+              <p className="section-subtitle">Grab limited-time savings before the timer runs out.</p>
+            </div>
+            <Link href="/products?sort=price_asc" className="btn-secondary">View all deals</Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {lightningDeals.map((product) => {
+              const variant = getDefaultVariant(product);
+              const price = variant?.price ?? product.price;
+              const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
+              return (
+                <div key={product._id} className="card flex h-full flex-col overflow-hidden">
+                  <Link href={`/product/${product.slug}`} className="group relative block h-44 overflow-hidden">
+                    {product.images?.[0] ? (
+                      <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
+                    )}
+                    <div className="absolute left-4 top-4 rounded-full bg-amber-500/90 px-3 py-1 text-xs font-semibold text-slate-900">
+                      Hot deal
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
+                  </Link>
+                  <div className="flex flex-1 flex-col justify-between space-y-3 p-5">
+                    <div className="space-y-1">
+                      <h3 className="text-base font-semibold text-white line-clamp-2">{product.title}</h3>
+                      <p className="text-sm text-amber-200/80">${(price / 100).toFixed(2)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        className="btn-primary w-full justify-center disabled:opacity-60"
+                        onClick={() => quickAdd(product._id, variant)}
+                        disabled={addBusy}
+                      >
+                        {addBusy ? 'Adding…' : 'Add to cart'}
+                      </button>
+                      {productErrors[product._id] && (
+                        <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100 text-center">
+                          {productErrors[product._id]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {bestSellers.length > 0 && (
+        <section className="space-y-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="section-title">Best sellers</h2>
+              <p className="section-subtitle">Crowd favorites with consistently high demand.</p>
+            </div>
+            <Link href="/products?sort=popular" className="btn-secondary">View best sellers</Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {bestSellers.map((product) => {
+              const variant = getDefaultVariant(product);
+              const price = variant?.price ?? product.price;
+              const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
+              return (
+                <div key={product._id} className="card flex h-full flex-col overflow-hidden">
+                  <Link href={`/product/${product.slug}`} className="group relative block h-44 overflow-hidden">
+                    {product.images?.[0] ? (
+                      <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
+                    )}
+                    <div className="absolute left-4 top-4 rounded-full bg-indigo-500/90 px-3 py-1 text-xs font-semibold text-slate-900">
+                      Best seller
+                    </div>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
+                  </Link>
+                  <div className="flex flex-1 flex-col justify-between space-y-3 p-5">
+                    <div className="space-y-1">
+                      <h3 className="text-base font-semibold text-white line-clamp-2">{product.title}</h3>
+                      <p className="text-sm text-indigo-100/80">${(price / 100).toFixed(2)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        className="btn-primary w-full justify-center disabled:opacity-60"
+                        onClick={() => quickAdd(product._id, variant)}
+                        disabled={addBusy}
+                      >
+                        {addBusy ? 'Adding…' : 'Add to cart'}
+                      </button>
+                      {productErrors[product._id] && (
+                        <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100 text-center">
+                          {productErrors[product._id]}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="space-y-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -427,7 +563,9 @@ export default function Page() {
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {curatedRecommendations.map((item) => {
               const product = item.product!;
-              const addBusy = pendingAdd(product._id);
+              const variant = getDefaultVariant(product);
+              const price = variant?.price ?? product.price;
+              const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
               return (
                 <div key={product._id} className="card flex h-full flex-col overflow-hidden">
                   <Link href={product.slug ? `/product/${product.slug}` : '#'} className="group relative block h-48 overflow-hidden">
@@ -448,13 +586,13 @@ export default function Page() {
                   <div className="flex flex-1 flex-col justify-between space-y-3 p-5">
                     <div className="space-y-1">
                       <h3 className="text-lg font-semibold text-white line-clamp-1">{product.title}</h3>
-                      <p className="text-sm text-indigo-100/70">${(product.price / 100).toFixed(2)}</p>
+                      <p className="text-sm text-indigo-100/70">${(price / 100).toFixed(2)}</p>
                     </div>
                     <div className="space-y-2">
                       <button
                         type="button"
                         className="btn-primary w-full justify-center disabled:opacity-60"
-                        onClick={() => quickAdd(product._id)}
+                        onClick={() => quickAdd(product._id, variant)}
                         disabled={addBusy}
                       >
                         {addBusy ? 'Adding…' : 'Add to cart'}

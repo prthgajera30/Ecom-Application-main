@@ -1,3 +1,4 @@
+
 import { Router } from 'express';
 import { z } from 'zod';
 import Stripe from 'stripe';
@@ -9,7 +10,14 @@ const secret = process.env.STRIPE_SECRET_KEY || 'sk_test_xxx';
 const isStripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_xxx');
 const stripe = new Stripe(secret);
 
-type SessionCartItem = { productId: string; qty: number };
+type SessionCartItem = {
+  productId: string;
+  qty: number;
+  variantId?: string;
+  variantLabel?: string;
+  variantOptions?: Record<string, string>;
+  unitPrice?: number;
+};
 
 const createSchema = z.object({
   currency: z.string().min(3).max(8).default('usd'),
@@ -32,6 +40,10 @@ function getCartItems(sessionDoc: any): SessionCartItem[] {
   return sessionDoc.cart.items.map((item: any) => ({
     productId: String(item.productId),
     qty: Number(item.qty || 0),
+    variantId: item.variantId ? String(item.variantId) : undefined,
+    variantLabel: item.variantLabel ? String(item.variantLabel) : undefined,
+    variantOptions: item.variantOptions && typeof item.variantOptions === 'object' ? item.variantOptions : undefined,
+    unitPrice: Number.isFinite(Number(item.unitPrice)) ? Number(item.unitPrice) : undefined,
   }));
 }
 
@@ -55,6 +67,15 @@ async function clearSessionCart(sessionDoc: any | null) {
   sessionDoc.cart = { items: [] };
   sessionDoc.updatedAt = new Date();
   await sessionDoc.save();
+}
+
+function resolveVariantPricing(product: any, item: SessionCartItem) {
+  const variant = item.variantId ? product?.variants?.find((v: any) => String(v.variantId) === String(item.variantId)) : undefined;
+  const unitPrice = Number.isFinite(item.unitPrice) ? Number(item.unitPrice) : Number(variant?.price ?? product?.price ?? 0);
+  const label = item.variantLabel || variant?.label || undefined;
+  const options = item.variantOptions || variant?.options || undefined;
+  const variantId = variant ? String(variant.variantId) : item.variantId;
+  return { variant, variantId, unitPrice, label, options };
 }
 
 async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, req: any) {
@@ -101,7 +122,7 @@ async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, r
     }
   }
 
-  const productIds = cartItems.map((item) => item.productId);
+  const productIds = Array.from(new Set(cartItems.map((item) => item.productId)));
   const products = await Product.find({ _id: { $in: productIds } }).exec();
   const productMap = new Map<string, any>();
   for (const doc of products) {
@@ -109,17 +130,25 @@ async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, r
     productMap.set(String(obj._id), obj);
   }
 
-  const orderItems: { productId: string; price: number; qty: number }[] = [];
+  const orderItems: { productId: string; price: number; qty: number; variantId?: string | null; variantLabel?: string | null; variantOptions?: any }[] = [];
   let total = 0;
 
   for (const item of cartItems) {
     const product = productMap.get(item.productId);
     if (!product) continue;
     const qty = Math.max(1, item.qty);
-    const unitPrice = Math.max(0, Number(product.price) || 0);
-    if (!unitPrice) continue;
+    if (!Number.isFinite(qty) || qty <= 0) continue;
+    const { variantId, unitPrice, label, options } = resolveVariantPricing(product, item);
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) continue;
     total += qty * unitPrice;
-    orderItems.push({ productId: String(product._id), price: Math.round(unitPrice), qty });
+    orderItems.push({
+      productId: String(product._id),
+      price: Math.round(unitPrice),
+      qty,
+      variantId: variantId || null,
+      variantLabel: label || null,
+      variantOptions: options || null,
+    });
   }
 
   if (!orderItems.length) return;
@@ -135,7 +164,14 @@ async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, r
         currency,
         status: paymentStatus === 'paid' ? 'paid' : 'pending',
         items: {
-          create: orderItems,
+          create: orderItems.map((item) => ({
+            productId: item.productId,
+            price: item.price,
+            qty: item.qty,
+            variantId: item.variantId,
+            variantLabel: item.variantLabel,
+            variantOptions: item.variantOptions,
+          })),
         },
         ...(paymentIntentId
           ? {
@@ -188,7 +224,7 @@ router.post('/checkout/create-session', async (req, res) => {
   const userEmail = await fetchUserEmail(userId);
   await ensureSessionUser(sessionDoc, userId);
 
-  const productIds = cartItems.map((item) => item.productId);
+  const productIds = Array.from(new Set(cartItems.map((item) => item.productId)));
   const products = await Product.find({ _id: { $in: productIds } }).exec();
   const productMap = new Map<string, any>();
   for (const doc of products) {
@@ -202,16 +238,19 @@ router.post('/checkout/create-session', async (req, res) => {
     if (!product) continue;
     const quantity = Math.max(1, item.qty);
     if (!Number.isFinite(quantity) || quantity <= 0) continue;
-    const amount = Math.max(0, Number(product.price) || 0);
-    if (amount <= 0) continue;
+    const { variantId, unitPrice, label } = resolveVariantPricing(product, item);
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) continue;
+    const productName = label ? `${product.title || 'Product'} (${label})` : product.title || 'Product';
+    const metadata: Record<string, string> = { productId: String(product._id) };
+    if (variantId) metadata.variantId = variantId;
     lineItems.push({
       price_data: {
         currency: parse.data.currency,
         product_data: {
-          name: product.title || 'Product',
-          metadata: { productId: String(product._id) },
+          name: productName,
+          metadata,
         },
-        unit_amount: Math.round(amount),
+        unit_amount: Math.round(unitPrice),
       },
       quantity,
     });

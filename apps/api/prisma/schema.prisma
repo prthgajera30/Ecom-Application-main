@@ -8,13 +8,14 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
+  id           String    @id @default(uuid())
+  email        String    @unique
   passwordHash String
-  role         Role     @default(customer)
-  createdAt    DateTime @default(now())
+  role         Role      @default(customer)
+  createdAt    DateTime  @default(now())
   orders       Order[]
   events       Event[]
+  addresses    Address[]
 }
 
 enum Role {
@@ -22,16 +23,56 @@ enum Role {
   admin
 }
 
+model Address {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  label      String?
+  fullName   String
+  line1      String
+  line2      String?
+  city       String
+  state      String?
+  postalCode String
+  country    String
+  phone      String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ShippingOption {
+  id               String   @id @default(uuid())
+  name             String
+  description      String?
+  amount           Int
+  estimatedDaysMin Int?
+  estimatedDaysMax Int?
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  orders           Order[]
+}
+
 model Order {
-  id        String      @id @default(uuid())
-  user      User        @relation(fields: [userId], references: [id])
-  userId    String
-  total     Int
-  currency  String
-  status    OrderStatus @default(pending)
-  createdAt DateTime    @default(now())
-  items     OrderItem[]
-  payment   Payment?
+  id               String       @id @default(uuid())
+  user             User         @relation(fields: [userId], references: [id])
+  userId           String
+  sessionId        String?
+  subtotal         Int          @default(0)
+  taxAmount        Int          @default(0)
+  shippingAmount   Int          @default(0)
+  discountAmount   Int          @default(0)
+  total            Int
+  currency         String
+  promoCode        String?
+  status           OrderStatus  @default(pending)
+  createdAt        DateTime     @default(now())
+  shippingAddress  Json?
+  shippingOption   ShippingOption? @relation(fields: [shippingOptionId], references: [id])
+  shippingOptionId String?
+  items            OrderItem[]
+  payment          Payment?
 }
 
 enum OrderStatus {
@@ -41,21 +82,27 @@ enum OrderStatus {
 }
 
 model OrderItem {
-  id        String @id @default(uuid())
-  order     Order  @relation(fields: [orderId], references: [id])
-  orderId   String
-  productId String
-  price     Int
-  qty       Int
+  id             String @id @default(uuid())
+  order          Order  @relation(fields: [orderId], references: [id])
+  orderId        String
+  productId      String
+  title          String?
+  price          Int
+  qty            Int
+  variantId      String?
+  variantLabel   String?
+  variantOptions Json?
 }
 
 model Payment {
   id                    String   @id @default(uuid())
   order                 Order    @relation(fields: [orderId], references: [id])
   orderId               String   @unique
-  stripePaymentIntentId String
+  provider              String   @default("stripe")
+  stripePaymentIntentId String?
   amount                Int
   status                String
+  metadata              Json?
   createdAt             DateTime @default(now())
 }
 

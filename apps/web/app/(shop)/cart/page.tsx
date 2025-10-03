@@ -5,8 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import { getSocket } from '../../../lib/ws';
-import { useCartState } from '../../../context/CartContext';
+import { useCartState, type CartItem } from '../../../context/CartContext';
 import { ApiError } from '../../../lib/api';
+
 
 type RecommendationItem = {
   score: number;
@@ -19,6 +20,8 @@ type RecommendationItem = {
   } | null;
   productId?: string;
 };
+
+const lineKey = (item: CartItem) => (item.variantId ? `${item.productId}::${item.variantId}` : item.productId);
 
 export default function CartPage() {
   const router = useRouter();
@@ -43,33 +46,36 @@ export default function CartPage() {
 
   const pendingCheckout = Boolean(pending.checkout);
 
-  const handleQtyChange = async (productId: string, qty: number) => {
-    setInlineErrors((current) => {
-      const next = { ...current };
-      delete next[productId];
-      return next;
-    });
-    try {
-      await updateItem(productId, qty);
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Failed to update quantity.';
-      setInlineErrors((current) => ({ ...current, [productId]: message }));
-    }
-  };
 
-  const handleRemove = async (productId: string) => {
-    setInlineErrors((current) => {
-      const next = { ...current };
-      delete next[productId];
-      return next;
-    });
-    try {
-      await removeItem(productId);
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Failed to remove item.';
-      setInlineErrors((current) => ({ ...current, [productId]: message }));
-    }
-  };
+const handleQtyChange = async (item: CartItem, qty: number) => {
+  const key = lineKey(item);
+  setInlineErrors((current) => {
+    const next = { ...current };
+    delete next[key];
+    return next;
+  });
+  try {
+    await updateItem(item.productId, qty, { variantId: item.variantId ?? null });
+  } catch (err) {
+    const message = err instanceof ApiError ? err.message : 'Failed to update quantity.';
+    setInlineErrors((current) => ({ ...current, [key]: message }));
+  }
+};
+
+const handleRemove = async (item: CartItem) => {
+  const key = lineKey(item);
+  setInlineErrors((current) => {
+    const next = { ...current };
+    delete next[key];
+    return next;
+  });
+  try {
+    await removeItem(item.productId, { variantId: item.variantId ?? null });
+  } catch (err) {
+    const message = err instanceof ApiError ? err.message : 'Failed to remove item.';
+    setInlineErrors((current) => ({ ...current, [key]: message }));
+  }
+};
 
   const startCheckout = async () => {
     setCheckoutError(null);
@@ -127,89 +133,105 @@ export default function CartPage() {
               </div>
             ))}
           </div>
-        ) : itemCount > 0 ? (
-          <div className="mt-6 space-y-4">
-            {items.map((item) => {
-              const product = products[item.productId];
-              const price = product?.price ?? 0;
-              const pendingKey = pending[`update:${item.productId}`] || pending[`remove:${item.productId}`];
-              return (
-                <div
-                  key={item.productId}
-                  className="card space-y-4 p-4 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:space-y-0"
-                >
-                  <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-                    <div className="h-28 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 sm:h-24 sm:w-24 sm:flex-shrink-0">
-                      {product?.images?.[0] ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.title}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-xs text-indigo-100/50">
-                          No image
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1 text-sm sm:space-y-2">
-                      <div className="text-base font-semibold text-white">
-                        {product?.title || 'Unnamed item'}
-                      </div>
-                      <div className="text-sm text-indigo-100/70">
-                        ${(price / 100).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-lg text-white transition hover:bg-white/15 disabled:opacity-50"
-                        onClick={() => handleQtyChange(item.productId, item.qty - 1)}
-                        aria-label={`Decrease quantity for ${product?.title || 'item'}`}
-                        disabled={pendingKey}
-                      >
-                        -
-                      </button>
-                      <input
-                        className="w-14 rounded-xl border border-white/15 bg-white/10 text-center text-sm text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
-                        value={item.qty}
-                        onChange={(e) => handleQtyChange(item.productId, parseInt(e.target.value || '0', 10))}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        aria-label={`Quantity for ${product?.title || 'item'}`}
-                        disabled={pendingKey}
-                      />
-                      <button
-                        type="button"
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-lg text-white transition hover:bg-white/15 disabled:opacity-50"
-                        onClick={() => handleQtyChange(item.productId, item.qty + 1)}
-                        aria-label={`Increase quantity for ${product?.title || 'item'}`}
-                        disabled={pendingKey}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      className="text-xs font-semibold uppercase tracking-wide text-rose-200 transition hover:text-rose-100 disabled:opacity-60"
-                      onClick={() => handleRemove(item.productId)}
-                      disabled={pendingKey}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  {inlineErrors[item.productId] && (
-                    <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100">
-                      {inlineErrors[item.productId]}
-                    </p>
-                  )}
+
+) : itemCount > 0 ? (
+  <div className="mt-6 space-y-4">
+    {items.map((item) => {
+      const product = products[item.productId];
+      const lineId = lineKey(item);
+      const unitPrice = Number.isFinite(item.unitPrice) ? Number(item.unitPrice) : product?.price ?? 0;
+      const formattedPrice = `$${(unitPrice / 100).toFixed(2)}`;
+      const pendingKey = pending[`update:${lineId}`] || pending[`remove:${lineId}`];
+      const primaryImage = item.variantImage || product?.images?.[0];
+      return (
+        <div
+          key={lineId}
+          className="card space-y-4 p-4 sm:flex sm:items-center sm:justify-between sm:gap-6 sm:space-y-0"
+        >
+          <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+            <div className="h-28 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 sm:h-24 sm:w-24 sm:flex-shrink-0">
+              {primaryImage ? (
+                <img
+                  src={primaryImage}
+                  alt={product?.title || 'Product image'}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-xs text-indigo-100/50">
+                  No image
                 </div>
-              );
-            })}
+              )}
+            </div>
+            <div className="space-y-1 text-sm sm:space-y-2">
+              <div className="text-base font-semibold text-white">
+                {product?.title || 'Unnamed item'}
+              </div>
+              {item.variantLabel && (
+                <div className="text-xs text-indigo-100/60">
+                  {item.variantLabel}
+                </div>
+              )}
+              {item.variantOptions && (
+                <div className="text-[11px] text-indigo-100/50">
+                  {Object.entries(item.variantOptions)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(' • ')}
+                </div>
+              )}
+              <div className="text-sm text-indigo-100/70">
+                {formattedPrice}
+              </div>
+            </div>
           </div>
-        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-lg text-white transition hover:bg-white/15 disabled:opacity-50"
+                onClick={() => handleQtyChange(item, item.qty - 1)}
+                aria-label={`Decrease quantity for ${product?.title || 'item'}`}
+                disabled={pendingKey}
+              >
+                -
+              </button>
+              <input
+                className="w-14 rounded-xl border border-white/15 bg-white/10 text-center text-sm text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                value={item.qty}
+                onChange={(e) => handleQtyChange(item, parseInt(e.target.value || '0', 10))}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                aria-label={`Quantity for ${product?.title || 'item'}`}
+                disabled={pendingKey}
+              />
+              <button
+                type="button"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-lg text-white transition hover:bg-white/15 disabled:opacity-50"
+                onClick={() => handleQtyChange(item, item.qty + 1)}
+                aria-label={`Increase quantity for ${product?.title || 'item'}`}
+                disabled={pendingKey}
+              >
+                +
+              </button>
+            </div>
+            <button
+              type="button"
+              className="text-xs font-semibold uppercase tracking-wide text-rose-200 transition hover:text-rose-100 disabled:opacity-60"
+              onClick={() => handleRemove(item)}
+              disabled={pendingKey}
+            >
+              Remove
+            </button>
+          </div>
+          {inlineErrors[lineId] && (
+            <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100">
+              {inlineErrors[lineId]}
+            </p>
+          )}
+        </div>
+      );
+    })}
+  </div>
+) : (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-indigo-100/70">
             Nothing here yet.
             <Link href="/products" className="ml-2 text-white underline hover:text-indigo-200">

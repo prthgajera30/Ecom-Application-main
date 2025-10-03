@@ -4,17 +4,45 @@ import { useAuth } from './AuthContext';
 import { apiGet, apiPost, ApiError } from '../lib/api';
 import { useToast } from './ToastContext';
 
-export type CartItem = { productId: string; qty: number };
+
+export type CartItem = {
+  productId: string;
+  qty: number;
+  variantId?: string | null;
+  variantLabel?: string | null;
+  variantOptions?: Record<string, string>;
+  unitPrice?: number | null;
+  variantImage?: string;
+};
+
 export type CartProduct = {
   _id: string;
   title: string;
   price: number;
   images?: string[];
   slug?: string;
+  brand?: string;
+  variants?: Array<{
+    variantId?: string;
+    label?: string;
+    price?: number;
+    stock?: number;
+    options?: Record<string, string>;
+    images?: string[];
+  }>;
 };
+
 export type CartResponse = {
   items: CartItem[];
   products?: Record<string, CartProduct>;
+};
+
+
+export type AddItemOptions = {
+  variantId?: string;
+  variantLabel?: string;
+  variantOptions?: Record<string, string>;
+  unitPrice?: number;
 };
 
 export type CartContextValue = {
@@ -26,17 +54,33 @@ export type CartContextValue = {
   subtotal: number;
   pending: Record<string, boolean>;
   refresh: () => Promise<void>;
-  addItem: (productId: string, qty?: number) => Promise<CartResponse>;
-  updateItem: (productId: string, qty: number) => Promise<CartResponse>;
-  removeItem: (productId: string) => Promise<CartResponse>;
+  addItem: (productId: string, qty?: number, options?: AddItemOptions) => Promise<CartResponse>;
+  updateItem: (productId: string, qty: number, options?: { variantId?: string | null }) => Promise<CartResponse>;
+  removeItem: (productId: string, options?: { variantId?: string | null }) => Promise<CartResponse>;
   beginCheckout: (options?: { successUrl?: string; cancelUrl?: string }) => Promise<string>;
 };
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
+
+function makeLineKey(productId: string, variantId?: string | null) {
+  return variantId ? `${productId}::${variantId}` : productId;
+}
+
 function normalizeCart(payload: CartResponse | null | undefined): { items: CartItem[]; products: Record<string, CartProduct> } {
+  const items = Array.isArray(payload?.items)
+    ? payload!.items.map((item) => ({
+        productId: item.productId,
+        qty: Math.max(0, Number(item.qty) || 0),
+        variantId: item.variantId ?? null,
+        variantLabel: item.variantLabel ?? null,
+        variantOptions: item.variantOptions ?? undefined,
+        unitPrice: Number.isFinite(Number(item.unitPrice)) ? Number(item.unitPrice) : undefined,
+        variantImage: item.variantImage,
+      }))
+    : [];
   return {
-    items: Array.isArray(payload?.items) ? payload!.items.map((item) => ({ productId: item.productId, qty: Math.max(0, Number(item.qty) || 0) })) : [],
+    items,
     products: payload?.products || {},
   };
 }
@@ -121,33 +165,40 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [applyCart, push, setPendingState]
   );
 
-  const addItem = useCallback(
-    (productId: string, qty = 1) =>
-      mutate(
-        `add:${productId}`,
-        () => apiPost<CartResponse>('/cart/add', { productId, qty }),
-        { successMessage: 'Added to cart' }
-      ),
-    [mutate]
-  );
 
-  const updateItem = useCallback(
-    (productId: string, qty: number) =>
-      mutate(
-        `update:${productId}`,
-        () => apiPost<CartResponse>('/cart/update', { productId, qty })
-      ),
-    [mutate]
-  );
+const addItem = useCallback(
+  (productId: string, qty = 1, options?: AddItemOptions) => {
+    const lineKey = makeLineKey(productId, options?.variantId || options?.variantLabel ? options?.variantId ?? null : undefined);
+    return mutate(
+      `add:${lineKey}`,
+      () => apiPost<CartResponse>('/cart/add', { productId, qty, ...options }),
+      { successMessage: 'Added to cart' }
+    );
+  },
+  [mutate]
+);
 
-  const removeItem = useCallback(
-    (productId: string) =>
-      mutate(
-        `remove:${productId}`,
-        () => apiPost<CartResponse>('/cart/remove', { productId })
-      ),
-    [mutate]
-  );
+const updateItem = useCallback(
+  (productId: string, qty: number, options?: { variantId?: string | null }) => {
+    const lineKey = makeLineKey(productId, options?.variantId ?? null);
+    return mutate(
+      `update:${lineKey}`,
+      () => apiPost<CartResponse>('/cart/update', { productId, qty, variantId: options?.variantId ?? undefined })
+    );
+  },
+  [mutate]
+);
+
+const removeItem = useCallback(
+  (productId: string, options?: { variantId?: string | null }) => {
+    const lineKey = makeLineKey(productId, options?.variantId ?? null);
+    return mutate(
+      `remove:${lineKey}`,
+      () => apiPost<CartResponse>('/cart/remove', { productId, variantId: options?.variantId ?? undefined })
+    );
+  },
+  [mutate]
+);
 
   const beginCheckout = useCallback(
     async (options?: { successUrl?: string; cancelUrl?: string }) => {
@@ -172,15 +223,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [push, setPendingState]
   );
 
-  const itemCount = useMemo(() => cart.items.reduce((acc, item) => acc + item.qty, 0), [cart.items]);
-  const subtotal = useMemo(
-    () =>
-      cart.items.reduce((acc, item) => {
-        const product = cart.products[item.productId];
-        return acc + (product?.price || 0) * item.qty;
-      }, 0),
-    [cart]
-  );
+
+const itemCount = useMemo(() => cart.items.reduce((acc, item) => acc + item.qty, 0), [cart.items]);
+const subtotal = useMemo(
+  () =>
+    cart.items.reduce((acc, item) => {
+      const product = cart.products[item.productId];
+      const unit = Number.isFinite(item.unitPrice) ? Number(item.unitPrice) : product?.price || 0;
+      return acc + unit * item.qty;
+    }, 0),
+  [cart]
+);
 
   const value = useMemo<CartContextValue>(
     () => ({

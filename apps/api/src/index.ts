@@ -14,6 +14,7 @@ import cartRoutes from './routes/cart';
 import checkoutRoutes from './routes/checkout';
 import ordersRoutes from './routes/orders';
 import recsRoutes from './routes/recs';
+import reviewsRoutes from './routes/reviews';
 
 export const app = express();
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use('/api', cartRoutes);
 app.use('/api', checkoutRoutes);
 app.use('/api', ordersRoutes);
 app.use('/api', recsRoutes);
+app.use('/api', reviewsRoutes);
 
 io.on('connection', (socket) => {
   logger.info({ id: socket.id }, 'socket connected');
