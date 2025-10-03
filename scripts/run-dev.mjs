@@ -1,8 +1,3 @@
-diff --git a//dev/null b/scripts/run-dev.mjs
-index 0000000000000000000000000000000000000000..65999de79610c57bd55a5a6c4771b9d7c924346b 100644
---- a//dev/null
-+++ b/scripts/run-dev.mjs
-@@ -0,0 +1,253 @@
 +#!/usr/bin/env node
 +import { createHash } from 'node:crypto';
 +import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
