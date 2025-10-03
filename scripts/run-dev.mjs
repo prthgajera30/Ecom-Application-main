@@ -3,7 +3,6 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { spawn } from 'node:child_process';
-import concurrently from 'concurrently';
 
 const repoRoot = process.cwd();
 
@@ -158,7 +157,71 @@ async function ensureNodeDependencies() {
   }
 }
 
+const apiDir = join(repoRoot, 'apps', 'api');
+const prismaSchema = join(apiDir, 'prisma', 'schema.prisma');
+
+function hasGeneratedPrismaClient() {
+  const prismaPackage = join(apiDir, 'node_modules', '@prisma', 'client');
+  if (!existsSync(prismaPackage)) {
+    return false;
+  }
+
+  const pnpmStore = join(apiDir, 'node_modules', '.pnpm');
+  if (!existsSync(pnpmStore)) {
+    return false;
+  }
+
+  for (const entry of readdirSync(pnpmStore)) {
+    if (!entry.startsWith('@prisma+client@')) {
+      continue;
+    }
+
+    const clientIndex = join(
+      pnpmStore,
+      entry,
+      'node_modules',
+      '.prisma',
+      'client',
+      'index.js',
+    );
+
+    if (existsSync(clientIndex)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function ensurePrismaClient() {
+  if (!existsSync(prismaSchema)) {
+    return;
+  }
+
+  if (!existsSync(join(apiDir, 'node_modules'))) {
+    // node dependencies aren't ready yet; ensureNodeDependencies will handle this
+    return;
+  }
+
+  if (hasGeneratedPrismaClient()) {
+    return;
+  }
+
+  console.log('Generating Prisma Client for API...');
+
+  const { command, args } = resolvePnpmInvocation([
+    '--filter',
+    './apps/api',
+    'exec',
+    'prisma',
+    'generate',
+  ]);
+  await run(command, args);
+}
+
 async function startServices() {
+  const concurrently = (await import('concurrently')).default;
+
   const { result } = concurrently(
     [
       { name: 'api', command: 'pnpm dev:api' },
@@ -178,6 +241,7 @@ async function startServices() {
 (async () => {
   try {
     await ensureNodeDependencies();
+    await ensurePrismaClient();
     await startServices();
   } catch (error) {
     if (error && typeof error === 'object' && 'code' in error && typeof error.code === 'number') {
