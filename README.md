@@ -57,6 +57,24 @@ yarn seed # or pnpm seed
 pnpm -r test
 ```
 
+### Seeding demo data
+
+The seeding script lives at `scripts/seed.ts` and is wired to the root `pnpm seed` command. It wipes and repopulates the MongoDB
+catalog and Prisma-backed PostgreSQL tables with demo products, events, and two ready-to-use accounts:
+
+- Admin: `admin@example.com` / `admin123`
+- Customer: `user@example.com` / `user123`
+
+Before running the seed, ensure the API environment variables point at reachable PostgreSQL and MongoDB instances (the script
+defaults to `MONGO_URL=mongodb://localhost:27017/shop` if unset) and apply the latest migrations:
+
+```bash
+pnpm migrate
+pnpm seed          # or pnpm --filter ./apps/api run seed
+```
+
+The operation is idempotent—re-running it will clear the existing demo data and load a fresh set.
+
 See `docs/ARCHITECTURE.md`, `docs/API_CONTRACTS.md`, and `docs/RUNBOOK.md`.
 
 ## Environments
