@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "packageManager": "pnpm@9.0.0",
   "scripts": {
+    "predev": "pnpm install",
     "dev:api": "pnpm --filter ./apps/api dev",
     "dev:web": "pnpm --filter ./apps/web dev",
     "dev:recs": "node scripts/run-recs-dev.mjs",
