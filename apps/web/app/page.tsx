@@ -19,12 +19,23 @@ type Recommendation = {
   productId?: string;
 };
 
+type ProductVariant = {
+  variantId?: string;
+  label?: string;
+  price?: number;
+  stock?: number;
+  options?: Record<string, string>;
+  images?: string[];
+};
+
 type Product = {
   _id: string;
   title: string;
   slug: string;
   price: number;
   images?: string[];
+  defaultVariantId?: string;
+  variants?: ProductVariant[];
 };
 
 type Category = { _id: string; name: string; slug?: string };
@@ -95,6 +106,17 @@ export default function Page() {
   const rotationRef = useRef<number>(Date.now());
   const { addItem, pending } = useCartState();
   const [productErrors, setProductErrors] = useState<Record<string, string>>({});
+
+  const getDefaultVariant = (product: Product): ProductVariant | undefined => {
+    if (Array.isArray(product.variants) && product.variants.length) {
+      if (product.defaultVariantId) {
+        const explicit = product.variants.find((variant) => variant.variantId === product.defaultVariantId);
+        if (explicit) return explicit;
+      }
+      return product.variants[0];
+    }
+    return undefined;
+  };
 
   useEffect(() => {
     apiGet<{ ok: boolean }>('/health')
