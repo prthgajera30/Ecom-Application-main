@@ -92,6 +92,7 @@ The Python service in `apps/recs` is optional. To experiment with it:
 
 - **Docker is not running / port already in use**: make sure Docker Desktop is started and no other Postgres/Mongo instances occupy ports 5432/27017. If you prefer local database services, start them manually before running `pnpm run setup` and the script will skip Docker.
 - **`pnpm run setup` fails waiting for Postgres**: `docker compose logs db` to inspect container logs; remove the `postgres_data` volume if initialization failed.
+- **`pnpm run setup` fails with Prisma error P1000 (authentication)**: your container likely booted with different credentials from a previous run. Update `DATABASE_URL` to match or reset the data volume via `docker compose down -v` before rerunning setup.
 - **Need to re-run the seed**: delete `.first-run-done` and re-run `pnpm run first-run` (or `pnpm run setup`).
 - **Cleanup install issues**: `pnpm store prune && rm -rf node_modules pnpm-lock.yaml && pnpm install --recursive`.
 - **Windows path errors**: ensure long paths are enabled (see Requirements section).

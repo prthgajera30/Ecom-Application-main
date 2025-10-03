@@ -16,7 +16,8 @@ if (Get-Command docker -ErrorAction SilentlyContinue) {
 }
 
 $tries = 0
-Write-Host ("Waiting for Postgres at {0}:{1}..." -f $host, $port)
+$endpoint = "{0}:{1}" -f $host, $port
+Write-Host "Waiting for Postgres at $endpoint..."
 while ($tries -lt 60) {
     if ($usingDocker) {
         try {

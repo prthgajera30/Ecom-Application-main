@@ -5,9 +5,36 @@ function Write-Step($Message) {
     Write-Host "`n==> $Message"
 }
 
+function Run-Command {
+    param(
+        [Parameter(Mandatory = $true)][string]$Command,
+        [Parameter()][string[]]$Arguments = @(),
+        [switch]$AllowFailure,
+        [string]$ErrorHint
+    )
+
+    & $Command @Arguments
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -ne 0) {
+        if ($AllowFailure) {
+            if ($ErrorHint) {
+                Write-Warning $ErrorHint
+            }
+            return $exitCode
+        }
+
+        if ($ErrorHint) {
+            Write-Error $ErrorHint
+        }
+        exit $exitCode
+    }
+
+    return 0
+}
+
 Write-Step "Ensuring Corepack is enabled"
 if (Get-Command corepack -ErrorAction SilentlyContinue) {
-    corepack enable | Out-Null
+    [void](Run-Command 'corepack' @('enable') -AllowFailure)
 } else {
     Write-Error "Corepack is not available. Install Node.js 20 or newer."
     exit 1
@@ -22,13 +49,13 @@ if ([version]$normalizedNodeVersion -lt [version]'20.0.0') {
     exit 1
 }
 if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
-    corepack prepare pnpm@9.12.3 --activate | Out-Null
+    Run-Command 'corepack' @('prepare', 'pnpm@9.12.3', '--activate')
 }
-$pnpmVersion = pnpm --version
+$pnpmVersion = (& pnpm --version)
 Write-Host "pnpm $pnpmVersion"
 
 Write-Step "Installing workspace dependencies"
-pnpm install --recursive
+Run-Command 'pnpm' @('install', '--recursive')
 
 Write-Step "Creating environment files if missing"
 if (-not (Test-Path '.env')) {
@@ -47,15 +74,11 @@ if (-not (Test-Path 'apps/web/.env')) {
 Write-Step "Starting PostgreSQL and MongoDB containers"
 $shouldWait = $true
 if (Get-Command docker -ErrorAction SilentlyContinue) {
-    try {
-        docker compose up -d db mongo | Out-Null
+    $result = Run-Command 'docker' @('compose', 'up', '-d', 'db', 'mongo') -AllowFailure -ErrorHint 'Docker Compose failed to start the containers. Ensure Docker Desktop is running or manage Postgres/Mongo manually.'
+    if ($result -eq 0) {
         Write-Step "Waiting for PostgreSQL to become ready"
-        powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/db-wait.ps1
-        if ($LASTEXITCODE -ne 0) {
-            throw "Postgres did not become healthy."
-        }
-    } catch {
-        Write-Warning "Docker Compose failed to start the containers. Ensure Docker Desktop is running or manage Postgres/Mongo manually."
+        Run-Command 'powershell' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', './scripts/db-wait.ps1') -ErrorHint 'Postgres did not become healthy. Inspect the container logs or start your local database manually before continuing.'
+    } else {
         $shouldWait = $false
     }
 } else {
@@ -68,14 +91,17 @@ if (-not $shouldWait) {
 }
 
 Write-Step "Generating Prisma clients"
-pnpm -r --if-present prisma:generate | Out-Null
+[void](Run-Command 'pnpm' @('-r', '--if-present', 'prisma:generate') -AllowFailure)
 
 Write-Step "Applying migrations"
-pnpm --filter @apps/api prisma:migrate
+$migrateCode = Run-Command 'pnpm' @('--filter', '@apps/api', 'prisma:migrate') -AllowFailure -ErrorHint 'Prisma migrations failed. Ensure your DATABASE_URL credentials match the running Postgres instance. If you changed credentials recently, run `docker compose down -v` to reset the database volume before retrying.'
+if ($migrateCode -ne 0) {
+    exit $migrateCode
+}
 
 if (-not (Test-Path '.first-run-done')) {
     Write-Step "First run detected – seeding database"
-    pnpm --filter @apps/api prisma:seed
+    Run-Command 'pnpm' @('--filter', '@apps/api', 'prisma:seed')
     New-Item -Path '.first-run-done' -ItemType File | Out-Null
 } else {
     Write-Step "Seed already applied (remove .first-run-done to rerun)"

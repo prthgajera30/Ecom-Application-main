@@ -70,7 +70,10 @@ log "Generating Prisma clients"
 pnpm -r --if-present prisma:generate || true
 
 log "Applying migrations"
-pnpm --filter @apps/api prisma:migrate
+if ! pnpm --filter @apps/api prisma:migrate; then
+  echo "Prisma migrations failed. Ensure your DATABASE_URL credentials match the running Postgres instance. If you changed credentials recently, run 'docker compose down -v' to reset the database volume before retrying."
+  exit 1
+fi
 
 if [ ! -f .first-run-done ]; then
   log "First run detected – seeding database"
