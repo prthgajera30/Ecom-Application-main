@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { spawn } from 'node:child_process';
+import concurrently from 'concurrently';
 
 const repoRoot = process.cwd();
 
@@ -158,8 +159,6 @@ async function ensureNodeDependencies() {
 }
 
 async function startServices() {
-  const concurrently = (await import('concurrently')).default;
-
   const { result } = concurrently(
     [
       { name: 'api', command: 'pnpm dev:api' },
