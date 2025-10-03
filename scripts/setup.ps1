@@ -50,7 +50,10 @@ if (Get-Command docker -ErrorAction SilentlyContinue) {
     try {
         docker compose up -d db mongo | Out-Null
         Write-Step "Waiting for PostgreSQL to become ready"
-        powershell -ExecutionPolicy Bypass -File ./scripts/db-wait.ps1
+        powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/db-wait.ps1
+        if ($LASTEXITCODE -ne 0) {
+            throw "Postgres did not become healthy."
+        }
     } catch {
         Write-Warning "Docker Compose failed to start the containers. Ensure Docker Desktop is running or manage Postgres/Mongo manually."
         $shouldWait = $false
