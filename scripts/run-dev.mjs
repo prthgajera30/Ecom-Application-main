@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import concurrently from 'concurrently';
@@ -40,49 +39,15 @@ function run(command, args, options = {}) {
   });
 }
 
-const modulesMarker = join(repoRoot, 'node_modules', '.modules.yaml');
-const lockfile = join(repoRoot, 'pnpm-lock.yaml');
-const lockfileStamp = join(repoRoot, 'node_modules', '.pnpm-lock.hash');
-
-function readLockfileHash() {
-  if (!existsSync(lockfile)) {
-    return null;
-  }
-
-  return createHash('sha256').update(readFileSync(lockfile)).digest('hex');
-}
-
-function readRecordedHash() {
-  if (!existsSync(lockfileStamp)) {
-    return null;
-  }
-
-  return readFileSync(lockfileStamp, 'utf-8').trim();
-}
-
 async function ensureNodeDependencies() {
-  const currentHash = readLockfileHash();
-  const recordedHash = readRecordedHash();
-
-  const needsInstall = !existsSync(modulesMarker) || (currentHash && currentHash !== recordedHash);
-
-  if (!needsInstall) {
+  const marker = join(repoRoot, 'node_modules', '.modules.yaml');
+  if (existsSync(marker)) {
     return;
   }
 
-  if (!existsSync(modulesMarker)) {
-    console.log('Installing workspace Node.js dependencies...');
-  } else {
-    console.log('Lockfile changed; reinstalling workspace Node.js dependencies...');
-  }
-
+  console.log('Installing workspace Node.js dependencies...');
   const { command, args } = resolvePnpmInvocation(['install']);
   await run(command, args);
-
-  const refreshedHash = readLockfileHash();
-  if (refreshedHash) {
-    writeFileSync(lockfileStamp, `${refreshedHash}\n`);
-  }
 }
 
 async function startServices() {
