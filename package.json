@@ -1,28 +1,32 @@
 {
-  "name": "ecommerce-personalization",
-  "private": true,
+  "name": "ecom-application",
   "version": "0.1.0",
-  "packageManager": "pnpm@9.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "volta": {
+    "node": "20.17.0",
+    "pnpm": "9.12.3"
+  },
   "scripts": {
-    "predev": "pnpm install",
-    "dev:api": "pnpm --filter ./apps/api dev",
-    "dev:web": "pnpm --filter ./apps/web dev",
-    "dev:recs": "node scripts/run-recs-dev.mjs",
-    "dev": "node scripts/run-dev.mjs",
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
+    "setup": "./scripts/setup.sh || powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/setup.ps1",
+    "install:all": "pnpm install --recursive",
     "migrate": "tsx scripts/migrate.ts",
-    "seed": "tsx scripts/seed.ts"
+    "db:up": "docker compose up -d db mongo",
+    "db:wait": "./scripts/db-wait.sh || powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/db-wait.ps1",
+    "db:migrate": "pnpm --filter @apps/api prisma:migrate",
+    "db:seed": "pnpm --filter @apps/api prisma:seed",
+    "first-run": "./scripts/migrate-and-seed.sh || powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/migrate-and-seed.ps1",
+    "dev": "pnpm -r --parallel dev",
+    "dev:recs": "node scripts/run-recs-dev.mjs",
+    "build": "pnpm -r --if-present build",
+    "lint": "pnpm -r --if-present lint",
+    "postinstall": "pnpm -r --if-present prisma:generate || true"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
     "dotenv": "^16.4.5",
-    "tsx": "^4.19.1"
-  },
-  "pnpm": {
-    "packages": {
-      "apps/*": {},
-      "packages/*": {}
-    }
+    "tsx": "^4.20.6"
   }
 }

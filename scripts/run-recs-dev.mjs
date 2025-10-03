@@ -1,88 +1,88 @@
 #!/usr/bin/env node
-import crypto from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'crypto';
+import { spawn, spawnSync } from 'child_process';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
-const repoRoot = process.cwd();
-const venvDir = join(repoRoot, '.venv');
-const venvPython = process.platform === 'win32'
-  ? join(venvDir, 'Scripts', 'python.exe')
-  : join(venvDir, 'bin', 'python');
-const requirementsFile = join(repoRoot, 'apps', 'recs', 'requirements.txt');
-const requirementsStamp = join(venvDir, '.recs-requirements.sha');
+const here = dirname(fileURLToPath(import.meta.url));
+const recsDir = join(here, '..', 'apps', 'recs');
+const venvDir = join(recsDir, '.venv');
+const stampPath = join(venvDir, '.requirements-stamp');
+const requirementsPath = join(recsDir, 'requirements.txt');
 
-function runSync(command, args, options = {}) {
-  const result = spawnSync(command, args, {
-    cwd: repoRoot,
-    stdio: 'inherit',
-    ...options,
-  });
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
-
-  return result;
-}
-
-function findPythonInterpreter() {
-  const candidates = process.platform === 'win32'
-    ? ['python', 'py']
-    : ['python3', 'python'];
-
-  for (const candidate of candidates) {
-    const check = spawnSync(candidate, ['--version'], {
-      stdio: 'ignore',
-    });
-
-    if (check.status === 0) {
-      return candidate;
+function findPython() {
+  const candidates = process.platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
+  for (const command of candidates) {
+    const result = spawnSync(command, ['--version'], { stdio: 'ignore' });
+    if (result.status === 0) {
+      return command;
     }
   }
-
   return null;
 }
 
-if (!existsSync(venvPython)) {
-  const interpreter = findPythonInterpreter();
-
-  if (!interpreter) {
-    console.error(
-      'Unable to find a Python interpreter. Please install Python 3.11 and re-run `pnpm dev`.',
-    );
-    process.exit(1);
-  }
-
-  console.log('Creating Python virtual environment for recommendations service...');
-  runSync(interpreter, ['-m', 'venv', venvDir]);
+const python = findPython();
+if (!python) {
+  console.error('Python 3.10+ is required to run the recommendations service. Install Python and ensure it is on your PATH.');
+  process.exit(1);
 }
 
-if (existsSync(requirementsFile)) {
-  const requirementsHash = crypto
-    .createHash('sha256')
-    .update(readFileSync(requirementsFile))
-    .digest('hex');
-
-  let existingHash = null;
-  if (existsSync(requirementsStamp)) {
-    existingHash = readFileSync(requirementsStamp, 'utf-8').trim();
-  }
-
-  if (requirementsHash !== existingHash) {
-    console.log('Installing Python dependencies for recommendations service...');
-    runSync(venvPython, ['-m', 'pip', 'install', '-r', requirementsFile]);
-    writeFileSync(requirementsStamp, requirementsHash);
+if (!existsSync(venvDir)) {
+  console.log('Creating virtual environment for recommendations service...');
+  const create = spawnSync(python, ['-m', 'venv', venvDir], { stdio: 'inherit' });
+  if (create.status !== 0) {
+    process.exit(create.status ?? 1);
   }
 }
 
-const pythonExecutable = existsSync(venvPython) ? venvPython : 'python';
+const venvPython = process.platform === 'win32'
+  ? join(venvDir, 'Scripts', 'python.exe')
+  : join(venvDir, 'bin', 'python');
 
-const child = spawn(pythonExecutable, ['apps/recs/app.py'], {
-  cwd: repoRoot,
+if (!existsSync(requirementsPath)) {
+  console.error('apps/recs/requirements.txt is missing.');
+  process.exit(1);
+}
+
+const requirementsHash = createHash('sha1').update(readFileSync(requirementsPath)).digest('hex');
+let previousHash = null;
+if (existsSync(stampPath)) {
+  previousHash = readFileSync(stampPath, 'utf8');
+}
+
+if (requirementsHash !== previousHash) {
+  console.log('Installing/updating Python dependencies for recommendations service...');
+  mkdirSync(venvDir, { recursive: true });
+  const install = spawnSync(venvPython, ['-m', 'pip', 'install', '--upgrade', 'pip', 'wheel'], { stdio: 'inherit' });
+  if (install.status !== 0) {
+    process.exit(install.status ?? 1);
+  }
+  const deps = spawnSync(venvPython, ['-m', 'pip', 'install', '-r', requirementsPath], { stdio: 'inherit' });
+  if (deps.status !== 0) {
+    process.exit(deps.status ?? 1);
+  }
+  writeFileSync(stampPath, requirementsHash);
+}
+
+console.log('Starting recommendations service (Flask)...');
+const child = spawn(venvPython, ['-m', 'flask', '--app', 'app', 'run', '--host=0.0.0.0', '--port=5000'], {
+  cwd: recsDir,
   stdio: 'inherit',
+  env: {
+    ...process.env,
+    FLASK_APP: 'app.py',
+    FLASK_ENV: 'development',
+  },
 });
 
-child.on('exit', (code) => {
-  process.exit(code ?? 0);
+child.on('close', (code, signal) => {
+  if (signal) {
+    process.kill(process.pid, signal);
+  } else {
+    process.exit(code ?? 0);
+  }
 });
+
+process.on('SIGINT', () => child.kill('SIGINT'));
+process.on('SIGTERM', () => child.kill('SIGTERM'));
