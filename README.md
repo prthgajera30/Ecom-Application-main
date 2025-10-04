@@ -66,6 +66,21 @@ If you edit a template, re-run `pnpm run setup` (or copy the files manually) to 
 | `pnpm run migrate` | Convenience wrapper that starts Docker (when available) then runs migrations + seed |
 | `pnpm run first-run` | Run migrations and seed only if `.first-run-done` is missing |
 
+### Docker compose stacks and container names
+
+The repository ships a few compose manifests that target different workflows. Use the right
+container name when you `docker exec` into a service:
+
+| Compose file | Stack purpose | Postgres container | Mongo container |
+| --- | --- | --- | --- |
+| `docker-compose.yml` (repo root) | Local database-only helper used by `pnpm run db:*` scripts | `ecom_postgres` | `ecom_mongo` |
+| `infra/docker-compose.yml` | Full dev stack (Nginx, web, API, recs, databases) | `ecommerce_postgres` | `ecommerce_mongo` |
+| `infra/docker-compose.prod.yml` | Production-like stack without explicit `container_name` overrides | `<project>_postgres_1` (for example `infra_postgres_1`) | `<project>_mongo_1` |
+
+When you start the prod stack from the `infra/` directory, Docker derives the project name
+from that folder. If you run it from elsewhere, override it with `--project-name` so you know
+which container to inspect, e.g. `docker compose --project-name ecom-prod -f infra/docker-compose.prod.yml up -d`.
+
 ### API package scripts
 
 Inside `apps/api`:
@@ -99,6 +114,7 @@ The Python service in `apps/recs` is optional. To experiment with it:
 - **Cleanup install issues**: `pnpm store prune && rm -rf node_modules pnpm-lock.yaml && pnpm install --recursive`.
 - **Windows path errors**: ensure long paths are enabled (see Requirements section).
 - **Isolating multiple Docker stacks on the same network**: when you run the compose setup on two machines simultaneously, make sure each host points at its own databases and API instance. Update the per-host env files (root `.env`, `apps/api/.env`, and `apps/web/.env`) so `DATABASE_URL`, `MONGO_URL`, and `NEXT_PUBLIC_API_BASE` use unique schema names/ports (for example, `shop_win` on port `5432/27017` vs. `shop_ubuntu` on `5433/27018`). Then adjust the compose manifests or overrides to publish distinct host ports for the API/web/DB containers and rebuild the storefront so it bakes in the correct `NEXT_PUBLIC_API_BASE` at build time. This prevents the Ubuntu storefront from accidentally calling the Windows API.
+- **Remote browsers and `localhost`**: if the storefront bundle still contains `NEXT_PUBLIC_API_BASE=http://localhost:4000/api`, any shopper hitting the site from another machine will see empty product lists because their browser tries to reach `localhost`. The client now auto-detects this mismatch and falls back to `/api` (proxied through Nginx), but you should still rebuild the `web` image with an origin that remote browsers can reach (for example, `/api` or `http://your-host:8085/api`).
 
 ### Example per-host env files
 
