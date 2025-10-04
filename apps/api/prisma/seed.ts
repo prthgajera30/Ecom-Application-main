@@ -13,39 +13,37 @@ function objectIdFor(seed: string) {
 async function seedMongo() {
   await connectMongo(mongoUrl);
 
+  const now = new Date();
   const categorySeeds = [
     { name: 'Shoes', slug: 'shoes' },
     { name: 'Bags', slug: 'bags' },
     { name: 'Watches', slug: 'watches' },
     { name: 'Hats', slug: 'hats' },
     { name: 'Accessories', slug: 'accessories' },
-  ].map((cat) => ({ ...cat, _id: objectIdFor(`category:${cat.slug}`) }));
+  ].map((cat, index) => ({
+    ...cat,
+    _id: objectIdFor(`category:${cat.slug}`),
+    createdAt: new Date(now.getTime() + index),
+    updatedAt: new Date(now.getTime() + index),
+  }));
 
-  for (const cat of categorySeeds) {
-    await Category.updateOne(
-      { _id: cat._id },
-      {
-        $set: {
-          name: cat.name,
-          slug: cat.slug,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true },
-    );
+  await Category.deleteMany({});
+  if (categorySeeds.length) {
+    await Category.insertMany(categorySeeds, { ordered: true });
   }
 
-  const categoryCheck = await Category.find({ _id: { $in: categorySeeds.map((cat) => cat._id) } })
+  const categoryCheck = await Category.find({})
     .select({ _id: 1 })
     .lean();
   const persistedCategoryIds = new Set(categoryCheck.map((doc) => String(doc._id)));
-  const missingCategoryIds = categorySeeds
-    .map((cat) => String(cat._id))
-    .filter((id) => !persistedCategoryIds.has(id));
-  if (missingCategoryIds.length) {
+  if (persistedCategoryIds.size !== categorySeeds.length) {
+    const missing = categorySeeds
+      .map((cat) => String(cat._id))
+      .filter((id) => !persistedCategoryIds.has(id));
     throw new Error(
-      `Mongo seed failed: expected all categories to persist, but these IDs are missing: ${missingCategoryIds.join(', ')}`,
+      `Mongo seed failed: expected ${categorySeeds.length} categories but only ${persistedCategoryIds.size} persisted (${missing.join(
+        ', ',
+      )}).`,
     );
   }
 
@@ -139,38 +137,37 @@ async function seedMongo() {
     };
   });
 
-  for (const product of products) {
-    await Product.updateOne(
-      { _id: product._id },
-      {
-        $set: {
-          ...product.document,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      },
-      { upsert: true },
+  await Product.deleteMany({});
+  if (products.length) {
+    await Product.insertMany(
+      products.map((product, index) => ({
+        _id: product._id,
+        ...product.document,
+        createdAt: new Date(now.getTime() + index),
+        updatedAt: new Date(now.getTime() + index),
+      })),
+      { ordered: true },
     );
   }
 
-  const productIds = products.map((product) => product._id);
-  const productCheck = await Product.find({ _id: { $in: productIds } })
+  const productCheck = await Product.find({})
     .select({ _id: 1 })
     .lean();
   const persistedProductIds = new Set(productCheck.map((doc) => String(doc._id)));
-  const missingProductIds = productIds
-    .map((id) => String(id))
-    .filter((id) => !persistedProductIds.has(id));
-  if (missingProductIds.length) {
+  if (persistedProductIds.size !== products.length) {
+    const missing = products
+      .map((product) => String(product._id))
+      .filter((id) => !persistedProductIds.has(id));
     throw new Error(
-      `Mongo seed failed: expected ${productIds.length} products, but ${missingProductIds.length} IDs were missing after upsert. ` +
-        'Verify that MONGO_URL points to the MongoDB service accessible from the container.',
+      `Mongo seed failed: expected ${products.length} products but only ${persistedProductIds.size} persisted (${missing.join(
+        ', ',
+      )}).`,
     );
   }
 
   console.log(`[seed] Upserted ${persistedCategoryIds.size} categories and ${persistedProductIds.size} products in MongoDB.`);
 
-  return productIds.map((id) => id.toString());
+  return products.map((product) => String(product._id));
 }
 
 async function seedPostgres(productIds: string[]) {
