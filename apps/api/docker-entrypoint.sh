@@ -56,6 +56,31 @@ try {
 NODE
 }
 
+rewrite_url_components() {
+  url="$1"
+  new_host="$2"
+  new_port="$3"
+  node - "$url" "$new_host" "$new_port" <<'NODE'
+const [rawUrl, hostOverride, portOverride] = process.argv.slice(2);
+if (!rawUrl) {
+  process.exit(0);
+}
+
+try {
+  const parsed = new URL(rawUrl);
+  if (hostOverride) {
+    parsed.hostname = hostOverride;
+  }
+  if (portOverride) {
+    parsed.port = String(portOverride);
+  }
+  console.log(parsed.toString());
+} catch (error) {
+  process.exit(0);
+}
+NODE
+}
+
 warn_if_localhost() {
   host="$1"
   config_name="$2"
@@ -113,6 +138,18 @@ NODE
 }
 
 if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
+  pg_host_override="${DATABASE_HOST_OVERRIDE:-${POSTGRES_HOST:-}}"
+  pg_port_override="${DATABASE_PORT_OVERRIDE:-${POSTGRES_PORT:-}}"
+  if [ -n "$pg_host_override" ] || [ -n "$pg_port_override" ]; then
+    updated_url="$(rewrite_url_components "${DATABASE_URL:-}" "$pg_host_override" "$pg_port_override")"
+    if [ -n "$updated_url" ] && [ "$updated_url" != "${DATABASE_URL:-}" ]; then
+      echo "[entrypoint] Applying DATABASE_URL host/port overrides for container networking."
+      export DATABASE_URL="$updated_url"
+    elif [ -z "$updated_url" ]; then
+      echo "[entrypoint] WARNING: Unable to apply DATABASE_URL overrides; please ensure the URL is valid." >&2
+    fi
+  fi
+
   pg_host="$(parse_url_component host "${DATABASE_URL:-}")"
   pg_port="$(parse_url_component port "${DATABASE_URL:-}")"
   if [ -n "$pg_host" ]; then
@@ -121,6 +158,18 @@ if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
   if ! wait_for_tcp "$pg_host" "$pg_port" "PostgreSQL"; then
     echo "[entrypoint] Unable to reach PostgreSQL using DATABASE_URL=$pg_host:$pg_port" >&2
     exit 1
+  fi
+
+  mongo_host_override="${MONGO_HOST_OVERRIDE:-${MONGO_HOST:-}}"
+  mongo_port_override="${MONGO_PORT_OVERRIDE:-${MONGO_PORT:-}}"
+  if [ -n "$mongo_host_override" ] || [ -n "$mongo_port_override" ]; then
+    updated_mongo_url="$(rewrite_url_components "${MONGO_URL:-}" "$mongo_host_override" "$mongo_port_override")"
+    if [ -n "$updated_mongo_url" ] && [ "$updated_mongo_url" != "${MONGO_URL:-}" ]; then
+      echo "[entrypoint] Applying MONGO_URL host/port overrides for container networking."
+      export MONGO_URL="$updated_mongo_url"
+    elif [ -z "$updated_mongo_url" ]; then
+      echo "[entrypoint] WARNING: Unable to apply MONGO_URL overrides; please ensure the URL is valid." >&2
+    fi
   fi
 
   mongo_host="$(parse_url_component host "${MONGO_URL:-}")"
