@@ -13,30 +13,39 @@ function objectIdFor(seed: string) {
 async function seedMongo() {
   await connectMongo(mongoUrl);
 
+  const now = new Date();
   const categorySeeds = [
     { name: 'Shoes', slug: 'shoes' },
     { name: 'Bags', slug: 'bags' },
     { name: 'Watches', slug: 'watches' },
     { name: 'Hats', slug: 'hats' },
     { name: 'Accessories', slug: 'accessories' },
-  ].map((cat) => ({ ...cat, _id: objectIdFor(`category:${cat.slug}`) }));
+  ].map((cat, index) => ({
+    ...cat,
+    _id: objectIdFor(`category:${cat.slug}`),
+    createdAt: new Date(now.getTime() + index),
+    updatedAt: new Date(now.getTime() + index),
+  }));
 
-  await Category.bulkWrite(
-    categorySeeds.map((cat) => ({
-      updateOne: {
-        filter: { _id: cat._id },
-        update: {
-          $set: {
-            name: cat.name,
-            slug: cat.slug,
-            updatedAt: new Date(),
-          },
-          $setOnInsert: { createdAt: new Date() },
-        },
-        upsert: true,
-      },
-    })),
-  );
+  await Category.deleteMany({});
+  if (categorySeeds.length) {
+    await Category.insertMany(categorySeeds, { ordered: true });
+  }
+
+  const categoryCheck = await Category.find({})
+    .select({ _id: 1 })
+    .lean();
+  const persistedCategoryIds = new Set(categoryCheck.map((doc) => String(doc._id)));
+  if (persistedCategoryIds.size !== categorySeeds.length) {
+    const missing = categorySeeds
+      .map((cat) => String(cat._id))
+      .filter((id) => !persistedCategoryIds.has(id));
+    throw new Error(
+      `Mongo seed failed: expected ${categorySeeds.length} categories but only ${persistedCategoryIds.size} persisted (${missing.join(
+        ', ',
+      )}).`,
+    );
+  }
 
   const brands = ['Pulse Gear', 'Aether Athletics', 'Northwind Supply', 'Beacon Street', 'Horizon Collective'];
   const materials = ['Recycled mesh', 'Full-grain leather', 'Performance knit', 'Organic cotton', 'Lightweight alloy'];
@@ -128,23 +137,37 @@ async function seedMongo() {
     };
   });
 
-  await Product.bulkWrite(
-    products.map((product) => ({
-      updateOne: {
-        filter: { _id: product._id },
-        update: {
-          $set: {
-            ...product.document,
-            updatedAt: new Date(),
-          },
-          $setOnInsert: { createdAt: new Date() },
-        },
-        upsert: true,
-      },
-    })),
-  );
+  await Product.deleteMany({});
+  if (products.length) {
+    await Product.insertMany(
+      products.map((product, index) => ({
+        _id: product._id,
+        ...product.document,
+        createdAt: new Date(now.getTime() + index),
+        updatedAt: new Date(now.getTime() + index),
+      })),
+      { ordered: true },
+    );
+  }
 
-  return products;
+  const productCheck = await Product.find({})
+    .select({ _id: 1 })
+    .lean();
+  const persistedProductIds = new Set(productCheck.map((doc) => String(doc._id)));
+  if (persistedProductIds.size !== products.length) {
+    const missing = products
+      .map((product) => String(product._id))
+      .filter((id) => !persistedProductIds.has(id));
+    throw new Error(
+      `Mongo seed failed: expected ${products.length} products but only ${persistedProductIds.size} persisted (${missing.join(
+        ', ',
+      )}).`,
+    );
+  }
+
+  console.log(`[seed] Upserted ${persistedCategoryIds.size} categories and ${persistedProductIds.size} products in MongoDB.`);
+
+  return products.map((product) => String(product._id));
 }
 
 async function seedPostgres(productIds: string[]) {
@@ -220,9 +243,14 @@ async function seedPostgres(productIds: string[]) {
 }
 
 async function main() {
-  const products = await seedMongo();
-  const productIds = products.slice(0, 3).map((product) => product._id.toString());
-  await seedPostgres(productIds);
+  const productIds = await seedMongo();
+  if (productIds.length < 3) {
+    throw new Error(
+      `Mongo seed only returned ${productIds.length} product IDs; expected at least 3 so Postgres seed can attach analytics eve` +
+        'nts. Check the Mongo seed logs above for details.',
+    );
+  }
+  await seedPostgres(productIds.slice(0, 3));
   console.log('Seed complete.');
 }
 

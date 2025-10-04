@@ -211,7 +211,7 @@ run_prisma_task() {
   return 1
 }
 
-if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
+if [ "$should_setup_db" = "true" ]; then
   original_pg_user="$(parse_url_component username "${DATABASE_URL:-}")"
   original_pg_password="$(parse_url_component password "${DATABASE_URL:-}")"
   original_pg_database="$(parse_url_component database "${DATABASE_URL:-}")"
@@ -248,10 +248,6 @@ if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
   if [ -n "$pg_host" ]; then
     warn_if_localhost "$pg_host" "DATABASE_URL"
   fi
-  if ! wait_for_tcp "$pg_host" "$pg_port" "PostgreSQL"; then
-    echo "[entrypoint] Unable to reach PostgreSQL using DATABASE_URL=$pg_host:$pg_port" >&2
-    exit 1
-  fi
 
   mongo_host_override="${MONGO_HOST_OVERRIDE:-${MONGO_HOST:-}}"
   mongo_port_override="${MONGO_PORT_OVERRIDE:-${MONGO_PORT:-}}"
@@ -275,24 +271,76 @@ if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
     exit 1
   fi
 
-  echo "[entrypoint] Running database migrations..."
-  if ! run_prisma_task "prisma:migrate" "Prisma migrations"; then
-    exit 1
+  if [ -f "$setup_marker" ]; then
+    if ! node - "${MONGO_URL:-}" <<'NODE'
+const [mongoUrl] = process.argv.slice(2);
+if (!mongoUrl) {
+  console.log('[entrypoint] Catalog check skipped: no MONGO_URL provided.');
+  process.exit(2);
+}
+
+const mongoose = require('mongoose');
+
+(async () => {
+  let connection;
+  try {
+    connection = await mongoose.createConnection(mongoUrl, {
+      serverSelectionTimeoutMS: 2000,
+    }).asPromise();
+
+    const categories = await connection.db.collection('categories').countDocuments();
+    const products = await connection.db.collection('products').countDocuments();
+    console.log(`[entrypoint] Catalog check: ${categories} categories, ${products} products found.`);
+
+    if (categories === 0 || products === 0) {
+      process.exit(1);
+    }
+
+    process.exit(0);
+  } catch (error) {
+    console.error('[entrypoint] Catalog check failed:', error?.message || error);
+    process.exit(2);
+  } finally {
+    if (connection) {
+      await connection.close().catch(() => {});
+    }
+  }
+})();
+NODE
+    then
+      :
+    else
+      status=$?
+      if [ $status -ne 0 ]; then
+        echo "[entrypoint] Existing catalog data is missing or could not be verified; forcing migrations and seed." >&2
+        rm -f "$setup_marker"
+      fi
+    fi
   fi
 
-  echo "[entrypoint] Seeding databases..."
-  if ! run_prisma_task "prisma:seed" "Prisma seed"; then
-    exit 1
-  fi
+  if [ ! -f "$setup_marker" ]; then
+    if ! wait_for_tcp "$pg_host" "$pg_port" "PostgreSQL"; then
+      echo "[entrypoint] Unable to reach PostgreSQL using DATABASE_URL=$pg_host:$pg_port" >&2
+      exit 1
+    fi
 
-  touch "$setup_marker"
-  echo "[entrypoint] Database ready."
-else
-  if [ "$should_setup_db" != "true" ]; then
-    echo "[entrypoint] AUTO_DB_SETUP disabled; skipping migrations and seed."
+    echo "[entrypoint] Running database migrations..."
+    if ! run_prisma_task "prisma:migrate" "Prisma migrations"; then
+      exit 1
+    fi
+
+    echo "[entrypoint] Seeding databases..."
+    if ! run_prisma_task "prisma:seed" "Prisma seed"; then
+      exit 1
+    fi
+
+    touch "$setup_marker"
+    echo "[entrypoint] Database ready."
   else
     echo "[entrypoint] Database already prepared; skipping migrations and seed."
   fi
+else
+  echo "[entrypoint] AUTO_DB_SETUP disabled; skipping migrations and seed."
 fi
 
 exec "$@"
