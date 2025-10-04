@@ -2,6 +2,13 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { Product } from '../db';
 
+type ProductRating = {
+  rating?: {
+    average?: number | null;
+    count?: number | null;
+  } | null;
+};
+
 const router = Router();
 
 const submissionSchema = z
@@ -30,7 +37,7 @@ function normalizeRating(raw: any) {
 
 router.get('/products/:id/reviews/summary', async (req, res) => {
   const productId = String(req.params.id);
-  const product = await Product.findById(productId).select({ rating: 1 }).lean();
+  const product = await Product.findById(productId).select({ rating: 1 }).lean<ProductRating>();
   if (!product) {
     return res.status(404).json({ error: 'NOT_FOUND' });
   }
@@ -40,7 +47,7 @@ router.get('/products/:id/reviews/summary', async (req, res) => {
 
 router.get('/products/:id/reviews', async (req, res) => {
   const productId = String(req.params.id);
-  const product = await Product.findById(productId).select({ _id: 1 }).lean();
+  const product = await Product.findById(productId).select({ _id: 1 }).lean<{ _id: unknown }>();
   if (!product) {
     return res.status(404).json({ error: 'NOT_FOUND' });
   }
@@ -49,7 +56,9 @@ router.get('/products/:id/reviews', async (req, res) => {
 
 router.post('/products/:id/reviews', async (req, res) => {
   const productId = String(req.params.id);
-  const product = await Product.findById(productId).select({ _id: 1, rating: 1 }).lean();
+  const product = await Product.findById(productId)
+    .select({ _id: 1, rating: 1 })
+    .lean<ProductRating & { _id: unknown }>();
   if (!product) {
     return res.status(404).json({ error: 'NOT_FOUND' });
   }
