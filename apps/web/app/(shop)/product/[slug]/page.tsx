@@ -2,6 +2,9 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+
+import { Button } from '../../../../components/ui/Button';
+import { Card } from '../../../../components/ui/Card';
 import { apiGet, ApiError } from '../../../../lib/api';
 import { useCartState } from '../../../../context/CartContext';
 
@@ -301,9 +304,9 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center rounded-3xl border border-white/10 bg-white/5 p-10 text-sm text-indigo-100/70">
+      <Card variant="elevated" className="flex min-h-[40vh] items-center justify-center p-10 text-sm text-subtle">
         Loading product details...
-      </div>
+      </Card>
     );
   }
 
@@ -311,7 +314,7 @@ export default function ProductDetailPage() {
     return (
       <div className="rounded-3xl border border-rose-500/30 bg-rose-500/10 p-10 text-center text-sm text-rose-100">
         We couldn't find that product.
-        <Link href="/products" className="ml-2 text-white underline hover:text-rose-50">
+        <Link href="/products" className="ml-2 text-[var(--text-primary)] underline hover:text-rose-100">
           Back to products
         </Link>
       </div>
@@ -319,14 +322,14 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="space-y-12">
-      <section className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <div className="space-y-4">
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/40">
+    <div className="space-y-10 sm:space-y-12">
+      <section className="lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-10">
+        <div className="space-y-5 lg:max-w-[560px]">
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-indigo-900/20 sm:rounded-3xl lg:aspect-[4/5] lg:max-h-[540px] lg:rounded-[26px]">
             {activeImage ? (
               <img src={activeImage} alt={product.title} className="h-full w-full object-cover" />
             ) : (
-              <div className="flex min-h-[280px] items-center justify-center text-sm text-indigo-100/60">
+              <div className="flex h-full items-center justify-center text-sm text-subtle">
                 No imagery available
               </div>
             )}
@@ -339,8 +342,8 @@ export default function ProductDetailPage() {
                   <button
                     key={image}
                     type="button"
-                    className={`h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl border transition ${
-                      isSelected ? 'border-white/80' : 'border-white/10 hover:border-indigo-400/60'
+                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border transition duration-200 xs:h-20 xs:w-20 xs:rounded-2xl ${
+                      isSelected ? 'border-white/80 ring-2 ring-indigo-300/80' : 'border-white/10 hover:border-indigo-400/60'
                     }`}
                     onClick={() => setActiveImage(image)}
                   >
@@ -351,74 +354,95 @@ export default function ProductDetailPage() {
             </div>
           )}
         </div>
-        <div className="card-elevated space-y-6 p-6 md:p-8">
-          <div className="space-y-3">
-            <Link
-              href="/products"
-              className="text-xs font-semibold uppercase tracking-wider text-indigo-100/60 hover:text-white"
-            >
-              Back to products
-            </Link>
-            <h1 className="text-3xl font-semibold leading-tight text-white">{product.title}</h1>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-indigo-100/70">
-              {product.brand && <span className="rounded-full bg-white/10 px-3 py-1 text-xs uppercase tracking-wider">{product.brand}</span>}
-              {ratingAverage && (
-                <span className="flex items-center gap-2 text-xs text-amber-300">
-                  <span className="text-lg leading-none">★</span>
-                  <span className="font-semibold text-white">{ratingAverage}</span>
-                  <span className="text-[11px] uppercase tracking-wider text-indigo-100/60">({ratingCount} reviews)</span>
+        <Card
+          variant="elevated"
+          className="space-y-4 p-5 sm:p-6 md:p-6 lg:sticky lg:top-24"
+        >
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-wider text-subtle">
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-2 text-subtle hover:text-[var(--text-primary)]"
+              >
+                <span aria-hidden>←</span>
+                Back to products
+              </Link>
+              <span className="rounded-full border border-white/10 px-3 py-1 text-[11px] text-subtle">
+                {stockMessage}
+              </span>
+            </div>
+            <h1 className="text-3xl font-semibold leading-tight text-[var(--text-primary)] sm:text-4xl">
+              {product.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider text-subtle">
+              {product.brand && (
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[var(--text-primary)]">
+                  {product.brand}
                 </span>
               )}
-              {!ratingAverage && <span className="text-xs uppercase tracking-wider text-indigo-100/60">Reviews coming soon</span>}
+              {ratingAverage ? (
+                <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/10 px-3 py-1 text-amber-100">
+                  <span className="text-base leading-none">★</span>
+                  <span className="font-semibold text-white">{ratingAverage}</span>
+                  <span className="text-[11px] uppercase tracking-wider text-amber-100/80">({ratingCount} reviews)</span>
+                </span>
+              ) : (
+                <span className="text-[11px] uppercase tracking-wider text-subtle">Reviews coming soon</span>
+              )}
             </div>
-            <div className="text-2xl font-semibold text-indigo-50">{formatCurrency(displayPrice, currency)}</div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-indigo-900/10">
+              <span className="text-[11px] uppercase tracking-wider text-subtle">Price</span>
+              <div className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">
+                {formatCurrency(displayPrice, currency)}
+              </div>
+            </div>
             {product.badges && product.badges.length > 0 && (
-              <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-wider text-indigo-100/70">
+              <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-wider text-subtle">
                 {product.badges.map((badge) => (
-                  <span key={badge} className="rounded-full border border-indigo-300/40 px-3 py-1">
+                  <span key={badge} className="rounded-full border border-indigo-300/40 px-3 py-1 text-[var(--text-primary)]">
                     {badge}
                   </span>
                 ))}
               </div>
             )}
             {product.description && (
-              <p className="text-sm leading-relaxed text-indigo-100/80 whitespace-pre-line">
+              <p className="whitespace-pre-line text-sm leading-relaxed text-subtle">
                 {product.description}
               </p>
             )}
           </div>
 
           {optionKeys.length > 0 && (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-indigo-100/60">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-subtle">
                 <span>Configure</span>
-                <span className="text-indigo-100/80">{stockMessage}</span>
+                <span className="text-subtle">{stockMessage}</span>
               </div>
               {optionKeys.map((key) => {
                 const values = optionFacets[key] ?? [];
                 const selectedValue = selectedOptions[key];
                 return (
                   <div key={key} className="space-y-2">
-                    <div className="flex items-center justify-between text-xs uppercase tracking-wider text-indigo-100/60">
+                    <div className="flex items-center justify-between text-xs uppercase tracking-wider text-subtle">
                       <span>{formatOptionLabel(key)}</span>
                       {selectedValue && (
                         <button
                           type="button"
-                          className="text-[11px] text-indigo-200 underline hover:text-white"
+                          className="text-[11px] text-subtle underline hover:text-[var(--text-primary)]"
                           onClick={() => clearOption(key)}
                         >
                           Clear
                         </button>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
                       {values.map((entry) => {
                         const isSelected = entry.value === selectedValue;
                         const disabled = !entry.available && !isSelected;
-                        const baseClasses = 'min-w-[72px] rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70';
+                        const baseClasses = 'group relative min-w-[64px] rounded-xl border px-3 py-2 text-[13px] font-semibold uppercase tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 sm:min-w-[80px]';
                         const colorClasses = isSelected
-                          ? 'border-white/80 bg-white/20 text-white'
-                          : 'border-white/10 bg-white/5 text-indigo-100/80 hover:border-indigo-400/60 hover:bg-white/10';
+                          ? 'border-white/70 bg-white/20 text-[var(--text-primary)] shadow-inner shadow-indigo-500/20'
+                          : 'border-white/10 bg-white/5 text-subtle hover:border-indigo-400/60 hover:bg-white/10';
                         const disabledClasses = disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer';
                         return (
                           <button
@@ -430,7 +454,7 @@ export default function ProductDetailPage() {
                             aria-pressed={isSelected}
                           >
                             <span>{entry.value}</span>
-                            <span className="block text-[10px] font-normal capitalize text-indigo-100/50">
+                            <span className="mt-1 block text-[11px] font-normal capitalize text-subtle">
                               {entry.stock} available
                             </span>
                           </button>
@@ -443,78 +467,76 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs uppercase tracking-wider text-indigo-100/60">
+          <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 shadow-inner shadow-indigo-900/10">
+            <div className="flex items-center justify-between text-xs uppercase tracking-wider text-subtle">
               <span>{selectedVariant?.label || (optionKeys.length ? 'Select options for availability' : 'Availability')}</span>
               <span className={isOutOfStock ? 'text-rose-200' : 'text-emerald-200'}>{stockMessage}</span>
             </div>
-            <button
-              className="btn-primary w-full justify-center sm:w-auto disabled:opacity-60"
-              onClick={add}
-              disabled={pendingAdd || isOutOfStock}
-            >
+            <Button className="w-full justify-center" onClick={add} disabled={pendingAdd || isOutOfStock}>
               {pendingAdd ? 'Adding…' : isOutOfStock ? 'Out of stock' : 'Add to cart'}
-            </button>
+            </Button>
             {addError && (
               <p className="rounded-full bg-rose-500/15 px-4 py-2 text-sm text-rose-100">
                 {addError}
               </p>
             )}
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs uppercase tracking-wider text-indigo-100/50">
-            SKU: <span className="text-indigo-100/80">{product._id}</span>
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs uppercase tracking-wider text-subtle">
+            SKU: <span className="text-[var(--text-primary)]">{product._id}</span>
           </div>
-        </div>
+        </Card>
       </section>
 
       {(product.longDescription || (product.specs && product.specs.length > 0)) && (
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20 backdrop-blur">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              className={`rounded-2xl px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-                selectedTab === 'details' ? 'bg-white/20 text-white' : 'bg-white/5 text-indigo-100/70 hover:bg-white/10'
-              }`}
-              onClick={() => setSelectedTab('details')}
-            >
-              Details
-            </button>
-            {product.specs && product.specs.length > 0 && (
-              <button
+        <section>
+          <Card className="p-5 shadow-lg shadow-indigo-900/20 backdrop-blur sm:p-6">
+            <div className="flex gap-3">
+              <Button
                 type="button"
-                className={`rounded-2xl px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-                  selectedTab === 'specs' ? 'bg-white/20 text-white' : 'bg-white/5 text-indigo-100/70 hover:bg-white/10'
-                }`}
-                onClick={() => setSelectedTab('specs')}
+                variant={selectedTab === 'details' ? 'secondary' : 'ghost'}
+                size="sm"
+                className={selectedTab === 'details' ? 'bg-white/20 text-[var(--text-primary)]' : ''}
+                onClick={() => setSelectedTab('details')}
               >
-                Specs
-              </button>
-            )}
-          </div>
-          <div className="mt-5 text-sm leading-relaxed text-indigo-100/80">
-            {selectedTab === 'details' ? (
-              <div className="space-y-4">
-                {product.longDescription ? (
-                  product.longDescription.split('\n').map((paragraph, idx) => (
-                    <p key={idx} className="whitespace-pre-line">
-                      {paragraph}
-                    </p>
-                  ))
-                ) : (
-                  <p>Product details are being finalized. Check back soon for the full story behind this item.</p>
-                )}
-              </div>
-            ) : (
-              <dl className="grid gap-3 sm:grid-cols-2">
-                {product.specs?.map((spec) => (
-                  <div key={`${spec.key}-${spec.value}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <dt className="text-xs uppercase tracking-wider text-indigo-100/60">{spec.key}</dt>
-                    <dd className="mt-1 text-sm text-white">{spec.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </div>
+                Details
+              </Button>
+              {product.specs && product.specs.length > 0 && (
+                <Button
+                  type="button"
+                  variant={selectedTab === 'specs' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className={selectedTab === 'specs' ? 'bg-white/20 text-[var(--text-primary)]' : ''}
+                  onClick={() => setSelectedTab('specs')}
+                >
+                  Specs
+                </Button>
+              )}
+            </div>
+            <div className="mt-5 text-sm leading-relaxed text-subtle">
+              {selectedTab === 'details' ? (
+                <div className="space-y-4 text-[0.95rem] leading-relaxed">
+                  {product.longDescription ? (
+                    product.longDescription.split('\n').map((paragraph, idx) => (
+                      <p key={idx} className="whitespace-pre-line">
+                        {paragraph}
+                      </p>
+                    ))
+                  ) : (
+                    <p>Product details are being finalized. Check back soon for the full story behind this item.</p>
+                  )}
+                </div>
+              ) : (
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  {product.specs?.map((spec) => (
+                    <div key={`${spec.key}-${spec.value}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <dt className="text-xs uppercase tracking-wider text-subtle">{spec.key}</dt>
+                      <dd className="mt-1 text-sm text-[var(--text-primary)]">{spec.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
+          </Card>
         </section>
       )}
 
@@ -522,12 +544,12 @@ export default function ProductDetailPage() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="section-title">You might also like</h2>
-            <Link href="/products" className="text-xs text-indigo-200 underline hover:text-white">
+            <Link href="/products" className="text-xs text-subtle underline hover:text-[var(--text-primary)]">
               View all products
             </Link>
           </div>
           <div className="overflow-x-auto pb-2">
-            <div className="flex gap-4">
+            <div className="flex gap-4 snap-x snap-mandatory">
               {similar.map((item) => {
                 const related = item.product;
                 if (!related) return null;
@@ -536,7 +558,7 @@ export default function ProductDetailPage() {
                   <Link
                     key={related._id || item.productId}
                     href={href}
-                    className="w-[220px] flex-shrink-0 rounded-3xl border border-white/10 bg-white/5 shadow-lg shadow-indigo-900/10 transition hover:border-indigo-400/60 hover:bg-white/10"
+                    className="w-[220px] flex-shrink-0 snap-start rounded-3xl border border-white/10 bg-white/5 text-subtle shadow-lg shadow-indigo-900/10 transition hover:border-indigo-400/60 hover:bg-white/10"
                   >
                     <div className="relative h-44 overflow-hidden rounded-t-3xl">
                       {related.images?.[0] ? (
@@ -555,10 +577,10 @@ export default function ProductDetailPage() {
                       </span>
                     </div>
                     <div className="space-y-1 p-4">
-                      <div className="text-sm font-medium text-white line-clamp-1">
+                      <div className="text-sm font-medium text-[var(--text-primary)] line-clamp-1">
                         {related.title || 'Product'}
                       </div>
-                      <div className="text-xs text-indigo-100/70">
+                      <div className="text-xs text-subtle">
                         {formatCurrency(related.price ?? 0, related.currency || 'USD')}
                       </div>
                     </div>

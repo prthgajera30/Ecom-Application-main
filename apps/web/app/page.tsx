@@ -2,10 +2,13 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
+import { Button, ButtonLink } from '../components/ui/Button';
 import { apiGet, ApiError } from '../lib/api';
 import { getSocket } from '../lib/ws';
 import { useCartState } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { cn } from '../lib/cn';
 
 type Recommendation = {
   score: number;
@@ -254,87 +257,97 @@ export default function Page() {
 
   return (
     <div className="space-y-24">
-      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 p-8 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl md:p-14">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,var(--bg-glow-1)_0%,transparent_55%)]" />
-        <div className="absolute -right-20 top-10 hidden h-72 w-72 rounded-full bg-cyan-500/30 blur-3xl lg:block" />
+      <section className="relative overflow-hidden rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-strong)] p-8 shadow-xl shadow-slate-950/30 backdrop-blur-xl transition-colors md:p-14">
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--bg-glow-1)_0%,transparent_55%)]" />
+          <div className="absolute -right-20 top-10 hidden h-72 w-72 rounded-full bg-[var(--bg-glow-2)] blur-3xl lg:block" />
+        </div>
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
           <div className="space-y-10">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-indigo-100/80">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-[var(--surface-muted)] px-4 py-1 text-xs font-semibold uppercase tracking-widest text-subtle">
               Pulse Market
             </span>
             <div className="space-y-4">
-              <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-5xl lg:text-6xl">
                 Everything you love. Delivered fast.
               </h1>
-              <p className="max-w-2xl text-base text-indigo-100/80">
+              <p className="max-w-2xl text-base text-[var(--text-muted)]">
                 From daily essentials to the latest tech, enjoy Prime perks on every order.
               </p>
             </div>
             <form onSubmit={submitHomeSearch} className="md:max-w-xl">
-              <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-indigo-900/10">
-                <span className="text-lg">🔍</span>
+              <div className="flex gap-3 rounded-2xl border border-[var(--surface-border)] bg-[var(--surface)] px-4 py-3 shadow-inner shadow-slate-900/10">
+                <span className="text-lg text-[var(--text-muted)]">🔍</span>
                 <input
                   value={homeSearch}
                   onChange={(e) => setHomeSearch(e.target.value)}
                   placeholder="Search millions of products, e.g. headphones or sneakers"
-                  className="w-full bg-transparent text-sm text-white placeholder:text-indigo-100/50 focus:outline-none"
+                  className="w-full bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-subtle)] focus:outline-none"
                 />
-                <button type="submit" className="btn-primary px-4 py-1.5 text-sm">Search</button>
+                <Button type="submit" className="px-4 py-1.5 text-sm">Search</Button>
               </div>
             </form>
             <div className="flex flex-wrap gap-3">
-              <Link href="/products?sort=price" className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-indigo-100/80 transition hover:bg-white/20">Today's Deals</Link>
-              <Link href="/products?sort=popular" className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-indigo-100/80 transition hover:bg-white/20">Best Sellers</Link>
-              <Link href="/products" className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-indigo-100/80 transition hover:bg-white/20">New Arrivals</Link>
-              <Link href="/orders" className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-indigo-100/80 transition hover:bg-white/20">Your Orders</Link>
+              <Link href="/products?sort=price" className="rounded-full border border-[var(--surface-border)] bg-[var(--surface-muted)] px-4 py-1.5 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--text-primary)]">
+                Today's Deals
+              </Link>
+              <Link href="/products?sort=popular" className="rounded-full border border-[var(--surface-border)] bg-[var(--surface-muted)] px-4 py-1.5 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--text-primary)]">
+                Best Sellers
+              </Link>
+              <Link href="/products" className="rounded-full border border-[var(--surface-border)] bg-[var(--surface-muted)] px-4 py-1.5 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--text-primary)]">
+                New Arrivals
+              </Link>
+              <Link href="/orders" className="rounded-full border border-[var(--surface-border)] bg-[var(--surface-muted)] px-4 py-1.5 text-xs font-semibold text-[var(--text-muted)] transition hover:text-[var(--text-primary)]">
+                Your Orders
+              </Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {heroChecklist.map((item) => (
-                <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-indigo-900/20">
+                <div key={item.title} className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface)] p-5 shadow-lg shadow-slate-900/15">
                   <div className="flex items-start gap-3">
                     <span className="text-xl">{item.icon}</span>
                     <div className="space-y-1">
-                      <h3 className="text-sm font-semibold text-white">{item.title}</h3>
-                      <p className="text-xs text-indigo-100/70">{item.description}</p>
+                      <h3 className="text-sm font-semibold text-[var(--text-primary)]">{item.title}</h3>
+                      <p className="text-xs text-[var(--text-muted)]">{item.description}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="flex flex-wrap gap-6 text-xs font-medium uppercase tracking-wide text-indigo-100/60">
+            <div className="flex flex-wrap gap-6 text-xs font-medium uppercase tracking-wide text-[var(--text-subtle)]">
               {communityLogos.map((logo) => (
-                <div key={logo.name} className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                <div key={logo.name} className="flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-[var(--surface)] px-3 py-1">
                   <span>{logo.name}</span>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-indigo-100/70">{logo.badge}</span>
+                  <span className="rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] text-[var(--text-muted)]">{logo.badge}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="relative">
-            <div className="mx-auto max-w-lg space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl shadow-slate-950/40">
+            <div className="mx-auto max-w-lg space-y-6 rounded-3xl border border-[var(--surface-border)] bg-[var(--surface)] p-6 shadow-2xl shadow-slate-950/30">
               <div>
-                <h3 className="text-lg font-semibold text-white">Store status</h3>
-                <p className="text-xs text-indigo-100/70">Live indicators so you always know shipping and deals are ready.</p>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">Store status</h3>
+                <p className="text-xs text-[var(--text-muted)]">Live indicators so you always know shipping and deals are ready.</p>
               </div>
               <div className="space-y-3">
                 {liveSnapshot.map((item) => (
-                  <div key={item.label} className={`flex items-center justify-between rounded-2xl border border-white/10 px-4 py-3 text-sm ${item.tone}`}>
-                    <span className="text-indigo-100/70">{item.label}</span>
-                    <span className="font-semibold text-white/90">{item.value}</span>
+                  <div key={item.label} className={cn('flex items-center justify-between rounded-2xl border border-[var(--surface-border)] px-4 py-3 text-sm text-[var(--text-primary)]', item.tone)}>
+                    <span className="text-[var(--text-muted)]">{item.label}</span>
+                    <span className="font-semibold">{item.value}</span>
                   </div>
                 ))}
               </div>
-              <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <span className="text-xs font-semibold uppercase tracking-wide text-indigo-100/60">Pulse shopping perks</span>
+              <div className="grid gap-4 rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-muted)] p-4">
+                <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Pulse shopping perks</span>
                 <div className="space-y-3">
                   {workflowMoments.map((moment) => (
-                    <div key={moment.label} className="rounded-xl border border-white/5 bg-white/10 px-4 py-3 text-sm text-indigo-100/80">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-white">{moment.label}</span>
-                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] uppercase tracking-wide text-indigo-100/60">{moment.caption}</span>
+                    <div key={moment.label} className="rounded-xl border border-[var(--surface-border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--text-muted)]">
+                      <div className="flex items-center justify-between text-[var(--text-primary)]">
+                        <span className="font-semibold">{moment.label}</span>
+                        <span className="rounded-full border border-[var(--surface-border)] bg-[var(--surface-muted)] px-2 py-0.5 text-[11px] uppercase tracking-wide text-[var(--text-subtle)]">{moment.caption}</span>
                       </div>
-                      <p className="mt-2 text-xs leading-relaxed text-indigo-100/60">{moment.description}</p>
+                      <p className="mt-2 text-xs leading-relaxed text-[var(--text-subtle)]">{moment.description}</p>
                     </div>
                   ))}
                 </div>
@@ -344,9 +357,9 @@ export default function Page() {
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center shadow-lg shadow-indigo-900/20">
-              <div className="text-2xl font-semibold text-white">{stat.value}</div>
-              <div className="mt-1 text-sm text-indigo-100/70">{stat.label}</div>
+            <div key={stat.label} className="rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-muted)] p-5 text-center shadow-lg shadow-slate-900/15">
+              <div className="text-2xl font-semibold text-[var(--text-primary)]">{stat.value}</div>
+              <div className="mt-1 text-sm text-[var(--text-muted)]">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -386,7 +399,7 @@ export default function Page() {
                 const price = variant?.price ?? product.price;
                 const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
                 return (
-                  <div key={product._id} className="group flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+                  <div key={product._id} className="group flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/5 p-4">
                     <Link href={`/product/${product.slug}`} className="relative h-32 overflow-hidden rounded-xl">
                       {product.images?.[0] ? (
                         <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
@@ -434,7 +447,7 @@ export default function Page() {
               <h2 className="section-title">Lightning deals</h2>
               <p className="section-subtitle">Grab limited-time savings before the timer runs out.</p>
             </div>
-            <Link href="/products?sort=price_asc" className="btn-secondary">View all deals</Link>
+            <ButtonLink href="/products?sort=price_asc" variant="secondary">View all deals</ButtonLink>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {lightningDeals.map((product) => {
@@ -460,14 +473,14 @@ export default function Page() {
                       <p className="text-sm text-amber-200/80">${(price / 100).toFixed(2)}</p>
                     </div>
                     <div className="space-y-2">
-                      <button
+                      <Button
                         type="button"
-                        className="btn-primary w-full justify-center disabled:opacity-60"
+                        className="w-full justify-center"
                         onClick={() => quickAdd(product._id, variant)}
                         disabled={addBusy}
                       >
                         {addBusy ? 'Adding…' : 'Add to cart'}
-                      </button>
+                      </Button>
                       {productErrors[product._id] && (
                         <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100 text-center">
                           {productErrors[product._id]}
@@ -489,7 +502,7 @@ export default function Page() {
               <h2 className="section-title">Best sellers</h2>
               <p className="section-subtitle">Crowd favorites with consistently high demand.</p>
             </div>
-            <Link href="/products?sort=popular" className="btn-secondary">View best sellers</Link>
+            <ButtonLink href="/products?sort=popular" variant="secondary">View best sellers</ButtonLink>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {bestSellers.map((product) => {
@@ -515,14 +528,14 @@ export default function Page() {
                       <p className="text-sm text-indigo-100/80">${(price / 100).toFixed(2)}</p>
                     </div>
                     <div className="space-y-2">
-                      <button
+                      <Button
                         type="button"
-                        className="btn-primary w-full justify-center disabled:opacity-60"
+                        className="w-full justify-center"
                         onClick={() => quickAdd(product._id, variant)}
                         disabled={addBusy}
                       >
                         {addBusy ? 'Adding…' : 'Add to cart'}
-                      </button>
+                      </Button>
                       {productErrors[product._id] && (
                         <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100 text-center">
                           {productErrors[product._id]}
@@ -543,7 +556,7 @@ export default function Page() {
             <h2 className="section-title">Featured products</h2>
             <p className="section-subtitle">Hand-picked items from our catalog.</p>
           </div>
-          <Link href="/products" className="btn-secondary">View all products</Link>
+          <ButtonLink href="/products" variant="secondary">View all products</ButtonLink>
         </div>
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {featured.map((product) => (
@@ -581,7 +594,7 @@ export default function Page() {
               <h2 className="section-title">Recommended for you</h2>
               <p className="section-subtitle">Personalized picks based on your browsing.</p>
             </div>
-            <Link href="/cart" className="btn-secondary">Go to cart</Link>
+            <ButtonLink href="/cart" variant="secondary">Go to cart</ButtonLink>
           </div>
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {curatedRecommendations.map((item) => {
@@ -612,14 +625,14 @@ export default function Page() {
                       <p className="text-sm text-indigo-100/70">${(price / 100).toFixed(2)}</p>
                     </div>
                     <div className="space-y-2">
-                      <button
+                      <Button
                         type="button"
-                        className="btn-primary w-full justify-center disabled:opacity-60"
+                        className="w-full justify-center"
                         onClick={() => quickAdd(product._id, variant)}
                         disabled={addBusy}
                       >
                         {addBusy ? 'Adding…' : 'Add to cart'}
-                      </button>
+                      </Button>
                       {productErrors[product._id] && (
                         <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100 text-center">
                           {productErrors[product._id]}
@@ -640,8 +653,8 @@ export default function Page() {
             <h2 className="text-3xl font-semibold text-white">Sign in for your best experience</h2>
             <p className="mx-auto max-w-2xl text-sm text-indigo-100/70">Track orders, save items, and get better recommendations.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-3">
-              <Link href="/login" className="btn-secondary">Sign in</Link>
-              <Link href="/register" className="btn-primary">Create account</Link>
+              <ButtonLink href="/login" variant="secondary">Sign in</ButtonLink>
+              <ButtonLink href="/register">Create account</ButtonLink>
             </div>
           </div>
         ) : (
@@ -649,8 +662,8 @@ export default function Page() {
             <h2 className="text-3xl font-semibold text-white">Welcome back</h2>
             <p className="mx-auto max-w-2xl text-sm text-indigo-100/70">Jump to your orders or keep shopping today's deals.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-3">
-              <Link href="/orders" className="btn-secondary">Your orders</Link>
-              <Link href="/products?sort=price" className="btn-primary">Today's deals</Link>
+              <ButtonLink href="/orders" variant="secondary">Your orders</ButtonLink>
+              <ButtonLink href="/products?sort=price">Today's deals</ButtonLink>
             </div>
           </div>
         )}

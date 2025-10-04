@@ -82,6 +82,7 @@ function ProductsPageContent() {
   const [priceDraft, setPriceDraft] = useState<{ min: string; max: string }>({ min: '', max: '' });
   const [loading, setLoading] = useState(true);
   const [errorsByProduct, setErrorsByProduct] = useState<Record<string, string>>({});
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const { addItem, pending } = useCartState();
   const initializedFilters = useRef(false);
   const getDefaultVariant = (product: Product): ProductVariant | undefined => {
@@ -105,6 +106,26 @@ function ProductsPageContent() {
   useEffect(() => {
     apiGet<Category[]>('/categories').then(setCategories).catch(() => setCategories([]));
   }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const originalOverflow = document.body.style.overflow;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileFiltersOpen(false);
+      }
+    };
+
+    if (mobileFiltersOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', onKeyDown);
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [mobileFiltersOpen]);
 
   useEffect(() => {
     const paramValue = searchParams.get('search');
@@ -305,17 +326,164 @@ function ProductsPageContent() {
     return badges;
   }, [selectedCategories, attributeFilters, priceRange, mergedCategories]);
 
+  const activeFilterCount = activeFilterBadges.length;
+  const openMobileFilters = () => setMobileFiltersOpen(true);
+  const closeMobileFilters = () => setMobileFiltersOpen(false);
+
+  const FiltersPanel = ({ onClose }: { onClose?: () => void }) => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <span
+          className="text-sm font-semibold uppercase tracking-wide text-subtle"
+          id={onClose ? 'mobile-filters-heading' : undefined}
+        >
+          Filters
+        </span>
+        {onClose && (
+          <button
+            type="button"
+            className="btn-secondary !w-auto justify-center px-4 py-1 text-xs"
+            onClick={onClose}
+          >
+            Done
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">Categories</h2>
+          <span className="text-xs text-subtle">{mergedCategories.length}</span>
+        </div>
+        <div className="max-h-56 space-y-2 overflow-y-auto pr-1 text-sm text-subtle">
+          {mergedCategories.map((cat) => (
+            <label key={cat.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+              <span className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="accent-indigo-500"
+                  checked={selectedCategories.includes(cat.id)}
+                  onChange={() => toggleCategory(cat.id)}
+                />
+                <span>{cat.name}</span>
+              </span>
+              <span className="text-xs text-subtle">{cat.count}</span>
+            </label>
+          ))}
+          {mergedCategories.length === 0 && (
+            <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
+              Categories will appear here as catalog data loads.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">Price</h2>
+          {(priceRange.min !== undefined || priceRange.max !== undefined) && (
+            <button
+              type="button"
+              className="text-xs text-subtle underline decoration-dotted underline-offset-4"
+              onClick={clearPriceFilter}
+            >
+              Reset
+            </button>
+          )}
+        </div>
+        <div className="space-y-2 text-sm text-subtle">
+          <div className="flex items-center gap-2">
+            <label className="flex-1">
+              <span className="text-xs text-subtle">Min</span>
+              <input
+                value={priceDraft.min}
+                onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
+                placeholder="$0.00"
+                inputMode="numeric"
+              />
+            </label>
+            <label className="flex-1">
+              <span className="text-xs text-subtle">Max</span>
+              <input
+                value={priceDraft.max}
+                onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
+                placeholder="$500.00"
+                inputMode="numeric"
+              />
+            </label>
+          </div>
+          <button onClick={applyPriceFilters} className="btn-primary w-full justify-center py-2 text-xs">
+            Apply price range
+          </button>
+          {facets.price.min !== undefined && facets.price.max !== undefined && (
+            <p className="text-xs text-subtle">
+              Available range: ${(facets.price.min / 100).toFixed(2)} – ${(facets.price.max / 100).toFixed(2)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {facets.attributes.map((facet) => (
+        <div key={facet.key} className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">{facet.key}</h2>
+            <span className="text-xs text-subtle">{facet.values.length}</span>
+          </div>
+          <div className="space-y-2 text-sm text-subtle">
+            {facet.values.map((entry) => {
+              const active = attributeFilters[facet.key]?.includes(entry.value) ?? false;
+              return (
+                <label key={entry.value} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                  <span className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="accent-indigo-500"
+                      checked={active}
+                      onChange={() => toggleAttribute(facet.key, entry.value)}
+                    />
+                    <span>{entry.value}</span>
+                  </span>
+                  <span className="text-xs text-subtle">{entry.count}</span>
+                </label>
+              );
+            })}
+            {facet.values.length === 0 && (
+              <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
+                No attribute values yet.
+              </p>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {activeFilterCount > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            clearFilters();
+            onClose?.();
+          }}
+          className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-subtle hover:bg-white/10"
+        >
+          Clear all filters
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20 backdrop-blur">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-semibold text-white">Explore the catalog</h1>
-            <p className="text-sm text-indigo-100/70">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-indigo-900/20 backdrop-blur sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-white sm:text-4xl">Explore the catalog</h1>
+            <p className="text-sm text-indigo-100/70 sm:max-w-xl">
               Discover seeded inventory, filter by specs, and surface the right products with smarter sorting.
             </p>
           </div>
-          <div className="hidden sm:flex flex-wrap gap-3">
+          <div className="hidden sm:flex flex-wrap gap-2">
             {sortOptions.map((option) => (
               <button
                 key={option.value}
@@ -324,7 +492,9 @@ function ProductsPageContent() {
                   setPage(1);
                 }}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                  sort === option.value ? 'bg-indigo-500 text-white shadow shadow-indigo-500/30' : 'bg-white/10 text-indigo-100/80 hover:bg-white/20'
+                  sort === option.value
+                    ? 'bg-indigo-500 text-white shadow shadow-indigo-500/30'
+                    : 'bg-white/10 text-indigo-100/80 hover:bg-white/20'
                 }`}
               >
                 {option.label}
@@ -332,8 +502,9 @@ function ProductsPageContent() {
             ))}
           </div>
         </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-indigo-900/10">
+
+        <div className="mt-5 flex flex-col gap-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-indigo-900/10">
             <span className="text-lg">🔍</span>
             <input
               value={search}
@@ -342,145 +513,89 @@ function ProductsPageContent() {
                 setPage(1);
               }}
               placeholder="Search products, e.g. sneakers or bags"
-              className="w-full bg-transparent text-sm text-white placeholder:text-indigo-100/50 focus:outline-none"
+              className="w-full bg-transparent text-sm text-[var(--text-primary)] placeholder:text-indigo-100/50 focus:outline-none"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setPage(1);
+                }}
+                className="text-xs text-indigo-100/70 hover:text-[var(--text-primary)]"
+              >
+                Clear
+              </button>
+            )}
           </div>
-          <select
-            value={sort}
-            onChange={(event) => {
-              setSort(event.target.value);
-              setPage(1);
-            }}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white shadow-inner shadow-indigo-900/10 sm:hidden"
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+
+          <div className="flex gap-2 sm:hidden">
+            <button
+              type="button"
+              onClick={openMobileFilters}
+              className="btn-secondary flex-1 justify-center"
+            >
+              Filters
+              {activeFilterCount ? (
+                <span className="ml-2 inline-flex h-6 min-w-[2rem] items-center justify-center rounded-full bg-indigo-500/20 px-2 text-xs font-semibold text-indigo-100">
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </button>
+            <div className="flex-1">
+              <label htmlFor="mobile-sort" className="sr-only">
+                Sort products
+              </label>
+              <select
+                id="mobile-sort"
+                value={sort}
+                onChange={(event) => {
+                  setSort(event.target.value);
+                  setPage(1);
+                }}
+                className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
-        {activeFilterBadges.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+
+        {activeFilterCount > 0 && (
+          <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-1 text-xs text-subtle">
             {activeFilterBadges.map((badge) => (
               <button
                 key={badge.label}
                 onClick={badge.onRemove}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-indigo-100/80 hover:bg-white/10"
+                className="inline-flex flex-shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[var(--text-primary)] hover:bg-white/10"
               >
                 <span>{badge.label}</span>
                 <span aria-hidden>✕</span>
               </button>
             ))}
-            <button onClick={clearFilters} className="text-indigo-200/80 underline decoration-dotted underline-offset-4">
+            <button
+              onClick={clearFilters}
+              className="flex-shrink-0 text-[var(--text-primary)] underline decoration-dotted underline-offset-4"
+            >
               Clear all
             </button>
           </div>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-indigo-100/70">Categories</h2>
-              <span className="text-xs text-indigo-100/50">{mergedCategories.length}</span>
-            </div>
-            <div className="space-y-2 text-sm text-indigo-100/80">
-              {mergedCategories.map((cat) => (
-                <label key={cat.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                  <span className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="accent-indigo-500"
-                      checked={selectedCategories.includes(cat.id)}
-                      onChange={() => toggleCategory(cat.id)}
-                    />
-                    <span>{cat.name}</span>
-                  </span>
-                  <span className="text-xs text-indigo-100/60">{cat.count}</span>
-                </label>
-              ))}
-            </div>
+      <div className="lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <aside className="hidden lg:block">
+          <div className="sticky top-28 space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20">
+            <FiltersPanel />
           </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-indigo-100/70">Price</h2>
-            </div>
-            <div className="space-y-2 text-sm text-indigo-100/80">
-              <div className="flex items-center gap-2">
-                <label className="flex-1">
-                  <span className="text-xs text-indigo-100/50">Min</span>
-                  <input
-                    value={priceDraft.min}
-                    onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"
-                    placeholder="$0.00"
-                    inputMode="numeric"
-                  />
-                </label>
-                <label className="flex-1">
-                  <span className="text-xs text-indigo-100/50">Max</span>
-                  <input
-                    value={priceDraft.max}
-                    onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-indigo-400 focus:outline-none"
-                    placeholder="$500.00"
-                    inputMode="numeric"
-                  />
-                </label>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={applyPriceFilters} className="btn-primary flex-1 justify-center py-2 text-xs">
-                  Apply
-                </button>
-                <button
-                  onClick={clearPriceFilter}
-                  className="btn-secondary flex-1 justify-center py-2 text-xs"
-                >
-                  Reset
-                </button>
-              </div>
-              {facets.price.min !== undefined && facets.price.max !== undefined && (
-                <p className="text-xs text-indigo-100/60">
-                  Available range: ${(facets.price.min / 100).toFixed(2)} – ${(facets.price.max / 100).toFixed(2)}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {facets.attributes.map((facet) => (
-            <div key={facet.key} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-indigo-100/70">{facet.key}</h2>
-                <span className="text-xs text-indigo-100/50">{facet.values.length}</span>
-              </div>
-              <div className="space-y-2 text-sm text-indigo-100/80">
-                {facet.values.map((entry) => {
-                  const active = attributeFilters[facet.key]?.includes(entry.value) ?? false;
-                  return (
-                    <label key={entry.value} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                      <span className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          className="accent-indigo-500"
-                          checked={active}
-                          onChange={() => toggleAttribute(facet.key, entry.value)}
-                        />
-                        <span>{entry.value}</span>
-                      </span>
-                      <span className="text-xs text-indigo-100/60">{entry.count}</span>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
         </aside>
 
         <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-indigo-100/70">
+          <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-subtle">
             <span>
               Showing {items.length} of {total} result{total === 1 ? '' : 's'}
             </span>
@@ -492,7 +607,7 @@ function ProductsPageContent() {
               >
                 Prev
               </button>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-indigo-100/80">
+              <span className="rounded-full bg-white/10 px-6 py-1 text-xs text-indigo-100/80">
                 Page {page} of {totalPages}
               </span>
               <button
@@ -576,6 +691,22 @@ function ProductsPageContent() {
           )}
         </div>
       </div>
+
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-40 flex lg:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-filters-heading">
+          <button
+            type="button"
+            aria-label="Close filters"
+            className="absolute inset-0 z-0 bg-black/60 backdrop-blur-sm"
+            onClick={closeMobileFilters}
+          />
+          <div className="relative z-10 ml-auto flex h-full w-full max-w-sm flex-col overflow-hidden rounded-l-3xl border-l border-[var(--surface-border)] bg-[color:var(--surface-solid)] shadow-2xl shadow-slate-950/40">
+            <div className="flex-1 overflow-y-auto px-5 py-6">
+              <FiltersPanel onClose={closeMobileFilters} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -584,25 +715,37 @@ function ProductsPageSkeleton() {
   return (
     <div className="space-y-8">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20 backdrop-blur">
-        <div className="h-6 w-1/3 animate-pulse rounded-full bg-white/10" />
-        <div className="mt-4 h-10 animate-pulse rounded-2xl bg-white/10" />
-      </div>
-      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <div key={idx} className="h-10 animate-pulse rounded-xl bg-white/10" />
-          ))}
+        <div className="h-8 w-2/3 animate-pulse rounded-full bg-white/10" />
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="h-10 w-full animate-pulse rounded-2xl bg-white/10 sm:max-w-xs" />
+          <div className="hidden h-8 w-48 animate-pulse rounded-full bg-white/10 sm:block" />
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <div key={idx} className="card animate-pulse overflow-hidden">
-              <div className="h-48 w-full bg-white/10" />
-              <div className="space-y-2 p-5">
-                <div className="h-4 w-2/3 rounded-full bg-white/10" />
-                <div className="h-4 w-1/4 rounded-full bg-white/10" />
+        <div className="mt-4 flex gap-2 sm:hidden">
+          <div className="h-9 flex-1 animate-pulse rounded-full bg-white/10" />
+          <div className="h-9 w-32 animate-pulse rounded-full bg-white/10" />
+        </div>
+      </div>
+      <div className="lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <div className="hidden lg:block">
+          <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div key={idx} className="h-10 animate-pulse rounded-xl bg-white/10" />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-6">
+          <div className="h-8 w-40 animate-pulse rounded-full bg-white/10" />
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div key={idx} className="card animate-pulse overflow-hidden">
+                <div className="h-48 w-full bg-white/10" />
+                <div className="space-y-2 p-5">
+                  <div className="h-4 w-2/3 rounded-full bg-white/10" />
+                  <div className="h-4 w-1/4 rounded-full bg-white/10" />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
