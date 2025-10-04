@@ -100,6 +100,107 @@ The Python service in `apps/recs` is optional. To experiment with it:
 - **Windows path errors**: ensure long paths are enabled (see Requirements section).
 - **Isolating multiple Docker stacks on the same network**: when you run the compose setup on two machines simultaneously, make sure each host points at its own databases and API instance. Update the per-host env files (root `.env`, `apps/api/.env`, and `apps/web/.env`) so `DATABASE_URL`, `MONGO_URL`, and `NEXT_PUBLIC_API_BASE` use unique schema names/ports (for example, `shop_win` on port `5432/27017` vs. `shop_ubuntu` on `5433/27018`). Then adjust the compose manifests or overrides to publish distinct host ports for the API/web/DB containers and rebuild the storefront so it bakes in the correct `NEXT_PUBLIC_API_BASE` at build time. This prevents the Ubuntu storefront from accidentally calling the Windows API.
 
+### Example per-host env files
+
+When you are running the Docker stacks on two different machines (for example Windows and Ubuntu on the same network), keep a dedicated copy of each env file per host. The templates below are based on `.env.example`, `apps/api/.env.example`, and `apps/web/.env.example`; adjust the hostnames to match your LAN and keep secrets (`JWT_SECRET`, Stripe keys, etc.) unique per environment.
+
+#### Windows host (`.env.win`, `apps/api/.env.win`, `apps/web/.env.win`)
+
+```env
+# Root .env.win
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=ecom
+DB_PASSWORD=ecom
+DB_NAME=shop_win
+
+DATABASE_URL=postgresql://ecom:ecom@localhost:5432/shop_win?schema=public
+MONGO_URL=mongodb://localhost:27017/shop_win
+
+API_PORT=4000
+WEB_PORT=3000
+
+NEXT_PUBLIC_API_BASE=http://windows-host.local/api
+RECS_URL=http://windows-host.local:5000
+```
+
+```env
+# apps/api/.env.win
+DATABASE_URL="postgresql://ecom:ecom@postgres:5432/shop_win?schema=public"
+MONGO_URL="mongodb://mongo:27017/shop_win"
+PORT=4000
+
+JWT_SECRET="dev-change-me"
+STRIPE_SECRET_KEY="sk_test_example"
+STRIPE_WEBHOOK_SECRET="whsec_example"
+RECS_URL="http://recs:5000"
+```
+
+```env
+# apps/web/.env.win
+NEXT_PUBLIC_API_BASE=http://windows-host.local/api
+```
+
+Publish the default compose stack (`docker compose up`) or expose the API/web services on host ports `4000`/`3000` so the Windows machine owns the canonical `shop_win` datasets.
+
+#### Ubuntu host (`.env.ubuntu`, `apps/api/.env.ubuntu`, `apps/web/.env.ubuntu`)
+
+```env
+# Root .env.ubuntu
+DB_HOST=localhost
+DB_PORT=5433
+DB_USER=ecom
+DB_PASSWORD=ecom
+DB_NAME=shop_ubuntu
+
+DATABASE_URL=postgresql://ecom:ecom@localhost:5433/shop_ubuntu?schema=public
+MONGO_URL=mongodb://localhost:27018/shop_ubuntu
+
+API_PORT=4001
+WEB_PORT=3001
+
+NEXT_PUBLIC_API_BASE=http://ubuntu-host.local:8085/api
+RECS_URL=http://ubuntu-host.local:5001
+```
+
+```env
+# apps/api/.env.ubuntu
+DATABASE_URL="postgresql://ecom:ecom@postgres:5432/shop_ubuntu?schema=public"
+MONGO_URL="mongodb://mongo:27017/shop_ubuntu"
+PORT=4001
+
+JWT_SECRET="dev-change-me"
+STRIPE_SECRET_KEY="sk_test_example"
+STRIPE_WEBHOOK_SECRET="whsec_example"
+RECS_URL="http://recs:5000"
+```
+
+```env
+# apps/web/.env.ubuntu
+NEXT_PUBLIC_API_BASE=http://ubuntu-host.local:8085/api
+```
+
+Pair these env files with a compose override that remaps host ports, for example:
+
+```yaml
+# docker-compose.override.yml (Ubuntu)
+services:
+  api:
+    ports:
+      - "8085:4001"
+  web:
+    ports:
+      - "8086:3001"
+  db:
+    ports:
+      - "5433:5432"
+  mongo:
+    ports:
+      - "27018:27017"
+```
+
+Copy the appropriate env files into place on each host (or pass them via `--env-file`) before running `pnpm run setup` so every service points at its own database schemas and baked-in API URL.
+
 ## Repository structure
 
 ```
