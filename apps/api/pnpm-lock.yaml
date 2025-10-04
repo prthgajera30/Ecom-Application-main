@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@prisma/client':
-        specifier: latest
+        specifier: ^6.16.3
         version: 6.16.3(prisma@6.16.3(typescript@5.9.3))(typescript@5.9.3)
       bcryptjs:
         specifier: ^2.4.3
@@ -76,7 +76,7 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@20.19.18)(ts-node@10.9.2(@types/node@20.19.18)(typescript@5.9.3))
       prisma:
-        specifier: latest
+        specifier: ^6.16.3
         version: 6.16.3(typescript@5.9.3)
       supertest:
         specifier: ^6.3.4
