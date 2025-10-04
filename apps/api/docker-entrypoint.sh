@@ -31,16 +31,21 @@ setup_marker=".db-setup-done"
 parse_url_component() {
   component="$1"
   url="$2"
-  node -e '
-const component = process.argv[1];
-const rawUrl = process.argv[2];
+  node - "$component" "$url" <<'NODE'
+const [component, rawUrl] = process.argv.slice(2);
 try {
   const parsed = new URL(rawUrl);
-  if (component === "host") {
+  if (component === 'host') {
     console.log(parsed.hostname);
-  } else if (component === "port") {
-    const protocol = parsed.protocol.replace(/:$/, "");
-    const port = parsed.port || (protocol === "postgres" || protocol === "postgresql" ? "5432" : protocol === "mongodb" ? "27017" : "");
+  } else if (component === 'port') {
+    const protocol = parsed.protocol.replace(/:$/, '');
+    const port =
+      parsed.port ||
+      (protocol === 'postgres' || protocol === 'postgresql'
+        ? '5432'
+        : protocol === 'mongodb'
+        ? '27017'
+        : '');
     if (port) {
       console.log(port);
     }
@@ -48,7 +53,7 @@ try {
 } catch (error) {
   // ignore parsing errors and fall back to defaults
 }
-' "$component" "$url"
+NODE
 }
 
 warn_if_localhost() {
@@ -75,7 +80,7 @@ wait_for_tcp() {
   echo "[entrypoint] Waiting for $service_name at $host:$port..."
   attempt=1
   while [ $attempt -le $max_attempts ]; do
-    if node - <<'NODE' "$host" "$port"; then
+    if node - <<'NODE' "$host" "$port"
 const args = process.argv.slice(2);
 const host = args[0];
 const port = Number(args[1]);
