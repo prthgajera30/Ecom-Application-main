@@ -38,7 +38,7 @@ services:
     environment:
       NODE_ENV: development
       JWT_SECRET: change_me
-      POSTGRES_URL: postgres://postgres:postgres@postgres:5432/shop
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/shop?schema=public
       MONGO_URL: mongodb://mongo:27017/shop
       STRIPE_SECRET_KEY: sk_test_xxx
       STRIPE_WEBHOOK_SECRET: whsec_xxx
