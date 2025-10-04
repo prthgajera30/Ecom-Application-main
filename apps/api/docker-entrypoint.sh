@@ -35,19 +35,40 @@ parse_url_component() {
 const [component, rawUrl] = process.argv.slice(2);
 try {
   const parsed = new URL(rawUrl);
-  if (component === 'host') {
-    console.log(parsed.hostname);
-  } else if (component === 'port') {
-    const protocol = parsed.protocol.replace(/:$/, '');
-    const port =
-      parsed.port ||
-      (protocol === 'postgres' || protocol === 'postgresql'
-        ? '5432'
-        : protocol === 'mongodb'
-        ? '27017'
-        : '');
-    if (port) {
-      console.log(port);
+  switch (component) {
+    case 'host':
+      console.log(parsed.hostname);
+      break;
+    case 'port': {
+      const protocol = parsed.protocol.replace(/:$/, '');
+      const port =
+        parsed.port ||
+        (protocol === 'postgres' || protocol === 'postgresql'
+          ? '5432'
+          : protocol === 'mongodb'
+          ? '27017'
+          : '');
+      if (port) {
+        console.log(port);
+      }
+      break;
+    }
+    case 'username':
+      if (parsed.username) {
+        console.log(parsed.username);
+      }
+      break;
+    case 'password':
+      if (parsed.password) {
+        console.log(parsed.password);
+      }
+      break;
+    case 'database': {
+      const db = parsed.pathname.replace(/^\//, '');
+      if (db) {
+        console.log(db);
+      }
+      break;
     }
   }
 } catch (error) {
@@ -60,8 +81,12 @@ rewrite_url_components() {
   url="$1"
   new_host="$2"
   new_port="$3"
-  node - "$url" "$new_host" "$new_port" <<'NODE'
-const [rawUrl, hostOverride, portOverride] = process.argv.slice(2);
+  new_user="$4"
+  new_password="$5"
+  new_database="$6"
+  node - "$url" "$new_host" "$new_port" "$new_user" "$new_password" "$new_database" <<'NODE'
+const [rawUrl, hostOverride, portOverride, userOverride, passwordOverride, dbOverride] =
+  process.argv.slice(2);
 if (!rawUrl) {
   process.exit(0);
 }
@@ -73,6 +98,16 @@ try {
   }
   if (portOverride) {
     parsed.port = String(portOverride);
+  }
+  if (userOverride) {
+    parsed.username = userOverride;
+  }
+  if (passwordOverride) {
+    parsed.password = passwordOverride;
+  }
+  if (dbOverride) {
+    const normalized = dbOverride.replace(/^\//, '');
+    parsed.pathname = normalized ? `/${normalized}` : '/';
   }
   console.log(parsed.toString());
 } catch (error) {
@@ -138,12 +173,31 @@ NODE
 }
 
 if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
+  original_pg_user="$(parse_url_component username "${DATABASE_URL:-}")"
+  original_pg_password="$(parse_url_component password "${DATABASE_URL:-}")"
+  original_pg_database="$(parse_url_component database "${DATABASE_URL:-}")"
+
   pg_host_override="${DATABASE_HOST_OVERRIDE:-${POSTGRES_HOST:-}}"
   pg_port_override="${DATABASE_PORT_OVERRIDE:-${POSTGRES_PORT:-}}"
-  if [ -n "$pg_host_override" ] || [ -n "$pg_port_override" ]; then
-    updated_url="$(rewrite_url_components "${DATABASE_URL:-}" "$pg_host_override" "$pg_port_override")"
+  pg_user_override="${DATABASE_USER_OVERRIDE:-${POSTGRES_USER:-}}"
+  pg_password_override="${DATABASE_PASSWORD_OVERRIDE:-${POSTGRES_PASSWORD:-}}"
+  pg_database_override="${DATABASE_NAME_OVERRIDE:-${POSTGRES_DB:-}}"
+
+  if [ -n "$pg_host_override" ] || [ -n "$pg_port_override" ] || [ -n "$pg_user_override" ] || [ -n "$pg_password_override" ] || [ -n "$pg_database_override" ]; then
+    updated_url="$(rewrite_url_components "${DATABASE_URL:-}" "$pg_host_override" "$pg_port_override" "$pg_user_override" "$pg_password_override" "$pg_database_override")"
     if [ -n "$updated_url" ] && [ "$updated_url" != "${DATABASE_URL:-}" ]; then
-      echo "[entrypoint] Applying DATABASE_URL host/port overrides for container networking."
+      if [ -n "$pg_host_override" ] || [ -n "$pg_port_override" ]; then
+        echo "[entrypoint] Applying DATABASE_URL host/port overrides for container networking."
+      fi
+      if [ -n "$pg_user_override" ] && [ "$pg_user_override" != "$original_pg_user" ]; then
+        echo "[entrypoint] Applying DATABASE_URL username override from environment."
+      fi
+      if [ -n "$pg_password_override" ] && [ "$pg_password_override" != "$original_pg_password" ]; then
+        echo "[entrypoint] Applying DATABASE_URL password override from environment."
+      fi
+      if [ -n "$pg_database_override" ] && [ "$pg_database_override" != "$original_pg_database" ]; then
+        echo "[entrypoint] Applying DATABASE_URL database override from environment."
+      fi
       export DATABASE_URL="$updated_url"
     elif [ -z "$updated_url" ]; then
       echo "[entrypoint] WARNING: Unable to apply DATABASE_URL overrides; please ensure the URL is valid." >&2
@@ -163,7 +217,7 @@ if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
   mongo_host_override="${MONGO_HOST_OVERRIDE:-${MONGO_HOST:-}}"
   mongo_port_override="${MONGO_PORT_OVERRIDE:-${MONGO_PORT:-}}"
   if [ -n "$mongo_host_override" ] || [ -n "$mongo_port_override" ]; then
-    updated_mongo_url="$(rewrite_url_components "${MONGO_URL:-}" "$mongo_host_override" "$mongo_port_override")"
+    updated_mongo_url="$(rewrite_url_components "${MONGO_URL:-}" "$mongo_host_override" "$mongo_port_override" "" "" "")"
     if [ -n "$updated_mongo_url" ] && [ "$updated_mongo_url" != "${MONGO_URL:-}" ]; then
       echo "[entrypoint] Applying MONGO_URL host/port overrides for container networking."
       export MONGO_URL="$updated_mongo_url"
