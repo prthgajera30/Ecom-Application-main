@@ -2,7 +2,7 @@
 node_modules/
 **/node_modules/
 .pnpm-store
-.venv/
+**/.venv/
 
 # Builds
 apps/web/.next/
@@ -17,7 +17,10 @@ coverage/
 # Environment
 .env
 .env.*
+!.env.example
+!apps/**/.env.example
 infra/env.prod
+.first-run-done
 
 # IDE / OS
 .vscode/
