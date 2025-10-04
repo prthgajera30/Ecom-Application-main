@@ -6,7 +6,15 @@ This directory contains the production-oriented Docker Compose stack. To run it:
    ```bash
    cp infra/env.prod.example infra/env.prod
    ```
-2. Edit `infra/env.prod` and replace the placeholder values with the credentials for your deployment (database password, JWT secret, Stripe keys, etc.). Ensure the Postgres username/password/database listed in the URL match the values supplied to the database container. The API entrypoint can automatically sync them by reading `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`, but they still need to be correct for the database you provision. Remember that changing `POSTGRES_PASSWORD` only updates brand-new Postgres volumes—if a volume was already initialised, update the user inside the database or recreate the volume so the credentials line up. The connection strings should use the container hostnames (e.g. `postgres` / `mongo`) rather than `localhost` so the services can talk to each other inside the network. If you reuse the same env file for local development, you can leave the URLs pointing at `localhost` and set the `DATABASE_*_OVERRIDE` / `MONGO_*_OVERRIDE` variables in the Docker env file so the entrypoint rewrites the host, port, and credentials to the container service values at runtime.
+2. Edit `infra/env.prod` and replace the placeholder values with the credentials for your deployment (database password, JWT secret, Stripe keys, etc.).  
+   Ensure the Postgres username/password/database listed in the URL match the values supplied to the database container. 
+   The API entrypoint can automatically sync them by reading `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`, but they still need to be correct for the database you provision. 
+   Remember that changing `POSTGRES_PASSWORD` only updates brand-new Postgres volumes—if a volume was already initialised, update the user inside the database or 
+   recreate the volume so the credentials line up. The connection strings should use the container hostnames (e.g. `postgres` / `mongo`) rather than `localhost` 
+   so the services can talk to each other inside the network. If you reuse the same env file for local development, you can leave the URLs pointing at `localhost` 
+   and set the `DATABASE_*_OVERRIDE` / `MONGO_*_OVERRIDE` variables in the Docker env file so the entrypoint rewrites the host, port, and credentials to the container service values at runtime.
+
+
 3. Launch the services in detached mode:
    ```bash
    docker compose -f infra/docker-compose.prod.yml up -d
