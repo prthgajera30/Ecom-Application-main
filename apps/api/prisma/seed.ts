@@ -21,22 +21,33 @@ async function seedMongo() {
     { name: 'Accessories', slug: 'accessories' },
   ].map((cat) => ({ ...cat, _id: objectIdFor(`category:${cat.slug}`) }));
 
-  await Category.bulkWrite(
-    categorySeeds.map((cat) => ({
-      updateOne: {
-        filter: { _id: cat._id },
-        update: {
-          $set: {
-            name: cat.name,
-            slug: cat.slug,
-            updatedAt: new Date(),
-          },
-          $setOnInsert: { createdAt: new Date() },
+  for (const cat of categorySeeds) {
+    await Category.updateOne(
+      { _id: cat._id },
+      {
+        $set: {
+          name: cat.name,
+          slug: cat.slug,
+          updatedAt: new Date(),
         },
-        upsert: true,
+        $setOnInsert: { createdAt: new Date() },
       },
-    })),
-  );
+      { upsert: true },
+    );
+  }
+
+  const categoryCheck = await Category.find({ _id: { $in: categorySeeds.map((cat) => cat._id) } })
+    .select({ _id: 1 })
+    .lean();
+  const persistedCategoryIds = new Set(categoryCheck.map((doc) => String(doc._id)));
+  const missingCategoryIds = categorySeeds
+    .map((cat) => String(cat._id))
+    .filter((id) => !persistedCategoryIds.has(id));
+  if (missingCategoryIds.length) {
+    throw new Error(
+      `Mongo seed failed: expected all categories to persist, but these IDs are missing: ${missingCategoryIds.join(', ')}`,
+    );
+  }
 
   const brands = ['Pulse Gear', 'Aether Athletics', 'Northwind Supply', 'Beacon Street', 'Horizon Collective'];
   const materials = ['Recycled mesh', 'Full-grain leather', 'Performance knit', 'Organic cotton', 'Lightweight alloy'];
@@ -128,23 +139,38 @@ async function seedMongo() {
     };
   });
 
-  await Product.bulkWrite(
-    products.map((product) => ({
-      updateOne: {
-        filter: { _id: product._id },
-        update: {
-          $set: {
-            ...product.document,
-            updatedAt: new Date(),
-          },
-          $setOnInsert: { createdAt: new Date() },
+  for (const product of products) {
+    await Product.updateOne(
+      { _id: product._id },
+      {
+        $set: {
+          ...product.document,
+          updatedAt: new Date(),
         },
-        upsert: true,
+        $setOnInsert: { createdAt: new Date() },
       },
-    })),
-  );
+      { upsert: true },
+    );
+  }
 
-  return products;
+  const productIds = products.map((product) => product._id);
+  const productCheck = await Product.find({ _id: { $in: productIds } })
+    .select({ _id: 1 })
+    .lean();
+  const persistedProductIds = new Set(productCheck.map((doc) => String(doc._id)));
+  const missingProductIds = productIds
+    .map((id) => String(id))
+    .filter((id) => !persistedProductIds.has(id));
+  if (missingProductIds.length) {
+    throw new Error(
+      `Mongo seed failed: expected ${productIds.length} products, but ${missingProductIds.length} IDs were missing after upsert. ` +
+        'Verify that MONGO_URL points to the MongoDB service accessible from the container.',
+    );
+  }
+
+  console.log(`[seed] Upserted ${persistedCategoryIds.size} categories and ${persistedProductIds.size} products in MongoDB.`);
+
+  return productIds.map((id) => id.toString());
 }
 
 async function seedPostgres(productIds: string[]) {
@@ -220,9 +246,14 @@ async function seedPostgres(productIds: string[]) {
 }
 
 async function main() {
-  const products = await seedMongo();
-  const productIds = products.slice(0, 3).map((product) => product._id.toString());
-  await seedPostgres(productIds);
+  const productIds = await seedMongo();
+  if (productIds.length < 3) {
+    throw new Error(
+      `Mongo seed only returned ${productIds.length} product IDs; expected at least 3 so Postgres seed can attach analytics eve` +
+        'nts. Check the Mongo seed logs above for details.',
+    );
+  }
+  await seedPostgres(productIds.slice(0, 3));
   console.log('Seed complete.');
 }
 
