@@ -7,14 +7,14 @@ log() {
 
 run_cmd() {
   local cmd=("$@")
-  printf "--> Running: %s\n" "${cmd[*]}"
+  printf -- "--> Running: %s\n" "${cmd[*]}"
   "${cmd[@]}"
   return $?
 }
 
 run_cmd_allow_failure() {
   local cmd=("$@")
-  printf "--> Running: %s\n" "${cmd[*]}"
+  printf -- "--> Running: %s\n" "${cmd[*]}"
   "${cmd[@]}"
   return $?
 }
@@ -60,7 +60,7 @@ fi
 
 if command -v docker >/dev/null 2>&1 && [ ! -f .first-run-done ]; then
   log "Resetting Docker database volumes for a clean first run"
-  printf "--> Running: docker compose down --volumes --remove-orphans\n"
+  printf -- "--> Running: docker compose down --volumes --remove-orphans\n"
   docker compose down --volumes --remove-orphans >/dev/null 2>&1 || true
 fi
 
