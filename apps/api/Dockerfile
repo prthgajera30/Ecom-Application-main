@@ -27,9 +27,13 @@ RUN pnpm build
 FROM node:20-alpine AS prod
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 COPY apps/api/prisma ./prisma
+COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 EXPOSE 4000
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node","dist/index.js"]
