@@ -40,6 +40,8 @@ function withApiBase(path: string): string {
   return `${base}${path}`;
 }
 
+export const API_BASE = resolveApiBase();
+
 export class ApiError extends Error {
   status: number;
   data: any;
