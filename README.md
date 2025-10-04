@@ -98,6 +98,7 @@ The Python service in `apps/recs` is optional. To experiment with it:
 - **Need to re-run the seed**: delete `.first-run-done` and re-run `pnpm run first-run` (or `pnpm run setup`).
 - **Cleanup install issues**: `pnpm store prune && rm -rf node_modules pnpm-lock.yaml && pnpm install --recursive`.
 - **Windows path errors**: ensure long paths are enabled (see Requirements section).
+- **Isolating multiple Docker stacks on the same network**: when you run the compose setup on two machines simultaneously, make sure each host points at its own databases and API instance. Update the per-host env files (root `.env`, `apps/api/.env`, and `apps/web/.env`) so `DATABASE_URL`, `MONGO_URL`, and `NEXT_PUBLIC_API_BASE` use unique schema names/ports (for example, `shop_win` on port `5432/27017` vs. `shop_ubuntu` on `5433/27018`). Then adjust the compose manifests or overrides to publish distinct host ports for the API/web/DB containers and rebuild the storefront so it bakes in the correct `NEXT_PUBLIC_API_BASE` at build time. This prevents the Ubuntu storefront from accidentally calling the Windows API.
 
 ## Repository structure
 
