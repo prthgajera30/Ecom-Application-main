@@ -11,6 +11,8 @@ This directory contains the production-oriented Docker Compose stack. To run it:
    ```bash
    docker compose -f infra/docker-compose.prod.yml up -d
    ```
+   On first boot the API container automatically applies Prisma migrations and seeds the demo catalog so the storefront has data
+   out of the box. Set `AUTO_DB_SETUP=0` in `infra/env.prod` if you prefer to manage migrations and seeds manually.
 4. When you're done, shut the stack down with:
    ```bash
    docker compose -f infra/docker-compose.prod.yml down
