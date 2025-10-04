@@ -6,7 +6,7 @@ This directory contains the production-oriented Docker Compose stack. To run it:
    ```bash
    cp infra/env.prod.example infra/env.prod
    ```
-2. Edit `infra/env.prod` and replace the placeholder values with the credentials for your deployment (database password, JWT secret, Stripe keys, etc.). Ensure `POSTGRES_PASSWORD` matches the password embedded in `DATABASE_URL`.
+2. Edit `infra/env.prod` and replace the placeholder values with the credentials for your deployment (database password, JWT secret, Stripe keys, etc.). Ensure `POSTGRES_PASSWORD` matches the password embedded in `DATABASE_URL`, and that the connection strings use the container hostnames (e.g. `postgres` / `mongo`) rather than `localhost` so the services can talk to each other inside the network.
 3. Launch the services in detached mode:
    ```bash
    docker compose -f infra/docker-compose.prod.yml up -d
