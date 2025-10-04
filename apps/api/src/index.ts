@@ -8,6 +8,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { connectMongo } from './db';
+import { ensureDatabasesSeeded } from './seeding';
 import authRoutes from './routes/auth';
 import catalogRoutes from './routes/catalog';
 import cartRoutes from './routes/cart';
@@ -65,6 +66,17 @@ export async function start() {
   const PORT = process.env.PORT || 4000;
   const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017/shop';
   await connectMongo(mongoUrl);
+  try {
+    const seeded = await ensureDatabasesSeeded({ mongoUrl });
+    if (seeded) {
+      logger.info('Databases were empty; ran seed script automatically.');
+    } else {
+      logger.debug('Databases already contained demo data; seed skipped.');
+    }
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to verify or seed databases.');
+    throw error;
+  }
   return new Promise<void>((resolve) => {
     server.listen(PORT, () => {
       logger.info(`API listening on ${PORT}`);

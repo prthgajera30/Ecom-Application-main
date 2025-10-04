@@ -98,6 +98,133 @@ The Python service in `apps/recs` is optional. To experiment with it:
 - **Need to re-run the seed**: delete `.first-run-done` and re-run `pnpm run first-run` (or `pnpm run setup`).
 - **Cleanup install issues**: `pnpm store prune && rm -rf node_modules pnpm-lock.yaml && pnpm install --recursive`.
 - **Windows path errors**: ensure long paths are enabled (see Requirements section).
+- **Isolating multiple Docker stacks on the same network**: when you run the compose setup on two machines simultaneously, make sure each host points at its own databases and API instance. Update the per-host env files (root `.env`, `apps/api/.env`, and `apps/web/.env`) so `DATABASE_URL`, `MONGO_URL`, and `NEXT_PUBLIC_API_BASE` use unique schema names/ports (for example, `shop_win` on port `5432/27017` vs. `shop_ubuntu` on `5433/27018`). Then adjust the compose manifests or overrides to publish distinct host ports for the API/web/DB containers and rebuild the storefront so it bakes in the correct `NEXT_PUBLIC_API_BASE` at build time. This prevents the Ubuntu storefront from accidentally calling the Windows API.
+
+### Example per-host env files
+
+When you are running the Docker stacks on two different machines (for example Windows and Ubuntu on the same network), keep a dedicated copy of each env file per host. The templates below are based on `.env.example`, `apps/api/.env.example`, and `apps/web/.env.example`; adjust the hostnames to match your LAN and keep secrets (`JWT_SECRET`, Stripe keys, etc.) unique per environment.
+
+#### Windows host (`.env.win`, `apps/api/.env.win`, `apps/web/.env.win`)
+
+```env
+# Root .env.win
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=ecom
+DB_PASSWORD=ecom
+DB_NAME=shop_win
+
+DATABASE_URL=postgresql://ecom:ecom@localhost:5432/shop_win?schema=public
+MONGO_URL=mongodb://localhost:27017/shop_win
+
+API_PORT=4000
+WEB_PORT=3000
+
+NEXT_PUBLIC_API_BASE=http://windows-host.local/api
+RECS_URL=http://windows-host.local:5000
+```
+
+```env
+# apps/api/.env.win
+DATABASE_URL="postgresql://ecom:ecom@postgres:5432/shop_win?schema=public"
+MONGO_URL="mongodb://mongo:27017/shop_win"
+PORT=4000
+
+JWT_SECRET="dev-change-me"
+STRIPE_SECRET_KEY="sk_test_example"
+STRIPE_WEBHOOK_SECRET="whsec_example"
+RECS_URL="http://recs:5000"
+```
+
+```env
+# apps/web/.env.win
+NEXT_PUBLIC_API_BASE=http://windows-host.local/api
+```
+
+Publish the default compose stack (`docker compose up`) or expose the API/web services on host ports `4000`/`3000` so the Windows machine owns the canonical `shop_win` datasets.
+
+#### Ubuntu host (`.env.ubuntu`, `apps/api/.env.ubuntu`, `apps/web/.env.ubuntu`)
+
+```env
+# Root .env.ubuntu
+DB_HOST=localhost
+DB_PORT=5433
+DB_USER=ecom
+DB_PASSWORD=ecom
+DB_NAME=shop_ubuntu
+
+DATABASE_URL=postgresql://ecom:ecom@localhost:5433/shop_ubuntu?schema=public
+MONGO_URL=mongodb://localhost:27018/shop_ubuntu
+
+API_PORT=4001
+WEB_PORT=3001
+
+NEXT_PUBLIC_API_BASE=http://ubuntu-host.local:8085/api
+RECS_URL=http://ubuntu-host.local:5001
+```
+
+```env
+# apps/api/.env.ubuntu
+DATABASE_URL="postgresql://ecom:ecom@postgres:5432/shop_ubuntu?schema=public"
+MONGO_URL="mongodb://mongo:27017/shop_ubuntu"
+PORT=4001
+
+JWT_SECRET="dev-change-me"
+STRIPE_SECRET_KEY="sk_test_example"
+STRIPE_WEBHOOK_SECRET="whsec_example"
+RECS_URL="http://recs:5000"
+```
+
+```env
+# apps/web/.env.ubuntu
+NEXT_PUBLIC_API_BASE=http://ubuntu-host.local:8085/api
+```
+
+Pair these env files with a compose override that remaps host ports, for example:
+
+```yaml
+# docker-compose.override.yml (Ubuntu)
+services:
+  api:
+    ports:
+      - "8085:4001"
+  web:
+    ports:
+      - "8086:3001"
+  db:
+    ports:
+      - "5433:5432"
+  mongo:
+    ports:
+      - "27018:27017"
+```
+
+#### Production stack env file (`infra/env.prod`)
+
+The production compose bundle in `infra/docker-compose.prod.yml` still uses an env file named `infra/env.prod`. Copy `infra/env.prod.example`
+to `infra/env.prod` and update the values so they mirror whichever host the stack belongs to. For example, if the Ubuntu machine owns the
+`shop_ubuntu` databases and exposes the API through `http://ubuntu-host.local:8085`, your `infra/env.prod` should look like:
+
+```env
+POSTGRES_USER=ecom
+POSTGRES_PASSWORD=ecom
+POSTGRES_DB=shop_ubuntu
+DATABASE_URL=postgresql://ecom:ecom@postgres:5432/shop_ubuntu?schema=public
+
+MONGO_URL=mongodb://mongo:27017/shop_ubuntu
+
+APP_URL=http://ubuntu-host.local:8085
+JWT_SECRET=replace-with-strong-secret
+STRIPE_SECRET_KEY=sk_live_or_test_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+```
+
+If you maintain a second stack (for example on Windows), keep a separate copy such as `infra/env.prod.win` with its own database names and
+URLs (e.g., `shop_win`, `http://windows-host.local/api`). Point `docker compose --env-file infra/env.prod.win -f infra/docker-compose.prod.yml`
+at the matching env file when you deploy that host. This keeps production secrets scoped correctly and avoids the two deployments seeding the
+same Postgres or Mongo databases by accident.
+
+Copy the appropriate env files into place on each host (or pass them via `--env-file`) before running `pnpm run setup` so every service points at its own database schemas and baked-in API URL.
 
 ## Repository structure
 
