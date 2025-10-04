@@ -54,7 +54,7 @@ should_wait=1
 if command -v docker >/dev/null 2>&1; then
   if docker compose up -d db mongo; then
     log "Waiting for PostgreSQL to become ready"
-    if ! ./scripts/db-wait.sh; then
+    if ! node scripts/run-script.mjs db-wait; then
       echo "Postgres did not become healthy. Inspect containers or start your local database manually."
       exit 1
     fi
@@ -74,102 +74,7 @@ fi
 log "Generating Prisma clients"
 pnpm -r --if-present prisma:generate || true
 
-log "Applying migrations"
-
-run_migrations() {
-  set +e
-  output="$(pnpm --filter @apps/api prisma:migrate 2>&1)"
-  status=$?
-  set -e
-  printf '%s\n' "$output"
-  return $status
-}
-
-should_auto_reset() {
-  local flag="${AUTO_RESET_DB_ON_P1000:-1}"
-  flag="$(printf '%s' "$flag" | tr '[:upper:]' '[:lower:]')"
-  if [ "$flag" = "0" ] || [ "$flag" = "false" ]; then
-    AUTO_RESET_BLOCK_REASON="AUTO_RESET_DB_ON_P1000 is disabled"
-    return 1
-  fi
-  if [ -f .first-run-done ]; then
-    AUTO_RESET_BLOCK_REASON="setup has already completed once"
-    return 1
-  fi
-  if ! command -v docker >/dev/null 2>&1; then
-    AUTO_RESET_BLOCK_REASON="docker is not available"
-    return 1
-  fi
-  if ! docker compose ps --status running db >/dev/null 2>&1; then
-    AUTO_RESET_BLOCK_REASON="docker compose db service is not running"
-    return 1
-  fi
-  AUTO_RESET_BLOCK_REASON=""
-  return 0
-}
-
-AUTO_RESET_BLOCK_REASON=""
-
-if ! run_migrations; then
-  if printf '%s' "$output" | grep -q 'P1000'; then
-    if should_auto_reset; then
-      echo "Prisma reported an authentication failure (P1000). Resetting the Docker Postgres volume and retrying once..."
-      docker compose down --volumes --remove-orphans
-      docker compose up -d db mongo
-      if ./scripts/db-wait.sh; then
-        if run_migrations; then
-          echo "Migrations succeeded after resetting the Postgres volume."
-        else
-          echo "Prisma migrations failed after retrying. Verify your DATABASE_URL credentials and rerun setup."
-          exit 1
-        fi
-      else
-        echo "Postgres did not become healthy after resetting the volume. Check container logs and rerun setup."
-        exit 1
-      fi
-    else
-      if [ -n "$AUTO_RESET_BLOCK_REASON" ]; then
-        echo "Automatic Docker reset was skipped because ${AUTO_RESET_BLOCK_REASON}."
-      fi
-      echo "Prisma migrations failed with P1000. Ensure your DATABASE_URL credentials match the running Postgres instance."
-      echo "You can set AUTO_RESET_DB_ON_P1000=1 to allow the setup script to reset the Docker volume automatically."
-      exit 1
-    fi
-  elif printf '%s' "$output" | grep -q 'P3018'; then
-    if should_auto_reset; then
-      echo "Prisma reported a migration failure (P3018). Resetting the Docker Postgres volume and retrying once..."
-      docker compose down --volumes --remove-orphans
-      docker compose up -d db mongo
-      if ./scripts/db-wait.sh; then
-        if run_migrations; then
-          echo "Migrations succeeded after resetting the Postgres volume."
-        else
-          echo "Prisma migrations failed after retrying. Verify your migration SQL and rerun setup."
-          exit 1
-        fi
-      else
-        echo "Postgres did not become healthy after resetting the volume. Check container logs and rerun setup."
-        exit 1
-      fi
-    else
-      if [ -n "$AUTO_RESET_BLOCK_REASON" ]; then
-        echo "Automatic Docker reset was skipped because ${AUTO_RESET_BLOCK_REASON}."
-      fi
-      echo "Prisma migrations failed with P3018. Inspect the failing migration or reset the database volume (docker compose down --volumes) before rerunning."
-      exit 1
-    fi
-  else
-    echo "Prisma migrations failed. Ensure your DATABASE_URL credentials match the running Postgres instance. If you changed credentials recently, run 'docker compose down --volumes' to reset the database volume before retrying."
-    exit 1
-  fi
-fi
-
-if [ ! -f .first-run-done ]; then
-  log "First run detected – seeding database"
-  pnpm --filter @apps/api prisma:seed
-  touch .first-run-done
-else
-  log "Seed already applied (remove .first-run-done to rerun)"
-fi
+log "Running migrations and seed (idempotent)"
+node scripts/run-script.mjs migrate-and-seed
 
 log "Setup complete. Next steps: pnpm run dev"

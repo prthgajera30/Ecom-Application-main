@@ -18,7 +18,8 @@ function Invoke-Migrate {
     $output = & pnpm --filter @apps/api prisma:migrate 2>&1
     $exitCode = $LASTEXITCODE
     if ($output) { $output | ForEach-Object { Write-Host $_ } }
-    return @{ Code = $exitCode; Text = ($output -join "`n") }
+    $text = [string]::Join("`n", @($output))
+    return [PSCustomObject]@{ Code = $exitCode; Text = $text }
 }
 
 $result = Invoke-Migrate
@@ -52,7 +53,7 @@ if ($result.Code -ne 0) {
         Write-Warning "Prisma reported a $reason. Resetting the Docker Postgres volume and retrying once..."
         Invoke-CheckedCommand 'docker' @('compose', 'down', '--volumes', '--remove-orphans')
         Invoke-CheckedCommand 'docker' @('compose', 'up', '-d', 'db', 'mongo')
-        Invoke-CheckedCommand 'powershell' @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', './scripts/db-wait.ps1')
+        Invoke-CheckedCommand (Join-Path $PSScriptRoot 'db-wait.ps1')
         $result = Invoke-Migrate
     } elseif ($sawP1000) {
         if ($autoResetBlockReason) { Write-Warning "Automatic Docker reset was skipped because $autoResetBlockReason." }
@@ -73,7 +74,7 @@ if ($result.Code -ne 0) {
 }
 
 if (-not (Test-Path '.first-run-done')) {
-    pnpm --filter @apps/api prisma:seed
+    Invoke-CheckedCommand 'pnpm' @('--filter', '@apps/api', 'prisma:seed')
     New-Item -Path '.first-run-done' -ItemType File | Out-Null
     Write-Host 'Database seeded (created .first-run-done marker).'
 } else {
