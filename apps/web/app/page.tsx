@@ -34,6 +34,7 @@ type Product = {
   slug: string;
   price: number;
   images?: string[];
+  brand?: string;
   defaultVariantId?: string;
   variants?: ProductVariant[];
 };
