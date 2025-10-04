@@ -1,7 +1,46 @@
 import { authHeaders } from './auth';
 import { getSessionId } from './session';
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '/api';
+const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE;
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
+
+function resolveApiBase(): string {
+  if (typeof window === 'undefined') {
+    return configuredApiBase || '/api';
+  }
+
+  if (!configuredApiBase) return '/api';
+
+  try {
+    const url = new URL(configuredApiBase, window.location.origin);
+
+    const configuredIsLocal = LOCAL_HOSTNAMES.has(url.hostname);
+    const currentIsLocal = LOCAL_HOSTNAMES.has(window.location.hostname);
+
+    if (configuredIsLocal && !currentIsLocal) {
+      return '/api';
+    }
+
+    if (url.origin === window.location.origin) {
+      return url.pathname.endsWith('/') ? url.pathname.slice(0, -1) : url.pathname || '/api';
+    }
+
+    const normalized = url.toString();
+    return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Invalid NEXT_PUBLIC_API_BASE, falling back to /api', error);
+    }
+    return '/api';
+  }
+}
+
+function withApiBase(path: string): string {
+  const base = resolveApiBase();
+  return `${base}${path}`;
+}
+
+export const API_BASE = resolveApiBase();
 
 export class ApiError extends Error {
   status: number;
@@ -38,7 +77,7 @@ async function handleError(res: Response) {
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(withApiBase(path), {
     cache: 'no-store',
     headers: buildHeaders(),
   });
@@ -47,7 +86,7 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 export async function apiPost<T>(path: string, body: any): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(withApiBase(path), {
     method: 'POST',
     headers: buildHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(body),
