@@ -4,17 +4,22 @@ $ErrorActionPreference = 'Stop'
 function Invoke-CheckedCommand {
     param(
         [Parameter(Mandatory = $true)][string]$Command,
-        [string[]]$Arguments = @()
+        [string[]]$Arguments = @(),
+        [string]$DisplayName
     )
 
+    $display = if ($DisplayName) { $DisplayName } else { "$Command $($Arguments -join ' ')" }
+    Write-Host "--> Running: $display"
     & $Command @Arguments
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) {
+        Write-Error "Command '$display' exited with code $exitCode."
         exit $exitCode
     }
 }
 
 function Invoke-Migrate {
+    Write-Host "--> Running: pnpm --filter @apps/api prisma:migrate"
     $output = & pnpm --filter @apps/api prisma:migrate 2>&1
     $exitCode = $LASTEXITCODE
     if ($output) { $output | ForEach-Object { Write-Host $_ } }
@@ -31,6 +36,7 @@ if ($env:AUTO_RESET_DB_ON_P1000) {
     }
 }
 if ($result.Code -ne 0) {
+    Write-Warning "Command 'pnpm --filter @apps/api prisma:migrate' exited with code $($result.Code)."
     $isFirstRun = -not (Test-Path '.first-run-done')
     $hasDocker = Get-Command docker -ErrorAction SilentlyContinue
     $composeRunning = $false
@@ -51,9 +57,9 @@ if ($result.Code -ne 0) {
     if ($result.Code -ne 0 -and ($sawP1000 -or $sawP3018) -and $isFirstRun -and $autoResetEnabled -and $composeRunning) {
         $reason = if ($sawP3018) { 'migration failure (P3018)' } else { 'authentication failure (P1000)' }
         Write-Warning "Prisma reported a $reason. Resetting the Docker Postgres volume and retrying once..."
-        Invoke-CheckedCommand 'docker' @('compose', 'down', '--volumes', '--remove-orphans')
-        Invoke-CheckedCommand 'docker' @('compose', 'up', '-d', 'db', 'mongo')
-        Invoke-CheckedCommand (Join-Path $PSScriptRoot 'db-wait.ps1')
+        Invoke-CheckedCommand 'docker' @('compose', 'down', '--volumes', '--remove-orphans') -DisplayName 'docker compose down --volumes --remove-orphans'
+        Invoke-CheckedCommand 'docker' @('compose', 'up', '-d', 'db', 'mongo') -DisplayName 'docker compose up -d db mongo'
+        Invoke-CheckedCommand (Join-Path $PSScriptRoot 'db-wait.ps1') @() -DisplayName 'db-wait.ps1'
         $result = Invoke-Migrate
     } elseif ($sawP1000) {
         if ($autoResetBlockReason) { Write-Warning "Automatic Docker reset was skipped because $autoResetBlockReason." }
@@ -74,7 +80,7 @@ if ($result.Code -ne 0) {
 }
 
 if (-not (Test-Path '.first-run-done')) {
-    Invoke-CheckedCommand 'pnpm' @('--filter', '@apps/api', 'prisma:seed')
+    Invoke-CheckedCommand 'pnpm' @('--filter', '@apps/api', 'prisma:seed') -DisplayName 'pnpm --filter @apps/api prisma:seed'
     New-Item -Path '.first-run-done' -ItemType File | Out-Null
     Write-Host 'Database seeded (created .first-run-done marker).'
 } else {

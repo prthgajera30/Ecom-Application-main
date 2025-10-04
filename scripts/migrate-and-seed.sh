@@ -3,11 +3,15 @@ set -euo pipefail
 
 run_migrations() {
   set +e
-  output="$(pnpm --filter @apps/api prisma:migrate 2>&1)"
-  status=$?
+  echo "--> Running: pnpm --filter @apps/api prisma:migrate"
+  MIGRATION_OUTPUT="$(pnpm --filter @apps/api prisma:migrate 2>&1)"
+  MIGRATION_STATUS=$?
   set -e
-  printf '%s\n' "$output"
-  return $status
+  printf '%s\n' "$MIGRATION_OUTPUT"
+  if [ "$MIGRATION_STATUS" -ne 0 ]; then
+    echo "Command 'pnpm --filter @apps/api prisma:migrate' exited with code ${MIGRATION_STATUS}."
+  fi
+  return $MIGRATION_STATUS
 }
 
 should_auto_reset() {
@@ -36,7 +40,7 @@ should_auto_reset() {
 AUTO_RESET_BLOCK_REASON=""
 
 if ! run_migrations; then
-  if printf '%s' "$output" | grep -q 'P1000'; then
+  if printf '%s' "$MIGRATION_OUTPUT" | grep -q 'P1000'; then
     if should_auto_reset; then
       echo "Prisma reported an authentication failure (P1000). Resetting the Docker Postgres volume and retrying once..."
       docker compose down --volumes --remove-orphans
@@ -60,7 +64,7 @@ if ! run_migrations; then
       echo "You can set AUTO_RESET_DB_ON_P1000=1 to allow the script to reset the Docker volume automatically."
       exit 1
     fi
-  elif printf '%s' "$output" | grep -q 'P3018'; then
+  elif printf '%s' "$MIGRATION_OUTPUT" | grep -q 'P3018'; then
     if should_auto_reset; then
       echo "Prisma reported a migration failure (P3018). Resetting the Docker Postgres volume and retrying once..."
       docker compose down --volumes --remove-orphans
@@ -90,6 +94,7 @@ if ! run_migrations; then
 fi
 
 if [ ! -f .first-run-done ]; then
+  echo "--> Running: pnpm --filter @apps/api prisma:seed"
   pnpm --filter @apps/api prisma:seed
   touch .first-run-done
   echo "Database seeded (created .first-run-done marker)."

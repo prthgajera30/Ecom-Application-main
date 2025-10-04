@@ -24,14 +24,25 @@ const exists = (filePath) => {
   }
 };
 
+const describe = (command, args, scriptPath) => {
+  const parts = [command, ...args];
+  if (scriptPath) {
+    parts.push(`(${scriptPath})`);
+  }
+  return parts.join(' ');
+};
+
 const run = (command, args) => spawnSync(command, args, { stdio: 'inherit', env: process.env });
 
-const handleResult = (result) => {
+const handleResult = (result, description) => {
   if (result.error) {
     throw result.error;
   }
   const code = result.status ?? 0;
   if (code !== 0) {
+    if (description) {
+      console.error(`[run-script] ${description} exited with code ${code}.`);
+    }
     process.exit(code);
   }
   process.exit(0);
@@ -39,21 +50,25 @@ const handleResult = (result) => {
 
 if (process.platform === 'win32') {
   if (exists(psPath)) {
-    handleResult(run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', psPath]));
+    const description = describe('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', psPath]);
+    handleResult(run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', psPath]), description);
   }
   if (exists(shPath)) {
-    handleResult(run('bash', [shPath]));
+    const description = describe('bash', [shPath]);
+    handleResult(run('bash', [shPath]), description);
   }
   console.error(`No script found for "${scriptBase}". Expected ${psPath} or ${shPath}.`);
   process.exit(1);
 } else {
   if (exists(shPath)) {
     const shell = exists('/bin/bash') ? 'bash' : 'sh';
-    handleResult(run(shell, [shPath]));
+    const description = describe(shell, [shPath]);
+    handleResult(run(shell, [shPath]), description);
   }
   if (exists(psPath)) {
     const pwsh = process.env.PWSH_PATH || 'pwsh';
-    handleResult(run(pwsh, ['-NoProfile', '-File', psPath]));
+    const description = describe(pwsh, ['-NoProfile', '-File', psPath]);
+    handleResult(run(pwsh, ['-NoProfile', '-File', psPath]), description);
   }
   console.error(`No script found for "${scriptBase}". Expected ${shPath} or ${psPath}.`);
   process.exit(1);

@@ -5,6 +5,20 @@ log() {
   printf '\n==> %s\n' "$1"
 }
 
+run_cmd() {
+  local cmd=("$@")
+  printf "--> Running: %s\n" "${cmd[*]}"
+  "${cmd[@]}"
+  return $?
+}
+
+run_cmd_allow_failure() {
+  local cmd=("$@")
+  printf "--> Running: %s\n" "${cmd[*]}"
+  "${cmd[@]}"
+  return $?
+}
+
 log "Ensuring Corepack is enabled"
 if command -v corepack >/dev/null 2>&1; then
   corepack enable >/dev/null 2>&1 || true
@@ -28,7 +42,7 @@ fi
 echo "pnpm $(pnpm --version)"
 
 log "Installing workspace dependencies"
-pnpm install --recursive
+run_cmd pnpm install --recursive
 
 log "Creating environment files if missing"
 if [ ! -f .env ]; then
@@ -46,13 +60,14 @@ fi
 
 if command -v docker >/dev/null 2>&1 && [ ! -f .first-run-done ]; then
   log "Resetting Docker database volumes for a clean first run"
+  printf "--> Running: docker compose down --volumes --remove-orphans\n"
   docker compose down --volumes --remove-orphans >/dev/null 2>&1 || true
 fi
 
 log "Starting PostgreSQL and MongoDB containers"
 should_wait=1
 if command -v docker >/dev/null 2>&1; then
-  if docker compose up -d db mongo; then
+  if run_cmd docker compose up -d db mongo; then
     log "Waiting for PostgreSQL to become ready"
     if ! node scripts/run-script.mjs db-wait; then
       echo "Postgres did not become healthy. Inspect containers or start your local database manually."
@@ -72,9 +87,18 @@ if [ "$should_wait" -eq 0 ]; then
 fi
 
 log "Generating Prisma clients"
-pnpm -r --if-present prisma:generate || true
+if ! run_cmd_allow_failure pnpm -r --if-present prisma:generate; then
+  echo "Command 'pnpm -r --if-present prisma:generate' exited with a non-zero status but setup will continue."
+fi
 
 log "Running migrations and seed (idempotent)"
+set +e
 node scripts/run-script.mjs migrate-and-seed
+migrate_status=$?
+set -e
+if [ "$migrate_status" -ne 0 ]; then
+  echo "migrate-and-seed script failed with exit code ${migrate_status}. Review the logs above for the pnpm commands that exited non-zero."
+  exit "$migrate_status"
+fi
 
 log "Setup complete. Next steps: pnpm run dev"

@@ -13,6 +13,8 @@ function Run-Command {
         [string]$ErrorHint
     )
 
+    $display = "$Command $($Arguments -join ' ')".Trim()
+    Write-Host "--> Running: $display"
     & $Command @Arguments
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) {
@@ -20,12 +22,14 @@ function Run-Command {
             if ($ErrorHint) {
                 Write-Warning $ErrorHint
             }
+            Write-Warning "Command '$display' exited with code $exitCode."
             return $exitCode
         }
 
         if ($ErrorHint) {
             Write-Error $ErrorHint
         }
+        Write-Error "Command '$display' exited with code $exitCode."
         exit $exitCode
     }
 
