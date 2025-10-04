@@ -199,6 +199,31 @@ services:
       - "27018:27017"
 ```
 
+#### Production stack env file (`infra/env.prod`)
+
+The production compose bundle in `infra/docker-compose.prod.yml` still uses an env file named `infra/env.prod`. Copy `infra/env.prod.example`
+to `infra/env.prod` and update the values so they mirror whichever host the stack belongs to. For example, if the Ubuntu machine owns the
+`shop_ubuntu` databases and exposes the API through `http://ubuntu-host.local:8085`, your `infra/env.prod` should look like:
+
+```env
+POSTGRES_USER=ecom
+POSTGRES_PASSWORD=ecom
+POSTGRES_DB=shop_ubuntu
+DATABASE_URL=postgresql://ecom:ecom@postgres:5432/shop_ubuntu?schema=public
+
+MONGO_URL=mongodb://mongo:27017/shop_ubuntu
+
+APP_URL=http://ubuntu-host.local:8085
+JWT_SECRET=replace-with-strong-secret
+STRIPE_SECRET_KEY=sk_live_or_test_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+```
+
+If you maintain a second stack (for example on Windows), keep a separate copy such as `infra/env.prod.win` with its own database names and
+URLs (e.g., `shop_win`, `http://windows-host.local/api`). Point `docker compose --env-file infra/env.prod.win -f infra/docker-compose.prod.yml`
+at the matching env file when you deploy that host. This keeps production secrets scoped correctly and avoids the two deployments seeding the
+same Postgres or Mongo databases by accident.
+
 Copy the appropriate env files into place on each host (or pass them via `--env-file`) before running `pnpm run setup` so every service points at its own database schemas and baked-in API URL.
 
 ## Repository structure
