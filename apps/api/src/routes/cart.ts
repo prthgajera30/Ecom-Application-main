@@ -100,7 +100,9 @@ function resolveVariant(product: any, payload: VariantPayload) {
 async function buildCartResponse(sessionId: string) {
   const session = await Session.findOne({ sessionId });
   const cart = normalizeCart(session?.cart || { items: [] });
-  const productIds = Array.from(new Set(cart.items.map((item: any) => item.productId)));
+  const productIds = Array.from(
+    new Set<string>(cart.items.map((item: any) => String(item.productId)))
+  );
   const productMap = await fetchProductMap(productIds);
 
   for (const item of cart.items) {

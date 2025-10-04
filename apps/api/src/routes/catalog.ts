@@ -117,19 +117,17 @@ function applyAttributeFilters(base: mongoose.FilterQuery<any>, filters: Attribu
   return { ...base, $and: [...(base.$and ?? []), ...attrConditions] };
 }
 
-function buildSort(sort?: string) {
-  switch (sort) {
-    case 'price_asc':
-      return { price: 1 };
-    case 'price_desc':
-      return { price: -1 };
-    case 'newest':
-      return { createdAt: -1 };
-    case 'popular':
-      return { stock: 1 };
-    default:
-      return { createdAt: -1 };
-  }
+type SortStage = Record<string, mongoose.SortOrder>;
+
+function buildSort(sort?: string): SortStage {
+  const sortMap: Record<string, SortStage> = {
+    price_asc: { price: 1 },
+    price_desc: { price: -1 },
+    newest: { createdAt: -1 },
+    popular: { stock: -1 },
+  };
+
+  return sortMap[sort ?? ''] ?? { createdAt: -1 };
 }
 
 router.get('/products', async (req, res) => {
