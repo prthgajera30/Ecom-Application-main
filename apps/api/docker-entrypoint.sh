@@ -172,6 +172,45 @@ NODE
   return 1
 }
 
+run_prisma_task() {
+  command_name="$1"
+  label="$2"
+  max_attempts="${3:-5}"
+  sleep_seconds="${4:-5}"
+
+  attempt=1
+  while [ $attempt -le $max_attempts ]; do
+    set +e
+    output=$(pnpm "$command_name" 2>&1)
+    status=$?
+    set -e
+
+    printf '%s\n' "$output"
+
+    if [ $status -eq 0 ]; then
+      return 0
+    fi
+
+    if printf '%s\n' "$output" | grep -q "P1000"; then
+      username="$(parse_url_component username "${DATABASE_URL:-}")"
+      echo "[entrypoint] $label failed because PostgreSQL rejected the credentials for user \"${username:-unknown}\"." >&2
+      echo "[entrypoint] Verify that DATABASE_URL points at the correct database and that its username/password match the Postgres service configuration. If the password was changed after the data volume was created, update it inside the database or recreate the volume." >&2
+      return $status
+    fi
+
+    if [ $attempt -ge $max_attempts ]; then
+      echo "[entrypoint] $label failed after $attempt attempts; aborting." >&2
+      return $status
+    fi
+
+    echo "[entrypoint] $label failed (attempt $attempt). Retrying in $sleep_seconds seconds..."
+    attempt=$((attempt + 1))
+    sleep "$sleep_seconds"
+  done
+
+  return 1
+}
+
 if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
   original_pg_user="$(parse_url_component username "${DATABASE_URL:-}")"
   original_pg_password="$(parse_url_component password "${DATABASE_URL:-}")"
@@ -237,34 +276,14 @@ if [ "$should_setup_db" = "true" ] && [ ! -f "$setup_marker" ]; then
   fi
 
   echo "[entrypoint] Running database migrations..."
-  migrate_attempt=0
-  while true; do
-    if pnpm prisma:migrate; then
-      break
-    fi
-    migrate_attempt=$((migrate_attempt + 1))
-    if [ $migrate_attempt -ge 5 ]; then
-      echo "[entrypoint] Prisma migrations failed after $migrate_attempt attempts; aborting." >&2
-      exit 1
-    fi
-    echo "[entrypoint] Prisma migrations failed (attempt $migrate_attempt). Retrying in 5 seconds..."
-    sleep 5
-  done
+  if ! run_prisma_task "prisma:migrate" "Prisma migrations"; then
+    exit 1
+  fi
 
   echo "[entrypoint] Seeding databases..."
-  seed_attempt=0
-  while true; do
-    if pnpm prisma:seed; then
-      break
-    fi
-    seed_attempt=$((seed_attempt + 1))
-    if [ $seed_attempt -ge 5 ]; then
-      echo "[entrypoint] Seeding failed after $seed_attempt attempts; aborting." >&2
-      exit 1
-    fi
-    echo "[entrypoint] Seeding failed (attempt $seed_attempt). Retrying in 5 seconds..."
-    sleep 5
-  done
+  if ! run_prisma_task "prisma:seed" "Prisma seed"; then
+    exit 1
+  fi
 
   touch "$setup_marker"
   echo "[entrypoint] Database ready."
