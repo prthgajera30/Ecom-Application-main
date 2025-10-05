@@ -1,6 +1,9 @@
 import { createHash } from 'crypto';
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import http from 'http';
+import https from 'https';
+import { URL } from 'url';
 
 import { prisma, Product, Category, connectMongo } from './db';
 
@@ -59,8 +62,8 @@ const productCatalog: SeedProduct[] = [
     badges: ['Bestseller'],
     images: [
       'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1526804507-25e8e2ee632e?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1588361861040-3f3c46ef6c26?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 13900,
     currency: 'USD',
@@ -412,8 +415,8 @@ const productCatalog: SeedProduct[] = [
       'Echo earbuds analyze ambient sound in real time, adapting active noise cancellation on the fly. The graphene-coated drivers deliver rich, balanced sound, while the ergonomic silhouette stays secure through every commute and workout.',
     badges: ['Top Rated'],
     images: [
-      'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1584946488600-0c2f87f2360c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 19900,
     variants: [
@@ -564,8 +567,8 @@ const productCatalog: SeedProduct[] = [
     longDescription:
       'Built from double-wall stainless steel with a copper lining, the Cascade bottle resists condensation and maintains temperature through full-day adventures. A powder-coated exterior improves grip while the removable strap clips onto packs.',
     images: [
-      'https://images.unsplash.com/photo-1600180758890-6b94519a181c?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1526404428533-46c4e5e83287?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 4200,
     variants: [
@@ -737,9 +740,9 @@ const productCatalog: SeedProduct[] = [
       'Velocity revitalizes a classic tennis silhouette with a recycled leather upper, responsive cupsole cushioning, and memory foam ankle collar. It is light enough for all-day wear while the rubber outsole maintains the board feel sneakerheads love.',
     badges: ['Recycled'],
     images: [
-      'https://images.unsplash.com/photo-1517142874080-09548ab78358?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1518226203300-8d3f06ed9c6d?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 12500,
     variants: [
@@ -800,9 +803,9 @@ const productCatalog: SeedProduct[] = [
     longDescription:
       'Mariner pairs a saltwater-resistant knit upper with antimicrobial linings, making it the go-to for boardwalk strolls and casual commutes alike. A collapsible heel turns the shoe into a slide, and the soft midsole keeps steps cushioned.',
     images: [
-      'https://images.unsplash.com/photo-1510146758428-e5e4b17b8b6d?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1445796886651-d31a2c15f3c9?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 9200,
     variants: [
@@ -864,8 +867,8 @@ const productCatalog: SeedProduct[] = [
       'Zenith is crafted from recycled double-knit fleece that traps warmth without bulk. The scuba hood, bonded zipper pockets, and knit cuff gaiters keep heat locked in while you recover or commute.',
     badges: ['Recycled'],
     images: [
-      'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1521572425945-88c34e72f762?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 10800,
     variants: [
@@ -922,8 +925,8 @@ const productCatalog: SeedProduct[] = [
     longDescription:
       'Halo uses a knit-in ventilation map and four-way stretch yarns to move with you through yoga flows and HIIT days. A stay-put waistband and soft brushed interior deliver support and comfort in equal measure.',
     images: [
-      'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1526401485004-46910ecc8e51?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 8800,
     variants: [
@@ -1039,8 +1042,8 @@ const productCatalog: SeedProduct[] = [
       'The Ridge Down Parka pairs responsibly sourced 700-fill down with a waterproof breathable shell to withstand frigid commutes and alpine getaways. Fleece-lined pockets and a removable faux-fur hood trim add warmth and versatility.',
     badges: ['Warmest'],
     images: [
-      'https://images.unsplash.com/photo-1547824477-82d40aa0c4ad?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1512427691650-1e0c84f45956?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 32900,
     variants: [
@@ -1098,8 +1101,8 @@ const productCatalog: SeedProduct[] = [
     longDescription:
       'Designed for unpredictable forecasts, the Harbor Rain Anorak packs into its own kangaroo pocket yet delivers full wind and rain protection. Side zips vent heat on hikes while reflective binding boosts visibility.',
     images: [
-      'https://images.unsplash.com/photo-1521572163475-279cf49769fe?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1514996937319-344454492b37?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 19800,
     variants: [
@@ -1157,8 +1160,8 @@ const productCatalog: SeedProduct[] = [
     longDescription:
       'Voyager is built from aerospace-grade polycarbonate with a reinforced aluminum frame, helping the case shrug off overhead bin bumps. Interior compression panels keep outfits organized while the USB pass-through keeps devices topped up.',
     images: [
-      'https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1518544889280-3caef1a7d72d?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 28500,
     variants: [
@@ -1254,8 +1257,8 @@ const productCatalog: SeedProduct[] = [
       'Each Artisan Chef Knife is forged by master bladesmiths who fold high-carbon steel into 67 layers for lasting sharpness. A stabilized walnut handle balances the blade, making prep work a joy.',
     badges: ['Small Batch'],
     images: [
-      'https://images.unsplash.com/photo-1586201375761-83865001e31b?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1604908176997-12518821a34d?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
     ],
     price: 16800,
     variants: [
@@ -1757,7 +1760,6 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
   if (categorySeeds.length) {
     await Category.insertMany(categorySeeds, { ordered: true });
   }
-
   const categoryCheck = await Category.find({})
     .select({ _id: 1 })
     .lean();
@@ -1773,29 +1775,97 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
 
   const categoryLookup = new Map(categorySeeds.map((cat) => [cat.slug, cat]));
 
-  const productDocuments = productCatalog.map((product, index) => {
+  // --- Image validation and fallbacks ---
+  // Many seed images are remote (Unsplash). Some may 404 or be removed over time.
+  // We attempt a HEAD request for each image; if it fails we substitute a category-level fallback.
+  const categoryFallbacks: Record<string, string> = {
+    footwear: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
+    apparel: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
+    outerwear: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
+    'gear-travel': 'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?auto=format&fit=crop&w=1200&q=80',
+    'home-kitchen': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+    accessories: 'https://images.unsplash.com/photo-1517142874080-09548ab78358?auto=format&fit=crop&w=1200&q=80',
+    wellness: 'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
+    tech: 'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
+  };
+
+  async function urlExists(url: string, timeout = 3000) {
+    return new Promise<boolean>((resolve) => {
+      try {
+        const u = new URL(url);
+        const lib = u.protocol === 'https:' ? https : http;
+        const req = lib.request(
+          {
+            method: 'HEAD',
+            host: u.hostname,
+            path: u.pathname + u.search,
+            port: u.port || (u.protocol === 'https:' ? 443 : 80),
+            timeout,
+          },
+          (res) => {
+            resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 400);
+          },
+        );
+        req.on('error', () => resolve(false));
+        req.on('timeout', () => {
+          req.destroy();
+          resolve(false);
+        });
+        req.end();
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  }
+
+  async function resolveImages(urls?: string[] | undefined, categorySlug?: string) {
+    const fallback = categoryFallbacks[categorySlug ?? ''] ?? Object.values(categoryFallbacks)[0];
+    if (!urls || urls.length === 0) return [fallback];
+
+    const out: string[] = [];
+    for (const url of urls) {
+      try {
+        const ok = await urlExists(url);
+        out.push(ok ? url : fallback);
+      } catch (err) {
+        out.push(fallback);
+      }
+    }
+    // ensure at least one unique url
+    return out.length ? out : [fallback];
+  }
+
+  const productDocuments: any[] = [];
+  for (const [index, product] of productCatalog.entries()) {
     const category = categoryLookup.get(product.categorySlug);
     if (!category) {
       throw new Error(`Seed configuration error: category ${product.categorySlug} not found for product ${product.slug}`);
     }
 
-    const variants = product.variants.map((variant) => {
+    // resolve product-level images (validate and fallback when necessary)
+    const resolvedProductImages = await resolveImages(product.images, product.categorySlug);
+
+    const variants = [] as any[];
+    for (const variant of product.variants) {
       const resolvedId =
         variant.variantId ||
         `${product.slug}-${Object.values(variant.options)
           .join('-')
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')}`;
-      return {
+
+      const resolvedVariantImages = await resolveImages(variant.images, product.categorySlug);
+
+      variants.push({
         variantId: resolvedId,
         sku: variant.sku,
         label: variant.label,
         options: variant.options,
         price: variant.price,
         stock: variant.stock,
-        images: variant.images,
-      };
-    });
+        images: resolvedVariantImages,
+      });
+    }
 
     const totalStock = variants.reduce((sum, entry) => sum + (entry.stock || 0), 0);
     const defaultVariantId = variants[0]?.variantId;
@@ -1810,7 +1880,7 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
       Object.entries(baseAttributes).filter(([, value]) => value !== undefined && value !== null && value !== ''),
     );
 
-    return {
+    productDocuments.push({
       _id: objectIdFor(`product:${product.slug}`),
       title: product.title,
       slug: product.slug,
@@ -1818,7 +1888,7 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
       longDescription: product.longDescription,
       brand: product.brand,
       badges: product.badges ?? [],
-      images: product.images,
+      images: resolvedProductImages,
       price: variants[0]?.price ?? product.price,
       currency: product.currency ?? 'USD',
       categoryId: category._id.toString(),
@@ -1828,8 +1898,8 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
       defaultVariantId,
       specs: product.specs ?? [],
       rating: product.rating ?? { average: 4.4, count: 24 },
-    };
-  });
+    });
+  }
 
   await Product.deleteMany({});
   if (productDocuments.length) {

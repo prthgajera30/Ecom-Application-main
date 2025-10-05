@@ -42,7 +42,8 @@ fi
 echo "pnpm $(pnpm --version)"
 
 log "Installing workspace dependencies"
-run_cmd pnpm install --recursive
+# install without running postinstall scripts to avoid prisma generate race on Windows; we'll run generate explicitly later
+run_cmd pnpm install --recursive --ignore-scripts
 
 log "Creating environment files if missing"
 if [ ! -f .env ]; then
@@ -87,6 +88,13 @@ if [ "$should_wait" -eq 0 ]; then
 fi
 
 log "Generating Prisma clients"
+# Cleanup stale prisma tmp files and move existing DLL out of the way to avoid EPERM on Windows
+if [ -d node_modules/.prisma/client ]; then
+  rm -f node_modules/.prisma/client/query_engine-windows.dll.node.tmp* || true
+  if [ -f node_modules/.prisma/client/query_engine-windows.dll.node ]; then
+    mv node_modules/.prisma/client/query_engine-windows.dll.node node_modules/.prisma/client/query_engine-windows.dll.node.bak || true
+  fi
+fi
 if ! run_cmd_allow_failure pnpm -r --if-present prisma:generate; then
   echo "Command 'pnpm -r --if-present prisma:generate' exited with a non-zero status but setup will continue."
 fi
@@ -99,6 +107,16 @@ set -e
 if [ "$migrate_status" -ne 0 ]; then
   echo "migrate-and-seed script failed with exit code ${migrate_status}. Review the logs above for the pnpm commands that exited non-zero."
   exit "$migrate_status"
+fi
+
+if [ "${SKIP_SEED_IMAGE_FIX:-}" != "1" ]; then
+  log "Validating and fixing seed images in MongoDB"
+  # default runs and applies changes; use --dry for a preview
+  if ! node scripts/fix-seed-images.js; then
+    echo "Warning: seed image fixer encountered errors but setup will continue."
+  fi
+else
+  echo "SKIP_SEED_IMAGE_FIX=1 detected; skipping seed image fixer step"
 fi
 
 log "Setup complete. Next steps: pnpm run dev"

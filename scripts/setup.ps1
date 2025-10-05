@@ -62,7 +62,7 @@ $pnpmVersion = (& pnpm --version)
 Write-Host "pnpm $pnpmVersion"
 
 Write-Step "Installing workspace dependencies"
-Run-Command 'pnpm' @('install', '--recursive')
+Run-Command 'pnpm' @('install', '--recursive', '--ignore-scripts')
 
 Write-Step "Creating environment files if missing"
 if (-not (Test-Path '.env')) {
@@ -103,9 +103,27 @@ if (-not $shouldWait) {
 }
 
 Write-Step "Generating Prisma clients"
+# On Windows prisma generate can fail due to file locks when moving the query engine DLL.
+# Proactively remove stale tmp files and move the existing DLL out of the way so generate can succeed.
+$prismaClientDir = Join-Path $PSScriptRoot '..\node_modules\.prisma\client'
+if (Test-Path $prismaClientDir) {
+    Get-ChildItem -Path $prismaClientDir -Filter 'query_engine-windows.dll.node.tmp*' -ErrorAction SilentlyContinue | ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
+    $dll = Join-Path $prismaClientDir 'query_engine-windows.dll.node'
+    if (Test-Path $dll) {
+        Rename-Item -Path $dll -NewName 'query_engine-windows.dll.node.bak' -ErrorAction SilentlyContinue
+    }
+}
 [void](Run-Command 'pnpm' @('-r', '--if-present', 'prisma:generate') -AllowFailure)
 
 Write-Step "Running migrations and seed (idempotent)"
 Run-Command 'node' @($NodeDispatcher, 'migrate-and-seed')
+
+if ($env:SKIP_SEED_IMAGE_FIX -ne '1') {
+    Write-Step "Validating and fixing seed images in MongoDB"
+    # run in non-dry mode by default; scripts/fix-seed-images.js will connect to MONGO_URL or default
+    Run-Command 'node' @('scripts/fix-seed-images.js') -AllowFailure
+} else {
+    Write-Host "SKIP_SEED_IMAGE_FIX=1 detected; skipping seed image fix step"
+}
 
 Write-Step "Setup complete. Next steps: pnpm run dev"
