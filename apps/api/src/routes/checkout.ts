@@ -156,6 +156,7 @@ async function handleCheckoutCompleted(
 
   const orderItems: {
     productId: string;
+    title?: string;
     price: number;
     qty: number;
     variantId?: string | null;
@@ -174,6 +175,7 @@ async function handleCheckoutCompleted(
     total += qty * unitPrice;
     orderItems.push({
       productId: String(product._id),
+      title: product.title,
       price: Math.round(unitPrice),
       qty,
       variantId: variantId || null,
@@ -196,6 +198,22 @@ async function handleCheckoutCompleted(
         status: isPaid ? 'paid' : 'pending',
       },
     });
+
+    // Create order items
+    for (const item of orderItems) {
+      await tx.orderItem.create({
+        data: {
+          orderId: createdOrder.id,
+          productId: item.productId,
+          title: item.title,
+          price: item.price,
+          qty: item.qty,
+          variantId: item.variantId,
+          variantLabel: item.variantLabel,
+          variantOptions: item.variantOptions,
+        },
+      });
+    }
 
     if (paymentIntentId) {
       await tx.payment.create({

@@ -10,6 +10,7 @@ import { getSocket, identifySession } from '../lib/ws';
 import { useCartState } from '../context/CartContext';
 import { ThemeToggle } from './ThemeToggle';
 import { Button, ButtonLink } from './ui/Button';
+import { UserMenu } from './ui/UserMenu';
 
 const navLinks = [
   { href: '/products', label: 'Products' },
@@ -152,14 +153,7 @@ export default function Header() {
               </ButtonLink>
             </>
           ) : (
-            <>
-              <span className="hidden text-sm font-medium text-subtle sm:inline">
-                {user.email}
-              </span>
-              <Button variant="secondary" className="hidden md:inline-flex" onClick={handleLogout}>
-                Logout
-              </Button>
-            </>
+            <UserMenu />
           )}
           <ThemeToggle className="md:hidden" />
           <Button
@@ -248,6 +242,19 @@ export default function Header() {
                   </span>
                 </Link>
               ))}
+              {user && (
+                <Link
+                  href="/profile"
+                  className={`rounded-xl border border-[var(--surface-border)] px-4 py-2 text-sm font-medium transition ${
+                    isActive('/profile')
+                      ? 'bg-[color:var(--surface-muted)] text-[var(--text-primary)]'
+                      : 'bg-[color:var(--surface-strong)] hover:bg-[color:var(--surface-muted)] hover:text-[var(--text-primary)]'
+                  }`}
+                  onClick={closeMobile}
+                >
+                  <span>Profile</span>
+                </Link>
+              )}
             </nav>
             <div className="mt-6 space-y-3">
               {!user ? (

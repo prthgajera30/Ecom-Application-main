@@ -55,6 +55,7 @@ export type CartContextValue = {
   pending: Record<string, boolean>;
   refresh: () => Promise<void>;
   addItem: (productId: string, qty?: number, options?: AddItemOptions) => Promise<CartResponse>;
+  addMultipleItems: (items: Array<{ productId: string; qty: number; options?: AddItemOptions }>) => Promise<CartResponse>;
   updateItem: (productId: string, qty: number, options?: { variantId?: string | null }) => Promise<CartResponse>;
   removeItem: (productId: string, options?: { variantId?: string | null }) => Promise<CartResponse>;
   beginCheckout: (options?: { successUrl?: string; cancelUrl?: string }) => Promise<string>;
@@ -178,6 +179,36 @@ const addItem = useCallback(
   [mutate]
 );
 
+const addMultipleItems = useCallback(
+  async (items: Array<{ productId: string; qty: number; options?: AddItemOptions }>) => {
+    // Batch add items by calling cart/add for each item sequentially
+    // but don't show individual "Added to cart" toasts for each item
+    const results = [];
+    for (const item of items) {
+      try {
+        const result = await mutate(
+          `reorder-${item.productId}`,
+          () => apiPost<CartResponse>('/cart/add', {
+            productId: item.productId,
+            qty: item.qty,
+            ...item.options
+          })
+        );
+        results.push(result);
+      } catch (error) {
+        console.warn('Failed to add item to cart:', item.productId, error);
+        // Continue with other items even if one fails
+      }
+    }
+
+    // Return the final cart state
+    const finalCart = await apiGet<CartResponse>('/cart');
+    applyCart(finalCart);
+    return finalCart;
+  },
+  [mutate, applyCart]
+);
+
 const updateItem = useCallback(
   (productId: string, qty: number, options?: { variantId?: string | null }) => {
     const lineKey = makeLineKey(productId, options?.variantId ?? null);
@@ -246,11 +277,12 @@ const subtotal = useMemo(
       pending,
       refresh,
       addItem,
+      addMultipleItems,
       updateItem,
       removeItem,
       beginCheckout,
     }),
-    [cart.items, cart.products, loading, error, itemCount, subtotal, pending, refresh, addItem, updateItem, removeItem, beginCheckout]
+    [cart.items, cart.products, loading, error, itemCount, subtotal, pending, refresh, addItem, addMultipleItems, updateItem, removeItem, beginCheckout]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

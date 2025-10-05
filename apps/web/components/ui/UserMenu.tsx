@@ -1,0 +1,184 @@
+"use client";
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { useCartState } from '../../context/CartContext';
+import { Button, ButtonLink } from './Button';
+import { Card } from './Card';
+
+export function UserMenu() {
+  const { user, logout } = useAuth();
+  const { push } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { itemCount, pending, beginCheckout } = useCartState();
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  const handleLogout = () => {
+    logout();
+    setIsOpen(false);
+  };
+
+  const startCheckout = async () => {
+    setIsOpen(false);
+    if (!user) {
+      push({ variant: 'info', title: 'Login required', description: 'Sign in before checking out.' });
+      router.push('/login?next=/cart');
+      return;
+    }
+    try {
+      const url = await beginCheckout();
+      if (url) window.location.href = url;
+    } catch (err) {
+      /* toast handled in beginCheckout */
+    }
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 rounded-xl border border-[var(--surface-border)] bg-[color:var(--surface-strong)] px-3 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+      >
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
+            <span className="text-sm font-bold text-white">
+              {user.email?.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <span className="hidden sm:inline text-xs text-subtle">
+            {user.email?.split('@')[0]}
+          </span>
+        </div>
+        <span className={`text-subtle transition-transform text-sm ${isOpen ? 'rotate-180 inline-block' : 'inline-block'}`}>
+          ▼
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full z-50 mt-2 w-64 origin-top-right">
+          <Card className="p-2 shadow-2xl">
+            <div className="space-y-1">
+              {/* User Info Header */}
+              <div className="border-b border-white/10 px-3 py-3">
+                <div className="text-sm font-medium text-white truncate">
+                  {user.email}
+                </div>
+                <div className="text-xs text-indigo-100/60 capitalize">
+                  {user.role} account
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="px-1">
+                <div className="space-y-1">
+                  {/* Profile */}
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+                  >
+                    <span className="text-indigo-400 text-sm">⚙️</span>
+                    <span>Profile Settings</span>
+                  </Link>
+
+                  {/* Orders */}
+                  <Link
+                    href="/orders"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+                  >
+                    <span className="text-indigo-400 text-sm">📦</span>
+                    <span>My Orders</span>
+                  </Link>
+
+                  {/* Wishlist */}
+                  <Link
+                    href="/wishlist"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+                  >
+                    <span className="text-pink-400 text-sm">❤️</span>
+                    <span>Wishlist</span>
+                    {itemCount > 0 && (
+                      <span className="ml-auto rounded-full bg-pink-500/20 px-2 py-0.5 text-xs text-pink-200">
+                        ♥
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Divider */}
+                  <hr className="border-white/10 my-2" />
+
+                  {/* Cart Link */}
+                  <Link
+                    href="/cart"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+                  >
+                    <span className="text-emerald-400 text-sm">🛒</span>
+                    <span>Shopping Cart</span>
+                    {itemCount > 0 && (
+                      <span className="ml-auto rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">
+                        {itemCount}
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Checkout Button */}
+                  {itemCount > 0 && (
+                    <Button
+                      onClick={startCheckout}
+                      disabled={Boolean(pending.checkout)}
+                      className="w-full justify-center text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                      size="sm"
+                    >
+                      {pending.checkout ? 'Preparing...' : 'Checkout'} ({itemCount})
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <hr className="border-white/10 my-2" />
+
+              {/* Logout */}
+              <div className="px-1">
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  className="w-full justify-start px-3 py-2.5 text-sm font-medium text-red-200 hover:bg-red-500/10 hover:text-red-100"
+                >
+                  <span className="mr-3 text-base">🚪</span>
+                  Sign Out
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}

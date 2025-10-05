@@ -6,6 +6,7 @@ import { ToastProvider } from '../context/ToastContext';
 import { CartProvider } from '../context/CartContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { WishlistProvider } from '../context/WishlistContext';
+import { ProfileProvider } from '../context/ProfileContext';
 import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-sans' });
@@ -36,15 +37,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AuthProvider>
               <CartProvider>
                 <WishlistProvider>
-                  <div className="relative min-h-screen overflow-hidden">
-                    <div className="pointer-events-none absolute inset-0">
-                      <div className="absolute -top-32 right-10 h-80 w-80 rounded-full bg-[var(--bg-glow-1)] blur-3xl" />
-                      <div className="absolute bottom-[-6rem] left-[-3rem] h-[22rem] w-[22rem] rounded-full bg-[var(--bg-glow-2)] blur-3xl" />
+                  <ProfileProvider>
+                    <div className="relative min-h-screen overflow-hidden">
+                      <div className="pointer-events-none absolute inset-0">
+                        <div className="absolute -top-32 right-10 h-80 w-80 rounded-full bg-[var(--bg-glow-1)] blur-3xl" />
+                        <div className="absolute bottom-[-6rem] left-[-3rem] h-[22rem] w-[22rem] rounded-full bg-[var(--bg-glow-2)] blur-3xl" />
+                      </div>
+                      <Header />
+                      <main className="relative z-10 container py-12 sm:py-16 lg:py-20">{children}</main>
+                      <ToastShelf />
                     </div>
-                    <Header />
-                    <main className="relative z-10 container py-12 sm:py-16 lg:py-20">{children}</main>
-                    <ToastShelf />
-                  </div>
+                  </ProfileProvider>
                 </WishlistProvider>
               </CartProvider>
             </AuthProvider>
