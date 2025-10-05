@@ -25,6 +25,10 @@ const createSchema = z.object({
   cancelUrl: z.string().url().optional(),
 });
 
+const finalizeSchema = z.object({
+  checkoutSessionId: z.string().min(10),
+});
+
 function getSessionId(req: any) {
   return (req.headers['x-session-id'] as string) || undefined;
 }
@@ -78,14 +82,17 @@ function resolveVariantPricing(product: any, item: SessionCartItem) {
   return { variant, variantId, unitPrice, label, options };
 }
 
-async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, req: any) {
-  if (!isStripeConfigured) return;
+async function handleCheckoutCompleted(
+  stripeSession: Stripe.Checkout.Session,
+  req: any
+): Promise<{ orderId?: string; cartCleared: boolean; status?: string } | null> {
+  if (!isStripeConfigured) return null;
   const sessionId = (stripeSession.metadata?.sessionId as string) || (stripeSession.client_reference_id as string) || undefined;
-  if (!sessionId) return;
+  if (!sessionId) return null;
 
   const sessionDoc = await Session.findOne({ sessionId });
   const cartItems = getCartItems(sessionDoc);
-  if (!cartItems.length) return;
+  if (!cartItems.length) return null;
 
   let userId = sessionDoc?.userId || (stripeSession.metadata?.userId as string | undefined);
   let userEmail = stripeSession.metadata?.userEmail as string | undefined;
@@ -106,7 +113,7 @@ async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, r
     }
   }
 
-  if (!userId) return;
+  if (!userId) return null;
 
   await ensureSessionUser(sessionDoc, userId);
 
@@ -114,11 +121,28 @@ async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, r
     ? stripeSession.payment_intent
     : stripeSession.payment_intent?.id;
 
+  const paymentStatus = stripeSession.payment_status || 'paid';
+  const isPaid = paymentStatus === 'paid';
+
   if (paymentIntentId) {
-    const existingPayment = await prisma.payment.findFirst({ where: { stripePaymentIntentId: paymentIntentId } });
+    const existingPayment = await prisma.payment.findFirst({
+      where: { stripePaymentIntentId: paymentIntentId },
+      include: { order: { select: { id: true, status: true } } },
+    });
     if (existingPayment) {
-      await clearSessionCart(sessionDoc);
-      return;
+      if (isPaid) {
+        await clearSessionCart(sessionDoc);
+        const io = req.app.get('io');
+        if (io) {
+          io.to('inventory').emit('cart:updated', { sessionId, items: [] });
+          io.to(`session:${sessionId}`).emit('cart:updated', { items: [] });
+        }
+      }
+      return {
+        orderId: existingPayment.orderId,
+        cartCleared: isPaid,
+        status: existingPayment.order?.status,
+      };
     }
   }
 
@@ -130,7 +154,14 @@ async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, r
     productMap.set(String(obj._id), obj);
   }
 
-  const orderItems: { productId: string; price: number; qty: number; variantId?: string | null; variantLabel?: string | null; variantOptions?: any }[] = [];
+  const orderItems: {
+    productId: string;
+    price: number;
+    qty: number;
+    variantId?: string | null;
+    variantLabel?: string | null;
+    variantOptions?: any;
+  }[] = [];
   let total = 0;
 
   for (const item of cartItems) {
@@ -151,58 +182,54 @@ async function handleCheckoutCompleted(stripeSession: Stripe.Checkout.Session, r
     });
   }
 
-  if (!orderItems.length) return;
+  if (!orderItems.length) return null;
 
   const currency = (stripeSession.currency || products[0]?.currency || 'usd').toLowerCase();
-  const paymentStatus = stripeSession.payment_status || 'paid';
 
   const order = await prisma.$transaction(async (tx) => {
-    return tx.order.create({
+    const createdOrder = await tx.order.create({
       data: {
         userId,
+        sessionId,
         total,
         currency,
-        status: paymentStatus === 'paid' ? 'paid' : 'pending',
-        items: {
-          create: orderItems.map((item) => ({
-            productId: item.productId,
-            price: item.price,
-            qty: item.qty,
-            variantId: item.variantId,
-            variantLabel: item.variantLabel,
-            variantOptions: item.variantOptions,
-          })),
-        },
-        ...(paymentIntentId
-          ? {
-              payment: {
-                create: {
-                  stripePaymentIntentId: paymentIntentId,
-                  amount: stripeSession.amount_total ?? total,
-                  status: paymentStatus,
-                },
-              },
-            }
-          : {}),
+        status: isPaid ? 'paid' : 'pending',
       },
-      include: { items: true, payment: true },
     });
+
+    if (paymentIntentId) {
+      await tx.payment.create({
+        data: {
+          orderId: createdOrder.id,
+          stripePaymentIntentId: paymentIntentId,
+          amount: stripeSession.amount_total ?? total,
+          status: paymentStatus,
+        },
+      });
+    }
+
+    return createdOrder;
   });
 
-  await clearSessionCart(sessionDoc);
-
-  const io = req.app.get('io');
-  if (io) {
-    io.to('inventory').emit('cart:updated', { sessionId, items: [] });
-    io.to(`session:${sessionId}`).emit('cart:updated', { items: [] });
-    io.to(`user:${userId}`).emit('order:paid', {
-      orderId: order.id,
-      total: order.total,
-      currency: order.currency,
-      status: order.status,
-      items: order.items,
-    });
+  let cartCleared = false;
+  if (isPaid) {
+    await clearSessionCart(sessionDoc);
+    cartCleared = true;
+    const io = req.app.get('io');
+    if (io) {
+      io.to('inventory').emit('cart:updated', { sessionId, items: [] });
+      io.to(`session:${sessionId}`).emit('cart:updated', { items: [] });
+      io.to(`user:${userId}`).emit('order:paid', {
+        orderId: order.id,
+        total: order.total,
+        currency: order.currency,
+        status: order.status,
+        items: orderItems,
+      });
+    }
   }
+
+  return { orderId: order.id, cartCleared, status: order.status };
 }
 
 router.post('/checkout/create-session', async (req, res) => {
@@ -281,6 +308,42 @@ router.post('/checkout/create-session', async (req, res) => {
   } catch (err: any) {
     console.error('Failed to create checkout session', err);
     return res.status(500).json({ error: 'CHECKOUT_FAILED' });
+  }
+});
+
+router.post('/checkout/finalize', async (req, res) => {
+  if (!isStripeConfigured) {
+    return res.status(503).json({ error: 'STRIPE_NOT_CONFIGURED' });
+  }
+  const parse = finalizeSchema.safeParse(req.body || {});
+  if (!parse.success) {
+    return res.status(400).json({ error: 'VALIDATION', details: parse.error.flatten() });
+  }
+
+  try {
+    const stripeSession = await stripe.checkout.sessions.retrieve(parse.data.checkoutSessionId, {
+      expand: ['payment_intent'],
+    });
+
+    if (!stripeSession) {
+      return res.status(404).json({ error: 'SESSION_NOT_FOUND' });
+    }
+
+    const metadataSessionId = (stripeSession.metadata?.sessionId as string) || (stripeSession.client_reference_id as string) || undefined;
+    const requestSessionId = getSessionId(req);
+    if (metadataSessionId && requestSessionId && metadataSessionId !== requestSessionId) {
+      return res.status(403).json({ error: 'SESSION_MISMATCH' });
+    }
+
+    const result = await handleCheckoutCompleted(stripeSession, req);
+    if (!result) {
+      return res.status(202).json({ pending: true });
+    }
+
+    return res.json({ success: true, ...result, status: result.status ?? stripeSession.payment_status });
+  } catch (err) {
+    console.error('Failed to finalize checkout session', err);
+    return res.status(500).json({ error: 'FINALIZE_FAILED' });
   }
 });
 

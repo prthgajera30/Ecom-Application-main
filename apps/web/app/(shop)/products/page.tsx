@@ -542,7 +542,7 @@ function ProductsPageContent() {
                 </span>
               ) : null}
             </button>
-            <div className="flex-1">
+            <div className="flex gap-2">
               <label htmlFor="mobile-sort" className="sr-only">
                 Sort products
               </label>
@@ -556,7 +556,11 @@ function ProductsPageContent() {
                 className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
               >
                 {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
+                  <option
+                    key={option.value}
+                    value={option.value}
+                    className="bg-[color:var(--surface-solid)] text-[var(--text-primary)]"
+                  >
                     {option.label}
                   </option>
                 ))}

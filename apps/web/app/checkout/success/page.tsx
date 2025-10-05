@@ -1,14 +1,50 @@
 "use client";
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ApiError, apiPost } from '../../../lib/api';
 import { useCartState } from '../../../context/CartContext';
 
 export default function Success() {
   const { refresh } = useCartState();
+  const searchParams = useSearchParams();
+  const checkoutSessionId = searchParams.get('session_id');
+  const [finalizing, setFinalizing] = useState(false);
+  const [finalizeError, setFinalizeError] = useState<string | null>(null);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let cancelled = false;
+
+    async function finalizeSession() {
+      if (!checkoutSessionId) {
+        await refresh();
+        return;
+      }
+
+      setFinalizing(true);
+      setFinalizeError(null);
+
+      try {
+        await apiPost('/checkout/finalize', { checkoutSessionId });
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof ApiError ? err.message : 'Unable to finalize your order right now.';
+          setFinalizeError(message);
+        }
+      } finally {
+        if (!cancelled) {
+          setFinalizing(false);
+        }
+        await refresh();
+      }
+    }
+
+    finalizeSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checkoutSessionId, refresh]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -18,6 +54,12 @@ export default function Success() {
         <p className="mt-3 text-sm text-emerald-100/80">
           Thanks for running a Stripe test payment. Jump into the orders dashboard or keep exploring the catalog to trigger more realtime events.
         </p>
+        {finalizing && (
+          <p className="mt-4 text-xs text-emerald-100/70">Finalizing your order…</p>
+        )}
+        {finalizeError && (
+          <p className="mt-4 rounded-full bg-rose-500/15 px-4 py-2 text-xs text-rose-100">{finalizeError}</p>
+        )}
         <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
           <Link href="/orders" className="btn-primary">View orders</Link>
           <Link href="/products" className="btn-secondary">Continue shopping</Link>
