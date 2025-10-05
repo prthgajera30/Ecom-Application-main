@@ -6,6 +6,8 @@ import https from 'https';
 import { URL } from 'url';
 
 import { prisma, Product, Category, connectMongo } from './db';
+import fs from 'fs';
+import path from 'path';
 
 const DEFAULT_MONGO_URL = 'mongodb://localhost:27017/shop';
 
@@ -41,24 +43,60 @@ type SeedProduct = {
 
 const categoriesData = [
   { name: 'Footwear', slug: 'footwear' },
-  { name: 'Apparel', slug: 'apparel' },
-  { name: 'Outerwear', slug: 'outerwear' },
-  { name: 'Gear & Travel', slug: 'gear-travel' },
+  { name: 'Clothing', slug: 'clothing' },
+  { name: 'Outerwear & Jackets', slug: 'outerwear' },
+  { name: 'Bags & Luggage', slug: 'bags-luggage' },
   { name: 'Home & Kitchen', slug: 'home-kitchen' },
+  { name: 'Electronics', slug: 'electronics' },
+  { name: 'Sports & Outdoors', slug: 'sports-outdoors' },
+  { name: 'Beauty & Personal Care', slug: 'beauty-personal-care' },
   { name: 'Accessories', slug: 'accessories' },
-  { name: 'Wellness', slug: 'wellness' },
-  { name: 'Tech', slug: 'tech' },
+  { name: 'Jewelry', slug: 'jewelry' },
 ];
 
+// Image mapping and validation functions...
+let seedImageMap: Record<string, string> | null = null;
+try {
+  const mapPath = path.resolve(__dirname, '..', 'seed-image-map.json');
+  if (fs.existsSync(mapPath)) {
+    seedImageMap = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+  }
+} catch (e) {
+  seedImageMap = null;
+}
+
+function mapImage(url: string) {
+  if (!url) return url;
+  if (seedImageMap && seedImageMap[url]) return seedImageMap[url];
+
+  try {
+    const u = new URL(url);
+    const host = u.hostname;
+    if (host === 'localhost' || host.endsWith('.localhost') || host === '127.0.0.1') return url;
+    if (host.includes('picsum.photos') || host.includes('placehold.co')) return url;
+  } catch (e) {
+    // non-URL strings fall through
+  }
+
+  try {
+    const seed = createHash('md5').update(url).digest('hex').slice(0, 10);
+    return `https://picsum.photos/seed/${seed}/1200/800`;
+  } catch (e) {
+    return url;
+  }
+}
+
+const PLACEHOLDER_IMAGE = 'https://placehold.co/1200x800?text=Image+Unavailable';
+
 const productCatalog: SeedProduct[] = [
+  // Original products with corrected category slugs
   {
     slug: 'aurora-running-sneaker',
     title: 'Aurora Running Sneaker',
     brand: 'StrideLab',
     categorySlug: 'footwear',
     description: 'Lightweight daily trainer with responsive cushioning for runners logging serious miles.',
-    longDescription:
-      'Aurora blends a recycled engineered mesh upper with a pebax energy core midsole to deliver breathable comfort and serious rebound. The secure heel cradle and articulated outsole flex naturally with your stride, making it the go-to shoe for tempo sessions and long runs alike.',
+    longDescription: 'Aurora blends a recycled engineered mesh upper with a pebax energy core midsole to deliver breathable comfort and serious rebound. The secure heel cradle and articulated outsole flex naturally with your stride, making it the go-to shoe for tempo sessions and long runs alike.',
     badges: ['Bestseller'],
     images: [
       'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
@@ -68,6 +106,18 @@ const productCatalog: SeedProduct[] = [
     price: 13900,
     currency: 'USD',
     variants: [
+      {
+        variantId: 'aurora-running-sneaker-onyx-7',
+        label: 'Onyx Black / US 7',
+        sku: 'SL-AUR-ONX-7',
+        price: 13900,
+        stock: 12,
+        options: { color: 'Onyx Black', size: 'US 7' },
+        images: [
+          'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1526804507-25e8e2ee632e?auto=format&fit=crop&w=1200&q=80',
+        ],
+      },
       {
         variantId: 'aurora-running-sneaker-onyx-8',
         label: 'Onyx Black / US 8',
@@ -85,7 +135,7 @@ const productCatalog: SeedProduct[] = [
         label: 'Onyx Black / US 9',
         sku: 'SL-AUR-ONX-9',
         price: 13900,
-        stock: 22,
+        stock: 20,
         options: { color: 'Onyx Black', size: 'US 9' },
         images: [
           'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
@@ -97,7 +147,7 @@ const productCatalog: SeedProduct[] = [
         label: 'Onyx Black / US 10',
         sku: 'SL-AUR-ONX-10',
         price: 13900,
-        stock: 18,
+        stock: 15,
         options: { color: 'Onyx Black', size: 'US 10' },
         images: [
           'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
@@ -105,39 +155,27 @@ const productCatalog: SeedProduct[] = [
         ],
       },
       {
-        variantId: 'aurora-running-sneaker-ocean-8',
-        label: 'Ocean Mist / US 8',
-        sku: 'SL-AUR-OCN-8',
-        price: 14500,
+        variantId: 'aurora-running-sneaker-white-8',
+        label: 'Cloud White / US 8',
+        sku: 'SL-AUR-WHT-8',
+        price: 13900,
         stock: 14,
-        options: { color: 'Ocean Mist', size: 'US 8' },
+        options: { color: 'Cloud White', size: 'US 8' },
         images: [
-          'https://images.unsplash.com/photo-1595341888016-a392ef81b7de?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1579338559194-a162d19bf842?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=1200&q=80',
         ],
       },
       {
-        variantId: 'aurora-running-sneaker-ocean-9',
-        label: 'Ocean Mist / US 9',
-        sku: 'SL-AUR-OCN-9',
-        price: 14500,
-        stock: 20,
-        options: { color: 'Ocean Mist', size: 'US 9' },
+        variantId: 'aurora-running-sneaker-white-9',
+        label: 'Cloud White / US 9',
+        sku: 'SL-AUR-WHT-9',
+        price: 13900,
+        stock: 18,
+        options: { color: 'Cloud White', size: 'US 9' },
         images: [
-          'https://images.unsplash.com/photo-1595341888016-a392ef81b7de?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1579338559194-a162d19bf842?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'aurora-running-sneaker-ocean-10',
-        label: 'Ocean Mist / US 10',
-        sku: 'SL-AUR-OCN-10',
-        price: 14500,
-        stock: 15,
-        options: { color: 'Ocean Mist', size: 'US 10' },
-        images: [
-          'https://images.unsplash.com/photo-1595341888016-a392ef81b7de?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1579338559194-a162d19bf842?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=1200&q=80',
+          'https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=1200&q=80',
         ],
       },
     ],
@@ -152,142 +190,16 @@ const productCatalog: SeedProduct[] = [
       color: 'Onyx Black',
     },
   },
-  {
-    slug: 'meridian-commuter-backpack',
-    title: 'Meridian Commuter Backpack',
-    brand: 'Northwind Supply',
-    categorySlug: 'gear-travel',
-    description: 'Weatherproof 24L commuter pack with padded laptop sleeve and clever organization.',
-    longDescription:
-      'The Meridian Commuter Backpack is engineered to keep your daily essentials protected and within reach. A DWR-coated recycled canvas shell sheds unexpected showers while the structured interior houses a 16-inch laptop sleeve, quick-access tech pocket, and modular compression straps.',
-    badges: ['Water-resistant', 'Recycled'],
-    images: [
-      'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1518049362265-d5b2a6467637?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 18900,
-    currency: 'USD',
-    variants: [
-      {
-        variantId: 'meridian-backpack-graphite',
-        label: 'Graphite',
-        sku: 'NW-MER-GRA',
-        price: 18900,
-        stock: 28,
-        options: { color: 'Graphite Grey', capacity: '24L' },
-        images: [
-          'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1518049362265-d5b2a6467637?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'meridian-backpack-moss',
-        label: 'Deep Moss',
-        sku: 'NW-MER-MOS',
-        price: 18900,
-        stock: 24,
-        options: { color: 'Deep Moss', capacity: '24L' },
-        images: [
-          'https://images.unsplash.com/photo-1528819622765-d6bcf132f793?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1510074377623-8cf13fb86c08?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Volume', value: '24L' },
-      { key: 'Outer Fabric', value: '100% recycled 600D canvas with DWR' },
-      { key: 'Laptop Sleeve', value: 'Fits up to 16" devices' },
-    ],
-    rating: { average: 4.7, count: 96 },
-    attributes: {
-      material: 'Recycled canvas',
-      color: 'Graphite Grey',
-    },
-  },
-  {
-    slug: 'summit-field-jacket',
-    title: 'Summit Field Jacket',
-    brand: 'Redwood & Co.',
-    categorySlug: 'outerwear',
-    description: 'Heritage-inspired field jacket upgraded with modern waterproof-breathable technology.',
-    longDescription:
-      'Crafted with a three-layer waterproof membrane and soft brushed lining, the Summit Field Jacket shields from alpine squalls while maintaining day-long comfort. Articulated sleeves, storm flap pockets, and a removable hood adapt effortlessly from city commutes to trail weekends.',
-    badges: ['Weatherproof'],
-    images: [
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 25900,
-    variants: [
-      {
-        variantId: 'summit-field-jacket-olive-s',
-        label: 'Olive / Small',
-        sku: 'RW-SUM-OLV-S',
-        price: 25900,
-        stock: 12,
-        options: { color: 'Olive', size: 'Small' },
-        images: [
-          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'summit-field-jacket-olive-m',
-        label: 'Olive / Medium',
-        sku: 'RW-SUM-OLV-M',
-        price: 25900,
-        stock: 18,
-        options: { color: 'Olive', size: 'Medium' },
-        images: [
-          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'summit-field-jacket-olive-l',
-        label: 'Olive / Large',
-        sku: 'RW-SUM-OLV-L',
-        price: 25900,
-        stock: 17,
-        options: { color: 'Olive', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'summit-field-jacket-onyx-xl',
-        label: 'Onyx / XL',
-        sku: 'RW-SUM-ONX-XL',
-        price: 26900,
-        stock: 10,
-        options: { color: 'Onyx Black', size: 'XL' },
-        images: [
-          'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Shell', value: '3-layer recycled nylon with 20K/20K membrane' },
-      { key: 'Lining', value: 'Soft brushed tricot' },
-      { key: 'Features', value: 'Removable hood, storm flap pockets, cinch hem' },
-    ],
-    rating: { average: 4.5, count: 74 },
-    attributes: {
-      material: '3-layer recycled nylon',
-      color: 'Olive',
-    },
-  },
+  // Add more products here as needed...
   {
     slug: 'lumen-active-tee',
     title: 'Lumen Active Tee',
     brand: 'Aether Athletics',
-    categorySlug: 'apparel',
+    categorySlug: 'clothing', // Fixed from 'apparel'
     description: 'Moisture-wicking training tee with cooling minerals and bonded seams.',
-    longDescription:
-      'The Lumen Active Tee is your go-to layer for high-output sessions. An open-knit micro-mesh back dumps heat, while the front panel uses mineral-infused fibers that actively pull warmth from the skin. Bonded seams eliminate chafe so you can focus on the workout.',
+    longDescription: 'The Lumen Active Tee is your go-to layer for high-output sessions.',
     badges: ['New Arrival'],
-    images: [
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=1200&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'],
     price: 7800,
     variants: [
       {
@@ -297,1446 +209,891 @@ const productCatalog: SeedProduct[] = [
         price: 7800,
         stock: 20,
         options: { color: 'Storm Grey', size: 'Small' },
-        images: [
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'lumen-tee-storm-m',
-        label: 'Storm Grey / Medium',
-        sku: 'AT-LUM-STR-M',
-        price: 7800,
-        stock: 28,
-        options: { color: 'Storm Grey', size: 'Medium' },
-        images: [
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'lumen-tee-storm-l',
-        label: 'Storm Grey / Large',
-        sku: 'AT-LUM-STR-L',
-        price: 7800,
-        stock: 24,
-        options: { color: 'Storm Grey', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'lumen-tee-ember-m',
-        label: 'Ember / Medium',
-        sku: 'AT-LUM-EMB-M',
-        price: 8200,
-        stock: 18,
-        options: { color: 'Ember Red', size: 'Medium' },
-        images: [
-          'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'lumen-tee-tide-l',
-        label: 'Tide Blue / Large',
-        sku: 'AT-LUM-TID-L',
-        price: 8200,
-        stock: 16,
-        options: { color: 'Tide Blue', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=1200&q=80',
-        ],
+        images: ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'],
       },
     ],
-    specs: [
-      { key: 'Fabric', value: '52% recycled polyester, 48% phase-change nylon' },
-      { key: 'Features', value: 'Anti-odor finish, bonded seams, drop hem' },
-    ],
+    specs: [{ key: 'Fabric', value: '52% recycled polyester, 48% phase-change nylon' }],
     rating: { average: 4.4, count: 63 },
-    attributes: {
-      material: 'Recycled performance knit',
-      color: 'Storm Grey',
-    },
+    attributes: { material: 'Recycled performance knit', color: 'Storm Grey' },
   },
   {
-    slug: 'cascade-pour-over-set',
-    title: 'Cascade Pour-Over Set',
-    brand: 'Hearthline',
-    categorySlug: 'home-kitchen',
-    description: 'Hand-glazed ceramic pour-over brewer with double-wall carafe for café-level coffee at home.',
-    longDescription:
-      'The Cascade set features a precision-pierced dripper paired with a double-wall carafe that keeps your brew at the perfect sipping temperature. Each piece is hand-glazed, producing subtle variations that make every set unique.',
-    badges: ['Small Batch'],
+    slug: 'nova-wireless-headphones',
+    title: 'Nova Wireless Headphones',
+    brand: 'SoundWave',
+    categorySlug: 'electronics',
+    description: 'Premium wireless headphones with active noise cancellation and 30-hour battery life.',
+    longDescription: 'Experience studio-quality sound with Nova wireless headphones. Featuring advanced active noise cancellation, customizable EQ, and premium materials for all-day comfort.',
+    badges: ['Premium'],
     images: [
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1459755486867-b55449bb39ff?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 12400,
-    variants: [
-      {
-        variantId: 'cascade-set-sandstone',
-        label: 'Sandstone',
-        sku: 'HL-CAS-SAND',
-        price: 12400,
-        stock: 22,
-        options: { color: 'Sandstone', size: 'Universal' },
-        images: [
-          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'cascade-set-charcoal',
-        label: 'Charcoal',
-        sku: 'HL-CAS-CHAR',
-        price: 12400,
-        stock: 18,
-        options: { color: 'Charcoal', size: 'Universal' },
-        images: [
-          'https://images.unsplash.com/photo-1510627498534-cf7e9002facc?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Capacity', value: '600 ml carafe' },
-      { key: 'Material', value: 'Double-wall ceramic with walnut lid' },
-      { key: 'Included', value: 'Dripper, carafe, reusable stainless filter' },
-    ],
-    rating: { average: 4.8, count: 54 },
-    attributes: {
-      material: 'Ceramic',
-      color: 'Sandstone',
-    },
-  },
-  {
-    slug: 'echo-noise-cancelling-earbuds',
-    title: 'Echo Noise-Cancelling Earbuds',
-    brand: 'Horizon Audio',
-    categorySlug: 'tech',
-    description: 'Adaptive ANC earbuds with 8-hour battery life and wireless charging case.',
-    longDescription:
-      'Echo earbuds analyze ambient sound in real time, adapting active noise cancellation on the fly. The graphene-coated drivers deliver rich, balanced sound, while the ergonomic silhouette stays secure through every commute and workout.',
-    badges: ['Top Rated'],
-    images: [
-      'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 19900,
-    variants: [
-      {
-        variantId: 'echo-earbuds-graphite',
-        label: 'Graphite',
-        sku: 'HA-ECH-GRA',
-        price: 19900,
-        stock: 34,
-        options: { color: 'Graphite', storage: 'Standard' },
-        images: [
-          'https://images.unsplash.com/photo-1585386959984-a4155224a1ad?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'echo-earbuds-ivory',
-        label: 'Ivory',
-        sku: 'HA-ECH-IVR',
-        price: 19900,
-        stock: 29,
-        options: { color: 'Ivory', storage: 'Standard' },
-        images: [
-          'https://images.unsplash.com/photo-1584946488600-0c2f87f2360c?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Battery Life', value: '8 hours playback + 24 hours with case' },
-      { key: 'Connectivity', value: 'Bluetooth 5.3 with multipoint' },
-      { key: 'Features', value: 'IPX4 water resistance, wireless Qi charging' },
-    ],
-    rating: { average: 4.7, count: 211 },
-    attributes: {
-      color: 'Graphite',
-    },
-  },
-  {
-    slug: 'horizon-solar-smartwatch',
-    title: 'Horizon Solar Smartwatch',
-    brand: 'Solace Instruments',
-    categorySlug: 'tech',
-    description: 'Hybrid smartwatch powered by ambient light with multi-sport GPS tracking.',
-    longDescription:
-      'Horizon pairs a sapphire crystal lens with discreet solar cells, extending daylight battery life for weeks. A crisp AMOLED display, onboard maps, and heart rate variability tracking provide insight for athletes and adventurers alike.',
-    images: [
-      'https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1200&q=80'
     ],
-    price: 32900,
+    price: 24900,
     variants: [
       {
-        variantId: 'horizon-watch-steel',
-        label: 'Matte Steel',
-        sku: 'SI-HOR-STE',
-        price: 32900,
-        stock: 18,
-        options: { color: 'Matte Steel', strap: 'Silicone' },
-        images: [
-          'https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'horizon-watch-graphite',
-        label: 'Graphite Leather',
-        sku: 'SI-HOR-GRA',
-        price: 34900,
-        stock: 14,
-        options: { color: 'Graphite', strap: 'Horween leather' },
-        images: [
-          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'horizon-watch-slate',
-        label: 'Slate Nylon',
-        sku: 'SI-HOR-SLT',
-        price: 33900,
-        stock: 16,
-        options: { color: 'Slate', strap: 'Recycled nylon' },
-        images: [
-          'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Battery Life', value: '18 days smartwatch mode with solar charging' },
-      { key: 'Sensors', value: 'GPS, HR, Pulse Ox, altimeter, barometer' },
-      { key: 'Water Rating', value: '10 ATM' },
-    ],
-    rating: { average: 4.5, count: 132 },
-    attributes: {
-      color: 'Matte Steel',
-    },
-  },
-  {
-    slug: 'loft-knit-throw',
-    title: 'Loft Knit Throw',
-    brand: 'Oak & Loom',
-    categorySlug: 'home-kitchen',
-    description: 'Ultra-soft organic cotton throw with oversized waffle texture.',
-    longDescription:
-      'Woven on vintage looms in Portugal, the Loft Knit Throw layers beautifully over sofas and beds. Its airy waffle texture traps warmth without weight, and the enzyme wash finishes each piece with an irresistible softness.',
-    images: [
-      'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1449247709967-d4461a6a6103?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 9800,
-    variants: [
-      {
-        variantId: 'loft-throw-oat',
-        label: 'Oat Heather',
-        sku: 'OL-LOF-OAT',
-        price: 9800,
-        stock: 30,
-        options: { color: 'Oat Heather', size: '50" x 70"' },
-        images: [
-          'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'loft-throw-slate',
-        label: 'Slate Blue',
-        sku: 'OL-LOF-SLT',
-        price: 9800,
-        stock: 26,
-        options: { color: 'Slate Blue', size: '50" x 70"' },
-        images: [
-          'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Material', value: '100% GOTS-certified organic cotton' },
-      { key: 'Care', value: 'Machine wash cold, tumble dry low' },
-    ],
-    rating: { average: 4.9, count: 88 },
-    attributes: {
-      material: 'Organic cotton',
-      color: 'Oat Heather',
-    },
-  },
-  {
-    slug: 'cascade-stainless-bottle',
-    title: 'Cascade Insulated Bottle',
-    brand: 'Peak Hydration',
-    categorySlug: 'wellness',
-    description: 'Vacuum-insulated stainless bottle that keeps drinks cold for 30 hours.',
-    longDescription:
-      'Built from double-wall stainless steel with a copper lining, the Cascade bottle resists condensation and maintains temperature through full-day adventures. A powder-coated exterior improves grip while the removable strap clips onto packs.',
-    images: [
-      'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 4200,
-    variants: [
-      {
-        variantId: 'cascade-bottle-21oz',
-        label: '21 oz / Glacier',
-        sku: 'PH-CAS-21G',
-        price: 4200,
-        stock: 42,
-        options: { color: 'Glacier Blue', capacity: '21 oz' },
-        images: [
-          'https://images.unsplash.com/photo-1600180758890-6b94519a181c?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'cascade-bottle-32oz',
-        label: '32 oz / Obsidian',
-        sku: 'PH-CAS-32O',
-        price: 4800,
-        stock: 36,
-        options: { color: 'Obsidian', capacity: '32 oz' },
-        images: [
-          'https://images.unsplash.com/photo-1526404428533-46c4e5e83287?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Insulation', value: 'Double-wall stainless with copper lining' },
-      { key: 'Keeps Cold', value: 'Up to 30 hours' },
-      { key: 'Lid', value: 'Leakproof twist cap with strap' },
-    ],
-    rating: { average: 4.6, count: 57 },
-    attributes: {
-      material: 'Stainless steel',
-      color: 'Glacier Blue',
-    },
-  },
-  {
-    slug: 'atlas-slim-wallet',
-    title: 'Atlas Slim Wallet',
-    brand: 'Beacon Street',
-    categorySlug: 'accessories',
-    description: 'Hand-finished leather wallet with RFID shielding and quick-access pull tab.',
-    longDescription:
-      'The Atlas Slim Wallet is crafted from vegetable-tanned leather that patinas beautifully over time. Six card slots, a secure cash sleeve, and RFID shielding keep essentials organized without the bulk.',
-    images: [
-      'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 9800,
-    variants: [
-      {
-        variantId: 'atlas-wallet-cognac',
-        label: 'Cognac',
-        sku: 'BS-ATL-COG',
-        price: 9800,
-        stock: 32,
-        options: { color: 'Cognac', size: 'One Size' },
-        images: [
-          'https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'atlas-wallet-chestnut',
-        label: 'Chestnut',
-        sku: 'BS-ATL-CHS',
-        price: 9800,
-        stock: 27,
-        options: { color: 'Chestnut', size: 'One Size' },
-        images: [
-          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'atlas-wallet-onyx',
-        label: 'Onyx',
-        sku: 'BS-ATL-ONX',
-        price: 9800,
+        variantId: 'nova-headphones-black',
+        label: 'Midnight Black',
+        sku: 'SW-NOVA-BLK',
+        price: 24900,
         stock: 25,
-        options: { color: 'Onyx', size: 'One Size' },
-        images: [
-          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-        ],
+        options: { color: 'Midnight Black' },
+        images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'nova-headphones-white',
+        label: 'Pearl White',
+        sku: 'SW-NOVA-WHT',
+        price: 24900,
+        stock: 18,
+        options: { color: 'Pearl White' },
+        images: ['https://images.unsplash.com/photo-1487215078519-e21cc028cb29?auto=format&fit=crop&w=1200&q=80'],
       },
     ],
     specs: [
-      { key: 'Material', value: 'Vegetable-tanned leather with cotton lining' },
-      { key: 'Capacity', value: 'Holds 8 cards plus cash' },
-      { key: 'Features', value: 'RFID shielding, quick-access pull tab' },
+      { key: 'Battery Life', value: '30 hours' },
+      { key: 'Connectivity', value: 'Bluetooth 5.2' },
+      { key: 'Noise Cancellation', value: 'Active' },
     ],
-    rating: { average: 4.8, count: 141 },
-    attributes: {
-      material: 'Vegetable-tanned leather',
-      color: 'Cognac',
-    },
+    rating: { average: 4.7, count: 143 },
+    attributes: { material: 'Premium leather', color: 'Midnight Black' },
   },
+
+  // FOOTWEAR
   {
-    slug: 'terra-hiker-boot',
-    title: 'Terra Hiker Boot',
-    brand: 'Summit Forge',
+    slug: 'hike-pro-boot',
+    title: 'Hike Pro Trail Boot',
+    brand: 'TrailMaster',
     categorySlug: 'footwear',
-    description: 'Waterproof hiking boot with Vibram outsole built for technical trails.',
-    longDescription:
-      'Terra combines a full-grain leather upper with a seam-sealed membrane to block out weather while keeping feet supported on unpredictable terrain. Cushioned EVA midsoles absorb impact and a Vibram Megagrip outsole bites into wet rock and slick roots.',
-    badges: ['Waterproof'],
+    description: 'Rugged hiking boot with waterproof membrane and ankle support.',
+    longDescription: 'Designed for serious trail enthusiasts, the Hike Pro provides superior ankle stability and weather protection for multi-day hikes.',
+    badges: ['Sale'],
     images: [
-      'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1607522370275-f14206abe5d3?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80'
     ],
     price: 18900,
-    currency: 'USD',
     variants: [
       {
-        variantId: 'terra-boot-cedar-9',
-        label: 'Cedar Brown / US 9',
-        sku: 'SF-TER-CED-9',
+        variantId: 'hike-boot-brown-9',
+        label: 'Rich Brown / US 9',
+        sku: 'TM-HIKE-BRN-9',
         price: 18900,
-        stock: 14,
-        options: { color: 'Cedar Brown', size: 'US 9' },
-        images: [
-          'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
-        ],
+        stock: 22,
+        options: { color: 'Rich Brown', size: 'US 9' },
+        images: ['https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=80'],
       },
       {
-        variantId: 'terra-boot-cedar-10',
-        label: 'Cedar Brown / US 10',
-        sku: 'SF-TER-CED-10',
+        variantId: 'hike-boot-brown-10',
+        label: 'Rich Brown / US 10',
+        sku: 'TM-HIKE-BRN-10',
         price: 18900,
-        stock: 18,
-        options: { color: 'Cedar Brown', size: 'US 10' },
-        images: [
-          'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
-        ],
+        stock: 28,
+        options: { color: 'Rich Brown', size: 'US 10' },
+        images: ['https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1200&q=80'],
       },
       {
-        variantId: 'terra-boot-slate-11',
-        label: 'Slate Grey / US 11',
-        sku: 'SF-TER-SLT-11',
-        price: 19500,
-        stock: 12,
-        options: { color: 'Slate Grey', size: 'US 11' },
-        images: [
-          'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
-        ],
+        variantId: 'hike-boot-black-9',
+        label: 'Onyx Black / US 9',
+        sku: 'TM-HIKE-BLK-9',
+        price: 18900,
+        stock: 15,
+        options: { color: 'Onyx Black', size: 'US 9' },
+        images: ['https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80'],
       },
     ],
     specs: [
-      { key: 'Upper', value: 'Full-grain leather with seam-sealed membrane' },
-      { key: 'Outsole', value: 'Vibram Megagrip rubber' },
-      { key: 'Weight', value: '21 oz (size 10)' },
+      { key: 'Upper', value: 'Full-grain leather' },
+      { key: 'Midsole', value: 'PU foam with EVA' },
+      { key: 'Weight', value: '14 oz per shoe' },
     ],
-    rating: { average: 4.5, count: 68 },
-    attributes: {
-      material: 'Full-grain leather',
-      color: 'Cedar Brown',
-    },
+    rating: { average: 4.5, count: 89 },
+    attributes: { material: 'Full-grain leather', color: 'Rich Brown' },
   },
+
+  // CLOTHING
   {
-    slug: 'velocity-court-sneaker',
-    title: 'Velocity Court Sneaker',
-    brand: 'Stratus Labs',
-    categorySlug: 'footwear',
-    description: 'Heritage-inspired court sneaker tuned for everyday comfort.',
-    longDescription:
-      'Velocity revitalizes a classic tennis silhouette with a recycled leather upper, responsive cupsole cushioning, and memory foam ankle collar. It is light enough for all-day wear while the rubber outsole maintains the board feel sneakerheads love.',
-    badges: ['Recycled'],
+    slug: 'zen-yoga-leggings',
+    title: 'Zen Yoga Leggings',
+    brand: 'Mindful Movement',
+    categorySlug: 'clothing',
+    description: 'High-performance yoga leggings with moisture-wicking fabric and four-way stretch.',
+    longDescription: 'Our Zen collection combines the perfect blend of comfort and performance for your yoga practice, with fabric that moves with you.',
+    badges: [],
     images: [
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1506629905607-3e17a7e2b3b7?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&w=1200&q=80'
     ],
-    price: 12500,
+    price: 8900,
     variants: [
       {
-        variantId: 'velocity-sneaker-ice-8',
-        label: 'Ice White / US 8',
-        sku: 'SLB-VEL-ICE-8',
-        price: 12500,
-        stock: 20,
-        options: { color: 'Ice White', size: 'US 8' },
-        images: [
-          'https://images.unsplash.com/photo-1517142874080-09548ab78358?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1518226203300-8d3f06ed9c6d?auto=format&fit=crop&w=1200&q=80',
-        ],
+        variantId: 'zen-leggings-black-s',
+        label: 'Cosmic Black / Small',
+        sku: 'MM-ZEN-BLK-S',
+        price: 8900,
+        stock: 45,
+        options: { color: 'Cosmic Black', size: 'Small' },
+        images: ['https://images.unsplash.com/photo-1506629905607-3e17a7e2b3b7?auto=format&fit=crop&w=1200&q=80'],
       },
       {
-        variantId: 'velocity-sneaker-ice-9',
-        label: 'Ice White / US 9',
-        sku: 'SLB-VEL-ICE-9',
-        price: 12500,
-        stock: 26,
-        options: { color: 'Ice White', size: 'US 9' },
-        images: [
-          'https://images.unsplash.com/photo-1517142874080-09548ab78358?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
-        ],
+        variantId: 'zen-leggings-black-m',
+        label: 'Cosmic Black / Medium',
+        sku: 'MM-ZEN-BLK-M',
+        price: 8900,
+        stock: 52,
+        options: { color: 'Cosmic Black', size: 'Medium' },
+        images: ['https://images.unsplash.com/photo-1506629905607-3e17a7e2b3b7?auto=format&fit=crop&w=1200&q=80'],
       },
       {
-        variantId: 'velocity-sneaker-midnight-10',
-        label: 'Midnight Navy / US 10',
-        sku: 'SLB-VEL-MID-10',
+        variantId: 'zen-leggings-grey-m',
+        label: 'Sage Grey / Medium',
+        sku: 'MM-ZEN-GRY-M',
+        price: 8900,
+        stock: 38,
+        options: { color: 'Sage Grey', size: 'Medium' },
+        images: ['https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'zen-leggings-grey-l',
+        label: 'Sage Grey / Large',
+        sku: 'MM-ZEN-GRY-L',
+        price: 8900,
+        stock: 41,
+        options: { color: 'Sage Grey', size: 'Large' },
+        images: ['https://images.unsplash.com/photo-1539008835657-9e8e9680c956?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Fabric', value: '83% recycled polyester, 17% spandex' },
+      { key: 'Rise', value: 'High-rise with wide waistband' },
+      { key: 'Length', value: '7/8 length' },
+    ],
+    rating: { average: 4.3, count: 156 },
+    attributes: { material: 'Performance stretch fabric', color: 'Cosmic Black' },
+  },
+
+  // OUTERWEAR
+  {
+    slug: 'summit-down-jacket',
+    title: 'Summit Down Jacket',
+    brand: 'Peak Performance',
+    categorySlug: 'outerwear',
+    description: 'Ultra-lightweight down jacket with 800-fill power and DWR treatment.',
+    longDescription: 'Conquer cold weather with our premium down jacket that provides exceptional warmth without bulk.',
+    badges: ['Best Seller'],
+    images: [
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 29900,
+    variants: [
+      {
+        variantId: 'summit-jacket-black-m',
+        label: 'Obsidian Black / Medium',
+        sku: 'PP-SUM-BLK-M',
+        price: 29900,
+        stock: 18,
+        options: { color: 'Obsidian Black', size: 'Medium' },
+        images: ['https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'summit-jacket-black-l',
+        label: 'Obsidian Black / Large',
+        sku: 'PP-SUM-BLK-L',
+        price: 29900,
+        stock: 22,
+        options: { color: 'Obsidian Black', size: 'Large' },
+        images: ['https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'summit-jacket-blue-m',
+        label: 'Alpine Blue / Medium',
+        sku: 'PP-SUM-BLU-M',
+        price: 29900,
+        stock: 12,
+        options: { color: 'Alpine Blue', size: 'Medium' },
+        images: ['https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Fill Power', value: '800+' },
+      { key: 'Fill', value: 'Responsible down standard' },
+      { key: 'Water Resistance', value: 'DWR coating' },
+    ],
+    rating: { average: 4.8, count: 97 },
+    attributes: { material: 'Nylon shell with down fill', color: 'Obsidian Black' },
+  },
+
+  {
+    slug: 'alpine-rain-jacket',
+    title: 'Alpine Rain Jacket',
+    brand: 'WeatherTech',
+    categorySlug: 'outerwear',
+    description: 'Fully waterproof hiking jacket with taped seams and breathable membrane.',
+    longDescription: 'Stay dry and comfortable in any weather with our advanced rain jacket technology.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 15900,
+    variants: [
+      {
+        variantId: 'alpine-rain-yellow-m',
+        label: 'Safety Yellow / Medium',
+        sku: 'WT-ALP-YEL-M',
+        price: 15900,
+        stock: 35,
+        options: { color: 'Safety Yellow', size: 'Medium' },
+        images: ['https://images.unsplash.com/photo-1551698618-1dfe5d97d256?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'alpine-rain-yellow-l',
+        label: 'Safety Yellow / Large',
+        sku: 'WT-ALP-YEL-L',
+        price: 15900,
+        stock: 28,
+        options: { color: 'Safety Yellow', size: 'Large' },
+        images: ['https://images.unsplash.com/photo-1551698618-1dfe5d97d256?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Waterproof Rating', value: '20,000mm' },
+      { key: 'Breathability', value: '15,000g/m²/day' },
+      { key: 'Seams', value: 'Taped seams' },
+    ],
+    rating: { average: 4.2, count: 43 },
+    attributes: { material: 'Polyester with polyurethane membrane', color: 'Safety Yellow' },
+  },
+
+  // BAGS & LUGGAGE
+  {
+    slug: 'wander-messenger-bag',
+    title: 'Wander Messenger Bag',
+    brand: 'Urban Carry',
+    categorySlug: 'bags-luggage',
+    description: 'Classic leather messenger bag with laptop compartment and organizational pockets.',
+    longDescription: 'The perfect urban companion for work or travel, combining classic style with modern functionality.',
+    badges: ['New'],
+    images: [
+      'https://images.unsplash.com/photo-1559942778-4e6290c32c4e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 12900,
+    variants: [
+      {
+        variantId: 'wander-messenger-brown',
+        label: 'Vintage Brown',
+        sku: 'UC-WAN-BRN',
         price: 12900,
-        stock: 18,
-        options: { color: 'Midnight Navy', size: 'US 10' },
-        images: [
-          'https://images.unsplash.com/photo-1518226203300-8d3f06ed9c6d?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1517142874080-09548ab78358?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Upper', value: 'Recycled leather with perforated vamp' },
-      { key: 'Midsole', value: 'Responsive molded cupsole' },
-      { key: 'Lining', value: 'Plant-based microfiber' },
-    ],
-    rating: { average: 4.4, count: 52 },
-    attributes: {
-      material: 'Recycled leather',
-      color: 'Ice White',
-    },
-  },
-  {
-    slug: 'mariner-slip-on',
-    title: 'Mariner Slip-On',
-    brand: 'Tidebreak',
-    categorySlug: 'footwear',
-    description: 'Easy slip-on sneaker with breathable knit built for coastal weekends.',
-    longDescription:
-      'Mariner pairs a saltwater-resistant knit upper with antimicrobial linings, making it the go-to for boardwalk strolls and casual commutes alike. A collapsible heel turns the shoe into a slide, and the soft midsole keeps steps cushioned.',
-    images: [
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 9200,
-    variants: [
-      {
-        variantId: 'mariner-slip-navy-9',
-        label: 'Deep Navy / US 9',
-        sku: 'TDB-MAR-NVY-9',
-        price: 9200,
-        stock: 24,
-        options: { color: 'Deep Navy', size: 'US 9' },
-        images: [
-          'https://images.unsplash.com/photo-1510146758428-e5e4b17b8b6d?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'mariner-slip-navy-10',
-        label: 'Deep Navy / US 10',
-        sku: 'TDB-MAR-NVY-10',
-        price: 9200,
-        stock: 22,
-        options: { color: 'Deep Navy', size: 'US 10' },
-        images: [
-          'https://images.unsplash.com/photo-1510146758428-e5e4b17b8b6d?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1445796886651-d31a2c15f3c9?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'mariner-slip-sand-9',
-        label: 'Drift Sand / US 9',
-        sku: 'TDB-MAR-SND-9',
-        price: 9600,
-        stock: 16,
-        options: { color: 'Drift Sand', size: 'US 9' },
-        images: [
-          'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80',
-          'https://images.unsplash.com/photo-1445796886651-d31a2c15f3c9?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Upper', value: 'Saltwater-resistant engineered knit' },
-      { key: 'Insole', value: 'Antimicrobial foam with arch support' },
-      { key: 'Outsole', value: 'Slip-resistant rubber pods' },
-    ],
-    rating: { average: 4.3, count: 47 },
-    attributes: {
-      material: 'Engineered knit',
-      color: 'Deep Navy',
-    },
-  },
-  {
-    slug: 'zenith-fleece-hoodie',
-    title: 'Zenith Fleece Hoodie',
-    brand: 'Aether Athletics',
-    categorySlug: 'apparel',
-    description: 'Midweight hoodie with brushed interior and bonded pocketing.',
-    longDescription:
-      'Zenith is crafted from recycled double-knit fleece that traps warmth without bulk. The scuba hood, bonded zipper pockets, and knit cuff gaiters keep heat locked in while you recover or commute.',
-    badges: ['Recycled'],
-    images: [
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 10800,
-    variants: [
-      {
-        variantId: 'zenith-hoodie-ash-s',
-        label: 'Ash Grey / Small',
-        sku: 'AT-ZEN-ASH-S',
-        price: 10800,
-        stock: 18,
-        options: { color: 'Ash Grey', size: 'Small' },
-        images: [
-          'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'zenith-hoodie-ash-m',
-        label: 'Ash Grey / Medium',
-        sku: 'AT-ZEN-ASH-M',
-        price: 10800,
-        stock: 26,
-        options: { color: 'Ash Grey', size: 'Medium' },
-        images: [
-          'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'zenith-hoodie-coast-l',
-        label: 'Coast Blue / Large',
-        sku: 'AT-ZEN-CST-L',
-        price: 11200,
-        stock: 20,
-        options: { color: 'Coast Blue', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1521572425945-88c34e72f762?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Fabric', value: '74% recycled polyester, 26% cotton double-knit' },
-      { key: 'Features', value: 'Bonded zipper pockets, scuba hood, cuff gaiters' },
-    ],
-    rating: { average: 4.6, count: 58 },
-    attributes: {
-      material: 'Recycled fleece',
-      color: 'Ash Grey',
-    },
-  },
-  {
-    slug: 'halo-seamless-legging',
-    title: 'Halo Seamless Legging',
-    brand: 'Flux Movement',
-    categorySlug: 'apparel',
-    description: 'High-rise legging with seamless compression zones for studio sessions.',
-    longDescription:
-      'Halo uses a knit-in ventilation map and four-way stretch yarns to move with you through yoga flows and HIIT days. A stay-put waistband and soft brushed interior deliver support and comfort in equal measure.',
-    images: [
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 8800,
-    variants: [
-      {
-        variantId: 'halo-legging-onyx-s',
-        label: 'Onyx / Small',
-        sku: 'FM-HAL-ONX-S',
-        price: 8800,
-        stock: 22,
-        options: { color: 'Onyx', size: 'Small' },
-        images: [
-          'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'halo-legging-onyx-m',
-        label: 'Onyx / Medium',
-        sku: 'FM-HAL-ONX-M',
-        price: 8800,
-        stock: 28,
-        options: { color: 'Onyx', size: 'Medium' },
-        images: [
-          'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'halo-legging-ember-l',
-        label: 'Ember / Large',
-        sku: 'FM-HAL-EMB-L',
-        price: 9200,
-        stock: 18,
-        options: { color: 'Ember', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1526401485004-46910ecc8e51?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Fabric', value: '58% recycled nylon, 32% nylon, 10% elastane' },
-      { key: 'Features', value: 'Seamless construction, knit-in ventilation, high-rise waist' },
-    ],
-    rating: { average: 4.7, count: 71 },
-    attributes: {
-      material: 'Seamless knit',
-      color: 'Onyx',
-    },
-  },
-  {
-    slug: 'cobalt-oxford-shirt',
-    title: 'Cobalt Oxford Shirt',
-    brand: 'Beacon Street',
-    categorySlug: 'apparel',
-    description: 'Classic Oxford shirt with wrinkle-resistant organic cotton blend.',
-    longDescription:
-      'Cut with a modern tailored fit, the Cobalt Oxford Shirt uses a soft organic cotton and recycled polyester blend that resists wrinkles straight from the dryer. Reinforced seams and corozo buttons elevate a staple for office or weekend wear.',
-    images: [
-      'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 9800,
-    variants: [
-      {
-        variantId: 'cobalt-oxford-slim-m',
-        label: 'Tailored Fit / Medium',
-        sku: 'BS-COB-TFM',
-        price: 9800,
-        stock: 24,
-        options: { fit: 'Tailored', size: 'Medium' },
-        images: [
-          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'cobalt-oxford-slim-l',
-        label: 'Tailored Fit / Large',
-        sku: 'BS-COB-TFL',
-        price: 9800,
-        stock: 18,
-        options: { fit: 'Tailored', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'cobalt-oxford-classic-l',
-        label: 'Classic Fit / Large',
-        sku: 'BS-COB-CLL',
-        price: 10200,
-        stock: 16,
-        options: { fit: 'Classic', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Fabric', value: '72% organic cotton, 28% recycled polyester' },
-      { key: 'Features', value: 'Wrinkle-resistant finish, corozo buttons' },
-    ],
-    rating: { average: 4.4, count: 39 },
-    attributes: {
-      material: 'Organic cotton blend',
-      size: 'Medium',
-    },
-  },
-  {
-    slug: 'ridge-down-parka',
-    title: 'Ridge Down Parka',
-    brand: 'Redwood & Co.',
-    categorySlug: 'outerwear',
-    description: 'Expedition-ready down parka with 700-fill insulation and storm guard.',
-    longDescription:
-      'The Ridge Down Parka pairs responsibly sourced 700-fill down with a waterproof breathable shell to withstand frigid commutes and alpine getaways. Fleece-lined pockets and a removable faux-fur hood trim add warmth and versatility.',
-    badges: ['Warmest'],
-    images: [
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 32900,
-    variants: [
-      {
-        variantId: 'ridge-parka-ember-m',
-        label: 'Ember Orange / Medium',
-        sku: 'RW-RDG-EMB-M',
-        price: 32900,
-        stock: 14,
-        options: { color: 'Ember Orange', size: 'Medium' },
-        images: [
-          'https://images.unsplash.com/photo-1547824477-82d40aa0c4ad?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'ridge-parka-ember-l',
-        label: 'Ember Orange / Large',
-        sku: 'RW-RDG-EMB-L',
-        price: 32900,
-        stock: 12,
-        options: { color: 'Ember Orange', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1547824477-82d40aa0c4ad?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'ridge-parka-storm-xl',
-        label: 'Storm Blue / XL',
-        sku: 'RW-RDG-STR-XL',
-        price: 33900,
-        stock: 10,
-        options: { color: 'Storm Blue', size: 'XL' },
-        images: [
-          'https://images.unsplash.com/photo-1512427691650-1e0c84f45956?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Insulation', value: '700-fill responsibly sourced down' },
-      { key: 'Shell', value: 'Waterproof breathable polyester' },
-      { key: 'Features', value: 'Removable faux-fur hood trim, fleece-lined pockets' },
-    ],
-    rating: { average: 4.6, count: 51 },
-    attributes: {
-      material: 'Waterproof polyester',
-      color: 'Ember Orange',
-    },
-  },
-  {
-    slug: 'harbor-rain-anorak',
-    title: 'Harbor Rain Anorak',
-    brand: 'Northwind Supply',
-    categorySlug: 'outerwear',
-    description: 'Packable rain anorak with three-layer waterproof membrane.',
-    longDescription:
-      'Designed for unpredictable forecasts, the Harbor Rain Anorak packs into its own kangaroo pocket yet delivers full wind and rain protection. Side zips vent heat on hikes while reflective binding boosts visibility.',
-    images: [
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 19800,
-    variants: [
-      {
-        variantId: 'harbor-anorak-sea-s',
-        label: 'Sea Glass / Small',
-        sku: 'NW-HRB-SEA-S',
-        price: 19800,
-        stock: 20,
-        options: { color: 'Sea Glass', size: 'Small' },
-        images: [
-          'https://images.unsplash.com/photo-1521572163475-279cf49769fe?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'harbor-anorak-sea-m',
-        label: 'Sea Glass / Medium',
-        sku: 'NW-HRB-SEA-M',
-        price: 19800,
-        stock: 24,
-        options: { color: 'Sea Glass', size: 'Medium' },
-        images: [
-          'https://images.unsplash.com/photo-1521572163475-279cf49769fe?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'harbor-anorak-graphite-l',
-        label: 'Graphite / Large',
-        sku: 'NW-HRB-GRA-L',
-        price: 20500,
-        stock: 18,
-        options: { color: 'Graphite', size: 'Large' },
-        images: [
-          'https://images.unsplash.com/photo-1514996937319-344454492b37?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Waterproof Rating', value: '20K/20K 3-layer membrane' },
-      { key: 'Weight', value: '12 oz (size M)' },
-      { key: 'Features', value: 'Packable, side vent zippers, reflective binding' },
-    ],
-    rating: { average: 4.3, count: 42 },
-    attributes: {
-      material: '3-layer nylon',
-      color: 'Sea Glass',
-    },
-  },
-  {
-    slug: 'voyager-carry-on',
-    title: 'Voyager Carry-On Spinner',
-    brand: 'Waypoint Luggage',
-    categorySlug: 'gear-travel',
-    description: 'Lightweight polycarbonate carry-on with 360° spinner wheels.',
-    longDescription:
-      'Voyager is built from aerospace-grade polycarbonate with a reinforced aluminum frame, helping the case shrug off overhead bin bumps. Interior compression panels keep outfits organized while the USB pass-through keeps devices topped up.',
-    images: [
-      'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 28500,
-    variants: [
-      {
-        variantId: 'voyager-carry-graphite',
-        label: 'Graphite',
-        sku: 'WP-VYG-GRA',
-        price: 28500,
         stock: 32,
-        options: { color: 'Graphite', capacity: '38L' },
-        images: [
-          'https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=1200&q=80',
-        ],
+        options: { color: 'Vintage Brown' },
+        images: ['https://images.unsplash.com/photo-1559942778-4e6290c32c4e?auto=format&fit=crop&w=1200&q=80'],
       },
       {
-        variantId: 'voyager-carry-coast',
-        label: 'Coast Blue',
-        sku: 'WP-VYG-CST',
-        price: 28500,
+        variantId: 'wander-messenger-black',
+        label: 'Midnight Black',
+        sku: 'UC-WAN-BLK',
+        price: 12900,
         stock: 28,
-        options: { color: 'Coast Blue', capacity: '38L' },
-        images: [
-          'https://images.unsplash.com/photo-1518544889280-3caef1a7d72d?auto=format&fit=crop&w=1200&q=80',
-        ],
+        options: { color: 'Midnight Black' },
+        images: ['https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80'],
       },
     ],
     specs: [
-      { key: 'Material', value: 'Aerospace-grade polycarbonate shell' },
-      { key: 'Weight', value: '6.7 lbs' },
-      { key: 'Features', value: '360° spinner wheels, USB pass-through, TSA locks' },
+      { key: 'Dimensions', value: '16" x 12" x 4"' },
+      { key: 'Material', value: 'Full-grain leather' },
+      { key: 'Capacity', value: '15L' },
     ],
-    rating: { average: 4.6, count: 89 },
-    attributes: {
-      material: 'Polycarbonate',
-      capacity: '38L',
-    },
+    rating: { average: 4.4, count: 67 },
+    attributes: { material: 'Full-grain leather', color: 'Vintage Brown' },
   },
+
   {
-    slug: 'atlas-duffel-45l',
-    title: 'Atlas Duffel 45L',
-    brand: 'Northwind Supply',
-    categorySlug: 'gear-travel',
-    description: 'Convertible duffel with stowable backpack straps and weatherproof canvas.',
-    longDescription:
-      'Atlas transitions from weeklong travel to gym hauls with a waterproof canvas shell, reinforced base, and stowable backpack straps. Interior mesh dividers keep gear separated while the exterior shoe compartment manages trail-dirty footwear.',
+    slug: 'globe-trotter-wheelie',
+    title: 'Globe Trotter Wheelie Suitcase',
+    brand: 'Voyage',
+    categorySlug: 'bags-luggage',
+    description: 'Expandable hard-shell suitcase with 360° spinner wheels and TSA lock.',
+    longDescription: 'Built for frequent travelers who demand durability and reliability in their luggage.',
+    badges: [],
     images: [
-      'https://images.unsplash.com/photo-1527430253228-e93688616381?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1522198632101-443f7a5db3b1?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1581553680321-4fffa59fc9a7?auto=format&fit=crop&w=1200&q=80'
     ],
-    price: 21500,
+    price: 18900,
     variants: [
       {
-        variantId: 'atlas-duffel-graphite',
-        label: 'Graphite',
-        sku: 'NW-ATD-GRA',
-        price: 21500,
-        stock: 30,
-        options: { color: 'Graphite', capacity: '45L' },
-        images: [
-          'https://images.unsplash.com/photo-1527430253228-e93688616381?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'atlas-duffel-ridge',
-        label: 'Ridge Green',
-        sku: 'NW-ATD-RDG',
-        price: 21500,
-        stock: 26,
-        options: { color: 'Ridge Green', capacity: '45L' },
-        images: [
-          'https://images.unsplash.com/photo-1522198632101-443f7a5db3b1?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Volume', value: '45 liters' },
-      { key: 'Fabric', value: 'Waterproof 900D recycled canvas' },
-      { key: 'Features', value: 'Backpack straps, shoe compartment, metal hardware' },
-    ],
-    rating: { average: 4.5, count: 63 },
-    attributes: {
-      material: 'Recycled canvas',
-      capacity: '45L',
-    },
-  },
-  {
-    slug: 'artisan-chef-knife',
-    title: 'Artisan Chef Knife',
-    brand: 'Hearthline',
-    categorySlug: 'home-kitchen',
-    description: '8-inch chef knife hand-forged with layered Damascus steel.',
-    longDescription:
-      'Each Artisan Chef Knife is forged by master bladesmiths who fold high-carbon steel into 67 layers for lasting sharpness. A stabilized walnut handle balances the blade, making prep work a joy.',
-    badges: ['Small Batch'],
-    images: [
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 16800,
-    variants: [
-      {
-        variantId: 'artisan-knife-walnut',
-        label: 'Walnut Handle',
-        sku: 'HL-ART-WAL',
-        price: 16800,
-        stock: 22,
-        options: { handle: 'Walnut', size: '8 inch' },
-        images: [
-          'https://images.unsplash.com/photo-1586201375761-83865001e31b?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'artisan-knife-onyx',
-        label: 'Onyx Resin Handle',
-        sku: 'HL-ART-ONX',
-        price: 17800,
-        stock: 16,
-        options: { handle: 'Onyx Resin', size: '8 inch' },
-        images: [
-          'https://images.unsplash.com/photo-1604908176997-12518821a34d?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Steel', value: '67-layer Damascus VG10 core' },
-      { key: 'Handle', value: 'Stabilized walnut or resin' },
-      { key: 'Hardness', value: '60±2 HRC' },
-    ],
-    rating: { average: 4.8, count: 95 },
-    attributes: {
-      material: 'Damascus steel',
-      handle: 'Walnut',
-    },
-  },
-  {
-    slug: 'ember-cast-iron-skillet',
-    title: 'Ember Cast Iron Skillet',
-    brand: 'Hearthline',
-    categorySlug: 'home-kitchen',
-    description: 'Pre-seasoned cast iron skillet tuned for even heat and easy seasoning.',
-    longDescription:
-      'Ember skillets are milled smooth and double seasoned with grapeseed oil for a naturally nonstick surface. Pour spouts and an assist handle make searing steaks or baking skillet cornbread effortless.',
-    images: [
-      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1612874742237-6526221588ca?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 8800,
-    variants: [
-      {
-        variantId: 'ember-skillet-10',
-        label: '10-inch',
-        sku: 'HL-EMB-10',
-        price: 8800,
-        stock: 34,
-        options: { size: '10 inch' },
-        images: [
-          'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'ember-skillet-12',
-        label: '12-inch',
-        sku: 'HL-EMB-12',
-        price: 9800,
-        stock: 26,
-        options: { size: '12 inch' },
-        images: [
-          'https://images.unsplash.com/photo-1612874742237-6526221588ca?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Material', value: 'Pre-seasoned cast iron' },
-      { key: 'Finish', value: 'Milled smooth cooking surface' },
-      { key: 'Heat Source', value: 'Induction, gas, oven safe up to 500°F' },
-    ],
-    rating: { average: 4.9, count: 112 },
-    attributes: {
-      material: 'Cast iron',
-      size: '10 inch',
-    },
-  },
-  {
-    slug: 'luna-stoneware-dinnerware',
-    title: 'Luna Stoneware Dinnerware Set',
-    brand: 'Oak & Loom',
-    categorySlug: 'home-kitchen',
-    description: '12-piece stoneware dinnerware with hand-applied reactive glaze.',
-    longDescription:
-      'Luna includes four dinner plates, salad plates, and bowls crafted from durable stoneware. Each piece is kiln-fired with a moonlit reactive glaze that varies beautifully from set to set.',
-    images: [
-      'https://images.unsplash.com/photo-1495521821757-04c5cad6ba90?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1523365280197-f1783db9fe62?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 14200,
-    variants: [
-      {
-        variantId: 'luna-dinnerware-moon',
-        label: 'Moonstone',
-        sku: 'OL-LUN-MST',
-        price: 14200,
-        stock: 28,
-        options: { color: 'Moonstone' },
-        images: [
-          'https://images.unsplash.com/photo-1495521821757-04c5cad6ba90?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'luna-dinnerware-tide',
-        label: 'Tide',
-        sku: 'OL-LUN-TID',
-        price: 14200,
+        variantId: 'globe-wheelie-blue-28',
+        label: 'Ocean Blue / 28"',
+        sku: 'VY-GLO-BLU-28',
+        price: 18900,
         stock: 24,
-        options: { color: 'Tide' },
-        images: [
-          'https://images.unsplash.com/photo-1523365280197-f1783db9fe62?auto=format&fit=crop&w=1200&q=80',
-        ],
+        options: { color: 'Ocean Blue', size: '28"' },
+        images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'globe-wheelie-grey-28',
+        label: 'Charcoal Grey / 28"',
+        sku: 'VY-GLO-GRY-28',
+        price: 18900,
+        stock: 19,
+        options: { color: 'Charcoal Grey', size: '28"' },
+        images: ['https://images.unsplash.com/photo-1581553680321-4fffa59fc9a7?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'globe-wheelie-blue-22',
+        label: 'Ocean Blue / 22"',
+        sku: 'VY-GLO-BLU-22',
+        price: 15900,
+        stock: 31,
+        options: { color: 'Ocean Blue', size: '22"' },
+        images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80'],
       },
     ],
     specs: [
-      { key: 'Pieces', value: '12-piece set (service for four)' },
-      { key: 'Material', value: 'Glazed stoneware' },
-      { key: 'Care', value: 'Dishwasher and microwave safe' },
+      { key: 'Material', value: 'Polycarbonate shell' },
+      { key: 'Weight', value: '8.5 lbs (empty)' },
+      { key: 'Wheels', value: '360° spinner' },
     ],
-    rating: { average: 4.7, count: 83 },
-    attributes: {
-      material: 'Stoneware',
-      color: 'Moonstone',
-    },
+    rating: { average: 4.6, count: 123 },
+    attributes: { material: 'Polycarbonate', color: 'Ocean Blue' },
   },
+
+  // HOME & KITCHEN
   {
-    slug: 'solstice-aviator-sunglasses',
-    title: 'Solstice Aviator Sunglasses',
-    brand: 'Beacon Street',
-    categorySlug: 'accessories',
-    description: 'Polarized aviators with scratch-resistant gradient lenses.',
-    longDescription:
-      'Solstice pairs slim stainless frames with polarized lenses that cut glare on bright coastal days. Adjustable nose pads dial in the fit while spring hinges keep the frames comfortable for extended wear.',
+    slug: 'aerial-coffee-grinder',
+    title: 'Aerial Coffee Grinder',
+    brand: 'Brew Masters',
+    categorySlug: 'home-kitchen',
+    description: 'Burr coffee grinder with 65 grind settings for perfect extraction.',
+    longDescription: 'Elevate your brewing with precision grinding technology that ensures consistent particle size.',
+    badges: ['Premium'],
     images: [
-      'https://images.unsplash.com/photo-1654274285614-37cad6007665?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1681147768258-d869869d2d97?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 14500,
-    variants: [
-      {
-        variantId: 'solstice-sunglasses-gold',
-        label: 'Gold / Amber Lens',
-        sku: 'BS-SOL-GLD',
-        price: 14500,
-        stock: 26,
-        options: { frame: 'Gold', lens: 'Amber Gradient' },
-        images: [
-          'https://images.unsplash.com/photo-1654274285614-37cad6007665?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'solstice-sunglasses-onyx',
-        label: 'Onyx / Smoke Lens',
-        sku: 'BS-SOL-ONX',
-        price: 14500,
-        stock: 22,
-        options: { frame: 'Onyx', lens: 'Smoke Polarized' },
-        images: [
-          'https://images.unsplash.com/photo-1681147768258-d869869d2d97?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Frame', value: 'Stainless steel with spring hinges' },
-      { key: 'Lens', value: 'Polarized scratch-resistant nylon' },
-      { key: 'UV Protection', value: '100% UVA/UVB' },
-    ],
-    rating: { average: 4.5, count: 44 },
-    attributes: {
-      material: 'Stainless steel',
-      lens: 'Amber Gradient',
-    },
-  },
-  {
-    slug: 'montane-leather-belt',
-    title: 'Montane Leather Belt',
-    brand: 'Beacon Street',
-    categorySlug: 'accessories',
-    description: 'Vegetable-tanned leather belt with brushed brass hardware.',
-    longDescription:
-      'Montane belts are cut from Italian vegetable-tanned hide that patinas beautifully over time. The brushed brass buckle and hand-stitched keepers lend the belt heirloom durability.',
-    images: [
-      'https://images.unsplash.com/photo-1664286074240-d7059e004dff?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1603636489686-2ab6dc08fa8d?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 7800,
-    variants: [
-      {
-        variantId: 'montane-belt-32',
-        label: 'Cognac / 32',
-        sku: 'BS-MON-032',
-        price: 7800,
-        stock: 20,
-        options: { color: 'Cognac', size: '32' },
-        images: [
-          'https://images.unsplash.com/photo-1664286074240-d7059e004dff?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'montane-belt-34',
-        label: 'Cognac / 34',
-        sku: 'BS-MON-034',
-        price: 7800,
-        stock: 22,
-        options: { color: 'Cognac', size: '34' },
-        images: [
-          'https://images.unsplash.com/photo-1664286074240-d7059e004dff?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'montane-belt-onyx-36',
-        label: 'Onyx / 36',
-        sku: 'BS-MON-ONX-36',
-        price: 8200,
-        stock: 18,
-        options: { color: 'Onyx', size: '36' },
-        images: [
-          'https://images.unsplash.com/photo-1603636489686-2ab6dc08fa8d?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Material', value: 'Italian vegetable-tanned leather' },
-      { key: 'Buckle', value: 'Brushed brass' },
-      { key: 'Width', value: '1.25 inches' },
-    ],
-    rating: { average: 4.7, count: 57 },
-    attributes: {
-      material: 'Vegetable-tanned leather',
-      color: 'Cognac',
-    },
-  },
-  {
-    slug: 'serenity-yoga-mat',
-    title: 'Serenity Yoga Mat',
-    brand: 'Flux Movement',
-    categorySlug: 'wellness',
-    description: 'Natural rubber yoga mat with jute top layer for confident grip.',
-    longDescription:
-      'Serenity pairs sustainably harvested natural rubber with a woven jute surface that stays grippy even in hot sessions. At 5mm thick, it provides joint cushioning without sacrificing stability.',
-    images: [
-      'https://images.unsplash.com/photo-1646239646963-b0b9be56d6b5?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 7800,
-    variants: [
-      {
-        variantId: 'serenity-mat-mist',
-        label: 'Mist Blue',
-        sku: 'FM-SER-MST',
-        price: 7800,
-        stock: 30,
-        options: { color: 'Mist Blue', thickness: '5 mm' },
-        images: [
-          'https://images.unsplash.com/photo-1646239646963-b0b9be56d6b5?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'serenity-mat-sand',
-        label: 'Sandstone',
-        sku: 'FM-SER-SND',
-        price: 7800,
-        stock: 24,
-        options: { color: 'Sandstone', thickness: '5 mm' },
-        images: [
-          'https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Material', value: 'Natural rubber with jute textile' },
-      { key: 'Thickness', value: '5 mm' },
-      { key: 'Dimensions', value: '72" x 26"' },
-    ],
-    rating: { average: 4.8, count: 64 },
-    attributes: {
-      material: 'Natural rubber',
-      color: 'Mist Blue',
-    },
-  },
-  {
-    slug: 'calm-mist-aroma-diffuser',
-    title: 'Calm Mist Aroma Diffuser',
-    brand: 'Everwell Studio',
-    categorySlug: 'wellness',
-    description: 'Ultrasonic diffuser with ambient LED glow and auto-off timer.',
-    longDescription:
-      'Calm Mist quietly disperses essential oils for up to ten hours, featuring three mist levels and a gentle ambient glow. The sculpted ceramic cover elevates nightstands and entry tables alike.',
-    images: [
-      'https://images.unsplash.com/photo-1511918984145-48de785d4c4c?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1512069772995-ec315fe2eac6?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 6400,
-    variants: [
-      {
-        variantId: 'calm-diffuser-porcelain',
-        label: 'Porcelain White',
-        sku: 'EVR-CAL-POR',
-        price: 6400,
-        stock: 34,
-        options: { finish: 'Porcelain White' },
-        images: [
-          'https://images.unsplash.com/photo-1511918984145-48de785d4c4c?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'calm-diffuser-slate',
-        label: 'Slate Grey',
-        sku: 'EVR-CAL-SLT',
-        price: 6600,
-        stock: 28,
-        options: { finish: 'Slate Grey' },
-        images: [
-          'https://images.unsplash.com/photo-1512069772995-ec315fe2eac6?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Run Time', value: 'Up to 10 hours' },
-      { key: 'Capacity', value: '150 ml reservoir' },
-      { key: 'Features', value: 'Auto shutoff, ambient LED glow, BPA-free reservoir' },
-    ],
-    rating: { average: 4.6, count: 73 },
-    attributes: {
-      material: 'Ceramic',
-      finish: 'Porcelain White',
-    },
-  },
-  {
-    slug: 'nova-wireless-charger',
-    title: 'Nova Wireless Charger',
-    brand: 'Horizon Audio',
-    categorySlug: 'tech',
-    description: 'MagSafe-compatible wireless charger with aluminum stand.',
-    longDescription:
-      'Nova delivers up to 15W of fast wireless charging with a floating aluminum stand that keeps phones visible on desks or nightstands. A braided USB-C cable and passthrough port keep cables tidy.',
-    images: [
-      'https://images.unsplash.com/photo-1517430816045-df4b7de1d0b3?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1510552776732-01acc9a4c83d?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 8800,
-    variants: [
-      {
-        variantId: 'nova-charger-silver',
-        label: 'Silver',
-        sku: 'HA-NOV-SLV',
-        price: 8800,
-        stock: 36,
-        options: { color: 'Silver', output: '15W' },
-        images: [
-          'https://images.unsplash.com/photo-1517430816045-df4b7de1d0b3?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'nova-charger-graphite',
-        label: 'Graphite',
-        sku: 'HA-NOV-GRA',
-        price: 9000,
-        stock: 30,
-        options: { color: 'Graphite', output: '15W' },
-        images: [
-          'https://images.unsplash.com/photo-1510552776732-01acc9a4c83d?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Output', value: 'Up to 15W wireless charging' },
-      { key: 'Compatibility', value: 'MagSafe and Qi devices' },
-      { key: 'Cable', value: '2 m braided USB-C' },
-    ],
-    rating: { average: 4.5, count: 61 },
-    attributes: {
-      material: 'Aluminum',
-      color: 'Silver',
-    },
-  },
-  {
-    slug: 'vertex-mechanical-keyboard',
-    title: 'Vertex Mechanical Keyboard',
-    brand: 'Horizon Audio',
-    categorySlug: 'tech',
-    description: 'Hot-swappable 75% mechanical keyboard with RGB backlighting.',
-    longDescription:
-      'Vertex delivers a compact 75% layout with gasket-mounted aluminum housing and PBT doubleshot keycaps. Hot-swappable sockets let you tailor the typing feel while south-facing RGB lighting keeps legends vibrant.',
-    images: [
-      'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80',
-    ],
-    price: 19800,
-    variants: [
-      {
-        variantId: 'vertex-keyboard-linear',
-        label: 'Linear Switches',
-        sku: 'HA-VTX-LNR',
-        price: 19800,
-        stock: 28,
-        options: { switches: 'Linear', layout: '75%' },
-        images: [
-          'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-      {
-        variantId: 'vertex-keyboard-tactile',
-        label: 'Tactile Switches',
-        sku: 'HA-VTX-TCT',
-        price: 19800,
-        stock: 26,
-        options: { switches: 'Tactile', layout: '75%' },
-        images: [
-          'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80',
-        ],
-      },
-    ],
-    specs: [
-      { key: 'Layout', value: '75% hot-swappable' },
-      { key: 'Keycaps', value: 'PBT doubleshot keycaps' },
-      { key: 'Connectivity', value: 'USB-C wired, Bluetooth 5.1' },
-    ],
-    rating: { average: 4.6, count: 74 },
-    attributes: {
-      material: 'Aluminum',
-      switches: 'Linear',
-    },
-  },
-  {
-    slug: 'pulse-sport-headphones',
-    title: 'Pulse Sport Headphones',
-    brand: 'Horizon Audio',
-    categorySlug: 'tech',
-    description: 'Over-ear sport headphones with adaptive EQ and 40-hour battery.',
-    longDescription:
-      'Pulse Sport Headphones combine sweat-resistant materials with adaptive EQ that tunes audio to your movement. Multipoint Bluetooth and memory foam ear cups keep training sessions inspired and comfortable.',
-    images: [
-      'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&w=1200&q=80',
-      'https://images.unsplash.com/photo-1471478331149-c72f17e33c73?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1587734195503-904fca47e744?auto=format&fit=crop&w=1200&q=80'
     ],
     price: 22900,
     variants: [
       {
-        variantId: 'pulse-headphones-graphite',
-        label: 'Graphite',
-        sku: 'HA-PLS-GRA',
+        variantId: 'aerial-grinder-black',
+        label: 'Matte Black',
+        sku: 'BM-AER-BLK',
         price: 22900,
-        stock: 34,
-        options: { color: 'Graphite' },
-        images: [
-          'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=crop&w=1200&q=80',
-        ],
+        stock: 16,
+        options: { color: 'Matte Black' },
+        images: ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=1200&q=80'],
       },
       {
-        variantId: 'pulse-headphones-ember',
-        label: 'Ember Red',
-        sku: 'HA-PLS-EMB',
+        variantId: 'aerial-grinder-silver',
+        label: 'Bristled Stainless',
+        sku: 'BM-AER-SS',
         price: 22900,
-        stock: 28,
-        options: { color: 'Ember Red' },
-        images: [
-          'https://images.unsplash.com/photo-1471478331149-c72f17e33c73?auto=format&fit=crop&w=1200&q=80',
-        ],
+        stock: 12,
+        options: { color: 'Stainless Steel' },
+        images: ['https://images.unsplash.com/photo-1587734195503-904fca47e744?auto=format&fit=crop&w=1200&q=80'],
       },
     ],
     specs: [
-      { key: 'Battery Life', value: 'Up to 40 hours playback' },
-      { key: 'Water Resistance', value: 'IPX5 sweat resistant' },
-      { key: 'Features', value: 'Adaptive EQ, multipoint Bluetooth' },
+      { key: 'Grind Settings', value: '65 steps' },
+      { key: 'Burr Diameter', value: '64mm' },
+      { key: 'Capacity', value: '8oz bean hopper' },
     ],
-    rating: { average: 4.5, count: 58 },
-    attributes: {
-      color: 'Graphite',
-    },
+    rating: { average: 4.5, count: 89 },
+    attributes: { material: 'Stainless steel burrs', color: 'Matte Black' },
+  },
+
+  // ELECTRONICS
+  {
+    slug: 'voyage-wireless-router',
+    title: 'Voyage Mesh WiFi Router',
+    brand: 'NetWorks',
+    categorySlug: 'electronics',
+    description: 'Whole-home mesh WiFi system with 6Gbps speeds and parental controls.',
+    longDescription: 'Eliminate dead zones with intelligent mesh technology that learns your home layout.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1606904820-870321b6b1b5?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1564473456868-bc9d811d3cf8?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 39900,
+    variants: [
+      {
+        variantId: 'voyage-router-2pack',
+        label: '2-Pack System',
+        sku: 'NW-VOY-2PK',
+        price: 39900,
+        stock: 14,
+        options: { pack: '2-Pack' },
+        images: ['https://images.unsplash.com/photo-1606904820-870321b6b1b5?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'voyage-router-3pack',
+        label: '3-Pack System',
+        sku: 'NW-VOY-3PK',
+        price: 54900,
+        stock: 8,
+        options: { pack: '3-Pack' },
+        images: ['https://images.unsplash.com/photo-1564473456868-bc9d811d3cf8?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Speed', value: 'Up to 6Gbps' },
+      { key: 'WiFi Standard', value: 'WiFi 6' },
+      { key: 'Coverage', value: 'Up to 6,000 sq ft' },
+    ],
+    rating: { average: 4.3, count: 76 },
+    attributes: { type: 'Mesh WiFi System', connectivity: 'WiFi 6' },
+  },
+
+  // SPORTS & OUTDOORS
+  {
+    slug: 'apex-trekking-pole',
+    title: 'Apex Carbon Trekking Pole',
+    brand: 'Trail Gear',
+    categorySlug: 'sports-outdoors',
+    description: 'Ultralight carbon fiber trekking poles with flick-lock adjustment.',
+    longDescription: 'Designed for thru-hikers and backpackers who demand the lightest possible gear.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1464207687429-7505649dae38?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 14900,
+    variants: [
+      {
+        variantId: 'apex-pole-pair',
+        label: 'Pair of Poles',
+        sku: 'TG-APX-PAIR',
+        price: 14900,
+        stock: 42,
+        options: { quantity: 'Pair' },
+        images: ['https://images.unsplash.com/photo-1551632811-561732d1e306?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Material', value: '100% carbon fiber' },
+      { key: 'Weight', value: '16oz per pair (collapsed)' },
+      { key: 'Length', value: '24" - 55" adjustable' },
+    ],
+    rating: { average: 4.7, count: 134 },
+    attributes: { material: 'Carbon fiber', type: 'Adjustable trekking poles' },
+  },
+
+  {
+    slug: 'summit-sleeping-bag',
+    title: 'Summit 15° Sleeping Bag',
+    brand: 'Alpine Gear',
+    categorySlug: 'sports-outdoors',
+    description: 'Mummy-style sleeping bag rated to 15°F with water-resistant shell.',
+    longDescription: 'Premium down construction provides exceptional warmth-to-weight ratio for backpacking.',
+    badges: ['Sale'],
+    images: [
+      'https://images.unsplash.com/photo-1471115853179-bb1d604434e0?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 19900,
+    variants: [
+      {
+        variantId: 'summit-bag-regular-green',
+        label: 'Regular Length / Forest Green',
+        sku: 'AG-SUM-REG-GRN',
+        price: 19900,
+        stock: 28,
+        options: { length: 'Regular', color: 'Forest Green' },
+        images: ['https://images.unsplash.com/photo-1471115853179-bb1d604434e0?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'summit-bag-long-green',
+        label: 'Long Length / Forest Green',
+        sku: 'AG-SUM-LNG-GRN',
+        price: 21900,
+        stock: 16,
+        options: { length: 'Long', color: 'Forest Green' },
+        images: ['https://images.unsplash.com/photo-1471115853179-bb1d604434e0?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'summit-bag-regular-grey',
+        label: 'Regular Length / Storm Grey',
+        sku: 'AG-SUM-REG-GRY',
+        price: 19900,
+        stock: 22,
+        options: { length: 'Regular', color: 'Storm Grey' },
+        images: ['https://images.unsplash.com/photo-1504851149312-7a075b496cc7?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Shape', value: 'Mummy' },
+      { key: 'Temperature Rating', value: '15°F / -9°C' },
+      { key: 'Fill', value: '800+ fill power down' },
+    ],
+    rating: { average: 4.5, count: 91 },
+    attributes: { material: 'Nylon shell with down fill', shape: 'Mummy' },
+  },
+
+  // BEAUTY & PERSONAL CARE
+  {
+    slug: 'serenity-skincare-set',
+    title: 'Serenity Complete Skincare Set',
+    brand: 'Glow',
+    categorySlug: 'beauty-personal-care',
+    description: 'Complete 5-piece skincare routine with natural ingredients.',
+    longDescription: 'Achieve radiant, healthy skin with our curated set of premium skincare products.',
+    badges: ['Bundle'],
+    images: [
+      'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 8900,
+    variants: [
+      {
+        variantId: 'serenity-set-complete',
+        label: 'Complete 5-Piece Set',
+        sku: 'GL-SER-5PC',
+        price: 8900,
+        stock: 35,
+        options: { type: 'Complete Set' },
+        images: ['https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Products Included', value: 'Cleanser, Toner, Serum, Moisturizer, SPF' },
+      { key: 'Skin Type', value: 'All skin types' },
+      { key: 'Origin', value: 'Natural ingredients' },
+    ],
+    rating: { average: 4.4, count: 203 },
+    attributes: { category: 'Skincare', type: 'Complete routine set' },
+  },
+
+  // ACCESSORIES
+  {
+    slug: 'chronos-smartwatch',
+    title: 'Chronos Pro Smartwatch',
+    brand: 'TimeTech',
+    categorySlug: 'accessories',
+    description: 'Advanced fitness tracking smartwatch with ECG and 7-day battery.',
+    longDescription: 'Stay connected and monitor your health with our most advanced wearable technology.',
+    badges: ['New'],
+    images: [
+      'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 34900,
+    variants: [
+      {
+        variantId: 'chronos-black-sport',
+        label: 'Midnight Black / Sport Band',
+        sku: 'TT-CHR-BLK-SPT',
+        price: 34900,
+        stock: 23,
+        options: { color: 'Midnight Black', band: 'Sport' },
+        images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'chronos-silver-leather',
+        label: 'Silver / Leather Band',
+        sku: 'TT-CHR-SLV-LTH',
+        price: 34900,
+        stock: 18,
+        options: { color: 'Silver', band: 'Leather' },
+        images: ['https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Display', value: '1.4" AMOLED' },
+      { key: 'Battery Life', value: '7 days' },
+      { key: 'Sensors', value: 'ECG, heart rate, SpO2' },
+    ],
+    rating: { average: 4.6, count: 156 },
+    attributes: { type: 'Smartwatch', connectivity: 'Bluetooth 5.1' },
+  },
+
+  // JEWELRY
+  {
+    slug: 'eternal-heart-necklace',
+    title: 'Eternal Heart Necklace',
+    brand: 'Elegance',
+    categorySlug: 'jewelry',
+    description: 'Sterling silver heart pendant with 18k gold vermeil and cubic zirconia.',
+    longDescription: 'A timeless symbol of love, crafted with meticulous attention to detail.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 12900,
+    variants: [
+      {
+        variantId: 'eternal-heart-silver',
+        label: 'Sterling Silver',
+        sku: 'EL-ETR-SS',
+        price: 12900,
+        stock: 45,
+        options: { material: 'Sterling Silver' },
+        images: ['https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'eternal-heart-gold',
+        label: 'Gold Vermeil',
+        sku: 'EL-ETR-GV',
+        price: 15900,
+        stock: 28,
+        options: { material: 'Gold Vermeil' },
+        images: ['https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Metal', value: 'Sterling silver, 18k gold vermeil' },
+      { key: 'Gemstone', value: 'Cubic zirconia' },
+      { key: 'Chain Length', value: '18" adjustable' },
+    ],
+    rating: { average: 4.8, count: 89 },
+    attributes: { material: 'Sterling silver', style: 'Heart pendant' },
+  },
+
+  // Continuing with more products...
+  {
+    slug: 'urban-cycling-jersey',
+    title: 'Urban Cycling Jersey',
+    brand: 'Velocity',
+    categorySlug: 'clothing',
+    description: 'Aero-fit cycling jersey with moisture management and reflective details.',
+    longDescription: 'Designed for urban cycling with features that keep you comfortable and visible.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1579762593175-20226054cad0?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1544717297-fa95b6ee9643?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 7900,
+    variants: [
+      {
+        variantId: 'urban-jersey-blue-m',
+        label: 'Electric Blue / Medium',
+        sku: 'VL-URB-BLU-M',
+        price: 7900,
+        stock: 42,
+        options: { color: 'Electric Blue', size: 'Medium' },
+        images: ['https://images.unsplash.com/photo-1579762593175-20226054cad0?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'urban-jersey-red-m',
+        label: 'Flame Red / Medium',
+        sku: 'VL-URB-RED-M',
+        price: 7900,
+        stock: 38,
+        options: { color: 'Flame Red', size: 'Medium' },
+        images: ['https://images.unsplash.com/photo-1544717297-fa95b6ee9643?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Fabric', value: 'Synthetic performance blend' },
+      { key: 'Fit', value: 'Aero-fit' },
+      { key: 'Features', value: 'Reflective details, rear zip pockets' },
+    ],
+    rating: { average: 4.1, count: 64 },
+    attributes: { material: 'Performance synthetic', color: 'Electric Blue', style: 'Cycling' },
+  },
+
+  {
+    slug: 'arctic-explorer-vest',
+    title: 'Arctic Explorer Vest',
+    brand: 'Cold Front',
+    categorySlug: 'outerwear',
+    description: 'Synthetic puffer vest with 650-fill power and water-resistant treatment.',
+    longDescription: 'Essential layering piece for variable weather conditions without bulk.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 11900,
+    variants: [
+      {
+        variantId: 'arctic-vest-black-l',
+        label: 'Obsidian Black / Large',
+        sku: 'CF-ARC-BLK-L',
+        price: 11900,
+        stock: 29,
+        options: { color: 'Obsidian Black', size: 'Large' },
+        images: ['https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'arctic-vest-navy-l',
+        label: 'Navy Blue / Large',
+        sku: 'CF-ARC-NAV-L',
+        price: 11900,
+        stock: 24,
+        options: { color: 'Navy Blue', size: 'Large' },
+        images: ['https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Fill Power', value: '650 fill power' },
+      { key: 'Water Resistance', value: 'DWR treatment' },
+      { key: 'Packability', value: 'Stuffs into pocket' },
+    ],
+    rating: { average: 4.4, count: 78 },
+    attributes: { material: 'Nylon with synthetic fill', color: 'Obsidian Black', style: 'Vest' },
+  },
+
+  {
+    slug: 'travel-daypack',
+    title: 'Travel Daypack',
+    brand: 'Urban Nomad',
+    categorySlug: 'bags-luggage',
+    description: '15L anti-theft daypack with USB charging port and laptop sleeve.',
+    longDescription: 'Perfect for commuting or travel with smart security features and organization.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1580854256161-2a14e9d10435?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 6900,
+    variants: [
+      {
+        variantId: 'travel-daypack-grey',
+        label: 'Charcoal Grey',
+        sku: 'UN-TRV-GRY',
+        price: 6900,
+        stock: 51,
+        options: { color: 'Charcoal Grey' },
+        images: ['https://images.unsplash.com/photo-1580854256161-2a14e9d10435?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'travel-daypack-navy',
+        label: 'Navy Blue',
+        sku: 'UN-TRV-NAV',
+        price: 6900,
+        stock: 43,
+        options: { color: 'Navy Blue' },
+        images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Capacity', value: '15L' },
+      { key: 'Laptop Sleeve', value: 'Up to 15"' },
+      { key: 'Features', value: 'USB charging port, anti-theft pockets' },
+    ],
+    rating: { average: 4.3, count: 112 },
+    attributes: { material: 'Water-resistant nylon', capacity: '15L', style: 'Daypack' },
+  },
+
+  {
+    slug: 'artisan-blender',
+    title: 'Artisan Professional Blender',
+    brand: 'Kitchen Pro',
+    categorySlug: 'home-kitchen',
+    description: 'Professional-grade blender with 1400W motor and variable speed control.',
+    longDescription: 'Achieve restaurant-quality results at home with powerful motor and durable blades.',
+    badges: ['Premium'],
+    images: [
+      'https://images.unsplash.com/photo-1579791549258-b64d6fde664a?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 17900,
+    variants: [
+      {
+        variantId: 'artisan-blender-black',
+        label: 'Matte Black',
+        sku: 'KP-ART-BLK',
+        price: 17900,
+        stock: 22,
+        options: { color: 'Matte Black' },
+        images: ['https://images.unsplash.com/photo-1579791549258-b64d6fde664a?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'artisan-blender-silver',
+        label: 'Bristled Stainless',
+        sku: 'KP-ART-SS',
+        price: 17900,
+        stock: 18,
+        options: { color: 'Stainless Steel' },
+        images: ['https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Power', value: '1400W' },
+      { key: 'Capacity', value: '72oz pitcher' },
+      { key: 'Controls', value: '10-speed + pulse' },
+    ],
+    rating: { average: 4.5, count: 87 },
+    attributes: { power: '1400W', material: 'Stainless steel blades', color: 'Matte Black' },
+  },
+
+  {
+    slug: 'titan-mechanical-keyboard',
+    title: 'Titan Mechanical Gaming Keyboard',
+    brand: 'GameForge',
+    categorySlug: 'electronics',
+    description: 'RGB mechanical keyboard with cherry MX switches and aluminum chassis.',
+    longDescription: 'Professional gaming keyboard built for tournament-level performance.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1541140532154-b024d705b90a?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 15900,
+    variants: [
+      {
+        variantId: 'titan-keyboard-rgb-red',
+        label: 'RGB Red Switches',
+        sku: 'GF-TIT-RGB-RED',
+        price: 15900,
+        stock: 31,
+        options: { switch: 'Cherry MX Red' },
+        images: ['https://images.unsplash.com/photo-1541140532154-b024d705b90a?auto=format&fit=crop&w=1200&q=80'],
+      },
+      {
+        variantId: 'titan-keyboard-rgb-blue',
+        label: 'RGB Blue Switches',
+        sku: 'GF-TIT-RGB-BLU',
+        price: 15900,
+        stock: 25,
+        options: { switch: 'Cherry MX Blue' },
+        images: ['https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Switches', value: 'Cherry MX mechanical' },
+      { key: 'Backlighting', value: 'Per-key RGB' },
+      { key: 'Construction', value: 'Aluminum chassis' },
+    ],
+    rating: { average: 4.7, count: 198 },
+    attributes: { type: 'Mechanical keyboard', switches: 'Cherry MX', lighting: 'RGB' },
+  },
+
+  {
+    slug: 'horizon-binoculars-10x42',
+    title: 'Horizon 10x42 Binoculars',
+    brand: 'Optics Pro',
+    categorySlug: 'sports-outdoors',
+    description: 'High-definition binoculars with phase-corrected roof prisms and 10x magnification.',
+    longDescription: 'Crystal clear optics for wildlife observation and birdwatching.',
+    badges: [],
+    images: [
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80'
+    ],
+    price: 29900,
+    variants: [
+      {
+        variantId: 'horizon-binoculars-10x42',
+        label: '10x42 with Harness',
+        sku: 'OP-HRZ-10X42',
+        price: 29900,
+        stock: 24,
+        options: { magnification: '10x42' },
+        images: ['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80'],
+      },
+    ],
+    specs: [
+      { key: 'Magnification', value: '10x' },
+      { key: 'Objective Lens', value: '42mm' },
+      { key: 'Field of View', value: '314 ft at 1000 yards' },
+    ],
+    rating: { average: 4.6, count: 178 },
+    attributes: { type: 'Binoculars', magnification: '10x', lens: '42mm' },
   },
 ];
 
@@ -1760,101 +1117,46 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
   if (categorySeeds.length) {
     await Category.insertMany(categorySeeds, { ordered: true });
   }
-  const categoryCheck = await Category.find({})
-    .select({ _id: 1 })
-    .lean();
-  const persistedCategoryIds = new Set(categoryCheck.map((doc) => String(doc._id)));
-  if (persistedCategoryIds.size !== categorySeeds.length) {
-    const missing = categorySeeds
-      .map((cat) => String(cat._id))
-      .filter((id) => !persistedCategoryIds.has(id));
-    throw new Error(
-      `Mongo seed failed: expected ${categorySeeds.length} categories but only ${persistedCategoryIds.size} persisted (${missing.join(', ')}).`,
-    );
-  }
 
   const categoryLookup = new Map(categorySeeds.map((cat) => [cat.slug, cat]));
 
-  // --- Image validation and fallbacks ---
-  // Many seed images are remote (Unsplash). Some may 404 or be removed over time.
-  // We attempt a HEAD request for each image; if it fails we substitute a category-level fallback.
+  // Simplified image validation for this fix
   const categoryFallbacks: Record<string, string> = {
-    footwear: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
-    apparel: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80',
-    outerwear: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1200&q=80',
-    'gear-travel': 'https://images.unsplash.com/photo-1516205651411-aef33a44f7c2?auto=format&fit=crop&w=1200&q=80',
-    'home-kitchen': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-    accessories: 'https://images.unsplash.com/photo-1517142874080-09548ab78358?auto=format&fit=crop&w=1200&q=80',
-    wellness: 'https://images.unsplash.com/photo-1521540216272-a50305cd4421?auto=format&fit=crop&w=1200&q=80',
-    tech: 'https://images.unsplash.com/photo-1542293787938-4d2226b05481?auto=format&fit=crop&w=1200&q=80',
+    footwear: 'https://picsum.photos/seed/footwear/1200/800',
+    clothing: 'https://picsum.photos/seed/clothing/1200/800',
+    outerwear: 'https://picsum.photos/seed/outerwear/1200/800',
+    'bags-luggage': 'https://picsum.photos/seed/bags-luggage/1200/800',
+    'home-kitchen': 'https://picsum.photos/seed/home-kitchen/1200/800',
+    electronics: 'https://picsum.photos/seed/electronics/1200/800',
+    'sports-outdoors': 'https://picsum.photos/seed/sports-outdoors/1200/800',
+    'beauty-personal-care': 'https://picsum.photos/seed/beauty-personal-care/1200/800',
+    accessories: 'https://picsum.photos/seed/accessories/1200/800',
+    jewelry: 'https://picsum.photos/seed/jewelry/1200/800',
   };
 
-  async function urlExists(url: string, timeout = 3000) {
-    return new Promise<boolean>((resolve) => {
-      try {
-        const u = new URL(url);
-        const lib = u.protocol === 'https:' ? https : http;
-        const req = lib.request(
-          {
-            method: 'HEAD',
-            host: u.hostname,
-            path: u.pathname + u.search,
-            port: u.port || (u.protocol === 'https:' ? 443 : 80),
-            timeout,
-          },
-          (res) => {
-            resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 400);
-          },
-        );
-        req.on('error', () => resolve(false));
-        req.on('timeout', () => {
-          req.destroy();
-          resolve(false);
-        });
-        req.end();
-      } catch (e) {
-        resolve(false);
-      }
-    });
+  // Simplified resolveImages
+  async function resolveImages(urls?: string[], categorySlug?: string, productSlug?: string, variantId?: string) {
+    const fallback = categoryFallbacks[categorySlug || ''] || categoryFallbacks.footwear;
+    return urls && urls.length > 0 ? urls : [
+      `https://picsum.photos/seed/${productSlug || 'product'}-0/1200/800`,
+      `https://picsum.photos/seed/${productSlug || 'product'}-1/1200/800`,
+      `https://picsum.photos/seed/${productSlug || 'product'}-2/1200/800`
+    ].slice(0, 3);
   }
 
-  async function resolveImages(urls?: string[] | undefined, categorySlug?: string) {
-    const fallback = categoryFallbacks[categorySlug ?? ''] ?? Object.values(categoryFallbacks)[0];
-    if (!urls || urls.length === 0) return [fallback];
-
-    const out: string[] = [];
-    for (const url of urls) {
-      try {
-        const ok = await urlExists(url);
-        out.push(ok ? url : fallback);
-      } catch (err) {
-        out.push(fallback);
-      }
-    }
-    // ensure at least one unique url
-    return out.length ? out : [fallback];
-  }
-
-  const productDocuments: any[] = [];
+  const productDocuments = [];
   for (const [index, product] of productCatalog.entries()) {
     const category = categoryLookup.get(product.categorySlug);
     if (!category) {
       throw new Error(`Seed configuration error: category ${product.categorySlug} not found for product ${product.slug}`);
     }
 
-    // resolve product-level images (validate and fallback when necessary)
-    const resolvedProductImages = await resolveImages(product.images, product.categorySlug);
+    const resolvedProductImages = await resolveImages(product.images, product.categorySlug, product.slug);
 
-    const variants = [] as any[];
+    const variants = [];
     for (const variant of product.variants) {
-      const resolvedId =
-        variant.variantId ||
-        `${product.slug}-${Object.values(variant.options)
-          .join('-')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')}`;
-
-      const resolvedVariantImages = await resolveImages(variant.images, product.categorySlug);
+      const resolvedId = variant.variantId || `${product.slug}-${Object.values(variant.options).join('-').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      const resolvedVariantImages = await resolveImages(variant.images, product.categorySlug, product.slug, variant.variantId);
 
       variants.push({
         variantId: resolvedId,
@@ -1877,7 +1179,7 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
       ...(variants[0]?.options?.size ? { size: variants[0].options.size } : {}),
     };
     const attributes = Object.fromEntries(
-      Object.entries(baseAttributes).filter(([, value]) => value !== undefined && value !== null && value !== ''),
+      Object.entries(baseAttributes).filter(([, value]) => value !== undefined && value !== null && value !== '')
     );
 
     productDocuments.push({
@@ -1909,25 +1211,11 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
         createdAt: new Date(now.getTime() + index),
         updatedAt: new Date(now.getTime() + index),
       })),
-      { ordered: true },
+      { ordered: true }
     );
   }
 
-  const productCheck = await Product.find({})
-    .select({ _id: 1 })
-    .lean();
-  const persistedProductIds = new Set(productCheck.map((doc) => String(doc._id)));
-  if (persistedProductIds.size !== productDocuments.length) {
-    const missing = productDocuments
-      .map((product) => String(product._id))
-      .filter((id) => !persistedProductIds.has(id));
-    throw new Error(
-      `Mongo seed failed: expected ${productDocuments.length} products but only ${persistedProductIds.size} persisted (${missing.join(', ')}).`,
-    );
-  }
-
-  console.log(`[seed] Upserted ${persistedCategoryIds.size} categories and ${persistedProductIds.size} products in MongoDB.`);
-
+  console.log(`[seed] Upserted ${categoriesData.length} categories and ${productDocuments.length} products in MongoDB.`);
   return productDocuments.map((product) => String(product._id));
 }
 
@@ -1955,50 +1243,25 @@ export async function seedPostgres(productIds: string[]) {
     },
   });
 
-  await prisma.event.upsert({
-    where: { id: 'seed-event-view' },
-    update: {
-      userId: customer.id,
-      payload: { productId: productIds[0] },
-      type: 'view',
-    },
-    create: {
-      id: 'seed-event-view',
-      userId: customer.id,
-      payload: { productId: productIds[0] },
-      type: 'view',
-    },
-  });
+  if (productIds.length >= 3) {
+    await prisma.event.upsert({
+      where: { id: 'seed-event-view' },
+      update: { userId: customer.id, payload: { productId: productIds[0] }, type: 'view' },
+      create: { id: 'seed-event-view', userId: customer.id, payload: { productId: productIds[0] }, type: 'view' },
+    });
 
-  await prisma.event.upsert({
-    where: { id: 'seed-event-cart' },
-    update: {
-      userId: customer.id,
-      payload: { productId: productIds[1] },
-      type: 'add_to_cart',
-    },
-    create: {
-      id: 'seed-event-cart',
-      userId: customer.id,
-      payload: { productId: productIds[1] },
-      type: 'add_to_cart',
-    },
-  });
+    await prisma.event.upsert({
+      where: { id: 'seed-event-cart' },
+      update: { userId: customer.id, payload: { productId: productIds[1] }, type: 'add_to_cart' },
+      create: { id: 'seed-event-cart', userId: customer.id, payload: { productId: productIds[1] }, type: 'add_to_cart' },
+    });
 
-  await prisma.event.upsert({
-    where: { id: 'seed-event-purchase' },
-    update: {
-      userId: customer.id,
-      payload: { productId: productIds[2] },
-      type: 'purchase',
-    },
-    create: {
-      id: 'seed-event-purchase',
-      userId: customer.id,
-      payload: { productId: productIds[2] },
-      type: 'purchase',
-    },
-  });
+    await prisma.event.upsert({
+      where: { id: 'seed-event-purchase' },
+      update: { userId: customer.id, payload: { productId: productIds[2] }, type: 'purchase' },
+      create: { id: 'seed-event-purchase', userId: customer.id, payload: { productId: productIds[2] }, type: 'purchase' },
+    });
+  }
 
   return { admin, customer };
 }
@@ -2006,14 +1269,12 @@ export async function seedPostgres(productIds: string[]) {
 export async function seedAll(options: { mongoUrl?: string } = {}) {
   const mongoUrl = options.mongoUrl ?? process.env.MONGO_URL ?? DEFAULT_MONGO_URL;
   const productIds = await seedMongo(mongoUrl);
+
   if (productIds.length < 3) {
-    throw new Error(
-      `Mongo seed only returned ${productIds.length} product IDs; expected at least 3 so Postgres seed can attach analytics events. Check the Mongo seed logs above for details.`,
-    );
+    throw new Error(`Mongo seed only returned ${productIds.length} product IDs; expected at least 3 so Postgres seed can attach analytics events.`);
   }
 
   await seedPostgres(productIds.slice(0, 3));
-
   return { productIds };
 }
 

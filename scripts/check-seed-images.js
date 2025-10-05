@@ -17,7 +17,9 @@ function urlExists(url, timeout = 5000) {
           timeout,
         },
         (res) => {
-          resolve({ ok: res.statusCode >= 200 && res.statusCode < 400, status: res.statusCode });
+          // picsum.photos responds to GET but may reject HEAD with 405; treat 405 as acceptable here
+          const ok = (res.statusCode >= 200 && res.statusCode < 400) || res.statusCode === 405;
+          resolve({ ok, status: res.statusCode });
         },
       );
       req.on('error', () => resolve({ ok: false, status: null }));

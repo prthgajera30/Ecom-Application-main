@@ -13,6 +13,7 @@ import { Button, ButtonLink } from './ui/Button';
 
 const navLinks = [
   { href: '/products', label: 'Products' },
+  { href: '/wishlist', label: 'Wishlist' },
   { href: '/cart', label: 'Cart' },
   { href: '/orders', label: 'Orders' },
 ];
@@ -304,4 +305,3 @@ export default function Header() {
     </header>
   );
 }
-

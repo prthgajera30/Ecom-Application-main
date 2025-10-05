@@ -16,6 +16,7 @@ model User {
   orders       Order[]
   events       Event[]
   addresses    Address[]
+  wishlist     Wishlist[]
 }
 
 enum Role {
@@ -113,4 +114,14 @@ model Event {
   type      String
   payload   Json
   createdAt DateTime @default(now())
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
 }

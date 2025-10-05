@@ -94,3 +94,14 @@ export async function apiPost<T>(path: string, body: any): Promise<T> {
   if (!res.ok) await handleError(res);
   return res.json();
 }
+
+export async function apiDelete<T>(path: string): Promise<T | void> {
+  const res = await fetch(withApiBase(path), {
+    method: 'DELETE',
+    headers: buildHeaders(),
+  });
+  if (!res.ok) await handleError(res);
+  // DELETE endpoints might not return JSON
+  const text = await res.text();
+  return text ? JSON.parse(text) : undefined;
+}

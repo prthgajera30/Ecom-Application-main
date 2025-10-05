@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button, ButtonLink } from '../components/ui/Button';
+import { WishlistButton } from '../components/ui/WishlistButton';
 import { apiGet, ApiError } from '../lib/api';
 import { getSocket } from '../lib/ws';
 import { useCartState } from '../context/CartContext';
@@ -407,6 +408,9 @@ export default function Page() {
                         <div className="flex h-full items-center justify-center text-xs text-indigo-100/60">No image</div>
                       )}
                       <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/80 via-transparent" />
+                      <div className="absolute right-3 top-3">
+                        <WishlistButton productId={product._id} variant="icon" size="sm" />
+                      </div>
                     </Link>
                     <div className="space-y-2 text-sm text-indigo-100/80">
                       <div className="text-base font-semibold text-white line-clamp-1">{product.title}</div>
@@ -671,4 +675,3 @@ export default function Page() {
     </div>
   );
 }
-

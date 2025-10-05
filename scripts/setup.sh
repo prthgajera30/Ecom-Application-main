@@ -101,6 +101,15 @@ fi
 
 log "Running migrations and seed (idempotent)"
 set +e
+migrate_status=0
+if [ "${SKIP_SEED_IMAGE_DOWNLOAD:-}" != "1" ]; then
+  log "Downloading and caching seed images (dry-run by default)"
+  # run in dry mode during setup to avoid network heavy downloads; remove --dry to actually download
+  node scripts/download-seed-images.js --dry || true
+else
+  echo "SKIP_SEED_IMAGE_DOWNLOAD=1 detected; skipping seed image download step"
+fi
+
 node scripts/run-script.mjs migrate-and-seed
 migrate_status=$?
 set -e

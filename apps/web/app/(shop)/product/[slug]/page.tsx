@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
+import { WishlistButton } from '../../../../components/ui/WishlistButton';
 import { apiGet, ApiError } from '../../../../lib/api';
 import { useCartState } from '../../../../context/CartContext';
 
@@ -472,9 +473,12 @@ export default function ProductDetailPage() {
               <span>{selectedVariant?.label || (optionKeys.length ? 'Select options for availability' : 'Availability')}</span>
               <span className={isOutOfStock ? 'text-rose-200' : 'text-emerald-200'}>{stockMessage}</span>
             </div>
-            <Button className="w-full justify-center" onClick={add} disabled={pendingAdd || isOutOfStock}>
-              {pendingAdd ? 'Adding…' : isOutOfStock ? 'Out of stock' : 'Add to cart'}
-            </Button>
+            <div className="flex gap-3">
+              <Button className="flex-1 justify-center" onClick={add} disabled={pendingAdd || isOutOfStock}>
+                {pendingAdd ? 'Adding…' : isOutOfStock ? 'Out of stock' : 'Add to cart'}
+              </Button>
+              <WishlistButton productId={product._id} size="md" variant="button" />
+            </div>
             {addError && (
               <p className="rounded-full bg-rose-500/15 px-4 py-2 text-sm text-rose-100">
                 {addError}

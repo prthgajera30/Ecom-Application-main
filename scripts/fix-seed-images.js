@@ -167,6 +167,22 @@ async function main() {
       if (updatedProductImages) updateDoc.images = newImages;
       if (updatedVariants) updateDoc.variants = newVariants;
       if (!dryRun) {
+        // dedupe images and prefer non-placeholder images before writing
+        if (updateDoc.images) {
+          const dedup = Array.from(new Set(updateDoc.images));
+          const nonPlaceholder = dedup.filter((u) => u && u !== PLACEHOLDER_FALLBACK);
+          updateDoc.images = (nonPlaceholder.length ? nonPlaceholder : dedup).slice(0, 6);
+        }
+        if (updateDoc.variants) {
+          updateDoc.variants = updateDoc.variants.map((v) => {
+            if (Array.isArray(v.images)) {
+              const ded = Array.from(new Set(v.images));
+              const nonp = ded.filter((u) => u && u !== PLACEHOLDER_FALLBACK);
+              v.images = (nonp.length ? nonp : ded).slice(0, 6);
+            }
+            return v;
+          });
+        }
         await Product.updateOne({ _id: p._id }, { $set: updateDoc });
       }
       changed++;

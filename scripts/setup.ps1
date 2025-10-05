@@ -116,6 +116,13 @@ if (Test-Path $prismaClientDir) {
 [void](Run-Command 'pnpm' @('-r', '--if-present', 'prisma:generate') -AllowFailure)
 
 Write-Step "Running migrations and seed (idempotent)"
+if ($env:SKIP_SEED_IMAGE_DOWNLOAD -ne '1') {
+    Write-Step "Downloading and caching seed images (optional)"
+    Run-Command 'node' @('scripts/download-seed-images.js', '--dry') -AllowFailure
+} else {
+    Write-Host "SKIP_SEED_IMAGE_DOWNLOAD=1 detected; skipping seed image download step"
+}
+
 Run-Command 'node' @($NodeDispatcher, 'migrate-and-seed')
 
 if ($env:SKIP_SEED_IMAGE_FIX -ne '1') {
