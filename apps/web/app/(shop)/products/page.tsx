@@ -1,10 +1,11 @@
 "use client";
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiGet } from '../../../lib/api';
 import { useCartState } from '../../../context/CartContext';
 import { ApiError } from '../../../lib/api';
+import { cn } from '../../../lib/cn';
 
 type ProductVariant = {
   variantId?: string;
@@ -65,6 +66,9 @@ const sortOptions = [
   { value: 'popular', label: 'Most Popular' },
 ];
 
+const FILTER_SCROLL_THRESHOLD = 6;
+const FILTER_SEARCH_THRESHOLD = 8;
+
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const [items, setItems] = useState<Product[]>([]);
@@ -80,6 +84,12 @@ function ProductsPageContent() {
   const [attributeFilters, setAttributeFilters] = useState<Record<string, string[]>>({});
   const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({});
   const [priceDraft, setPriceDraft] = useState<{ min: string; max: string }>({ min: '', max: '' });
+  const [categorySearch, setCategorySearch] = useState('');
+  const [attributeSearchTerms, setAttributeSearchTerms] = useState<Record<string, string>>({});
+  const categorySearchInputRef = useRef<HTMLInputElement | null>(null);
+  const attributeSearchRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const categorySearchFocusInitialized = useRef(false);
+  const pendingAttributeFocusKey = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorsByProduct, setErrorsByProduct] = useState<Record<string, string>>({});
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -146,6 +156,40 @@ function ProductsPageContent() {
       max: priceRange.max !== undefined ? (priceRange.max / 100).toFixed(2) : '',
     });
   }, [priceRange.min, priceRange.max]);
+
+  useLayoutEffect(() => {
+    const input = categorySearchInputRef.current;
+    if (!input) return;
+    if (!categorySearchFocusInitialized.current) {
+      categorySearchFocusInitialized.current = true;
+      return;
+    }
+    if (document.activeElement !== input) {
+      input.focus({ preventScroll: true });
+    }
+    const position = input.value.length;
+    try {
+      input.setSelectionRange(position, position);
+    } catch (err) {
+      // ignore when selection range is unsupported
+    }
+  }, [categorySearch]);
+
+  useEffect(() => {
+    setAttributeSearchTerms((current) => {
+      const validKeys = new Set(facets.attributes.map((facet) => facet.key));
+      let changed = false;
+      const next: Record<string, string> = {};
+      Object.entries(current).forEach(([key, value]) => {
+        if (validKeys.has(key)) {
+          next[key] = value;
+        } else {
+          changed = true;
+        }
+      });
+      return changed ? next : current;
+    });
+  }, [facets.attributes]);
 
   const categoryKey = useMemo(() => selectedCategories.slice().sort().join(','), [selectedCategories]);
   const attributeKey = useMemo(() => {
@@ -330,8 +374,44 @@ function ProductsPageContent() {
   const openMobileFilters = () => setMobileFiltersOpen(true);
   const closeMobileFilters = () => setMobileFiltersOpen(false);
 
-  const FiltersPanel = ({ onClose }: { onClose?: () => void }) => (
-    <div className="space-y-6">
+  function handleAttributeSearchChange(key: string, value: string) {
+    setAttributeSearchTerms((current) => {
+      const next = { ...current };
+      if (value) next[key] = value;
+      else delete next[key];
+      return next;
+    });
+    pendingAttributeFocusKey.current = key;
+  }
+
+  useLayoutEffect(() => {
+    const focusKey = pendingAttributeFocusKey.current;
+    if (!focusKey) return;
+    pendingAttributeFocusKey.current = null;
+    const input = attributeSearchRefs.current[focusKey];
+    if (!input) return;
+    const container = input.closest('[data-filter-scrollable="true"]') as HTMLElement | null;
+    const previousScrollTop = container?.scrollTop ?? 0;
+    input.focus({ preventScroll: true });
+    const position = input.value.length;
+    try {
+      input.setSelectionRange(position, position);
+    } catch (err) {
+      // ignore when selection range is unsupported
+    }
+    if (container) {
+      container.scrollTop = previousScrollTop;
+    }
+  }, [attributeSearchTerms]);
+
+  const FiltersPanel = ({ onClose }: { onClose?: () => void }) => {
+    const categoryTerm = categorySearch.trim().toLowerCase();
+    const filteredCategories = categoryTerm
+      ? mergedCategories.filter((cat) => cat.name.toLowerCase().includes(categoryTerm))
+      : mergedCategories;
+
+    return (
+      <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <span
           className="text-sm font-semibold uppercase tracking-wide text-subtle"
@@ -355,24 +435,39 @@ function ProductsPageContent() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">Categories</h2>
           <span className="text-xs text-subtle">{mergedCategories.length}</span>
         </div>
-        <div className="max-h-56 space-y-2 overflow-y-auto pr-1 text-sm text-subtle">
-          {mergedCategories.map((cat) => (
-            <label key={cat.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-              <span className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="accent-indigo-500"
-                  checked={selectedCategories.includes(cat.id)}
-                  onChange={() => toggleCategory(cat.id)}
-                />
-                <span>{cat.name}</span>
-              </span>
-              <span className="text-xs text-subtle">{cat.count}</span>
-            </label>
-          ))}
-          {mergedCategories.length === 0 && (
+        <label className="block text-sm text-subtle">
+          <span className="sr-only">Search categories</span>
+          <input
+            ref={categorySearchInputRef}
+            value={categorySearch}
+            onChange={(event) => setCategorySearch(event.target.value)}
+            placeholder="Search categories"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
+          />
+        </label>
+        <div className="max-h-56 space-y-2 overflow-y-auto pr-1 text-sm text-subtle" data-filter-scrollable="true">
+          {filteredCategories.length > 0 ? (
+            filteredCategories.map((cat) => (
+              <label key={cat.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                <span className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="accent-indigo-500"
+                    checked={selectedCategories.includes(cat.id)}
+                    onChange={() => toggleCategory(cat.id)}
+                  />
+                  <span>{cat.name}</span>
+                </span>
+                <span className="text-xs text-subtle">{cat.count}</span>
+              </label>
+            ))
+          ) : mergedCategories.length === 0 ? (
             <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
               Categories will appear here as catalog data loads.
+            </p>
+          ) : (
+            <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
+              No categories match your search.
             </p>
           )}
         </div>
@@ -425,38 +520,74 @@ function ProductsPageContent() {
         </div>
       </div>
 
-      {facets.attributes.map((facet) => (
-        <div key={facet.key} className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">{facet.key}</h2>
-            <span className="text-xs text-subtle">{facet.values.length}</span>
-          </div>
-          <div className="space-y-2 text-sm text-subtle">
-            {facet.values.map((entry) => {
-              const active = attributeFilters[facet.key]?.includes(entry.value) ?? false;
-              return (
-                <label key={entry.value} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                  <span className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="accent-indigo-500"
-                      checked={active}
-                      onChange={() => toggleAttribute(facet.key, entry.value)}
-                    />
-                    <span>{entry.value}</span>
-                  </span>
-                  <span className="text-xs text-subtle">{entry.count}</span>
-                </label>
-              );
-            })}
-            {facet.values.length === 0 && (
-              <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
-                No attribute values yet.
-              </p>
+      {facets.attributes.map((facet) => {
+        const attributeSearchValue = attributeSearchTerms[facet.key] ?? '';
+        const attributeTerm = attributeSearchValue.trim().toLowerCase();
+        const filteredValues = attributeTerm
+          ? facet.values.filter((entry) => entry.value.toLowerCase().includes(attributeTerm))
+          : facet.values;
+        const showAttributeSearch = facet.values.length > FILTER_SEARCH_THRESHOLD;
+        const attributeShouldScroll = facet.values.length > FILTER_SCROLL_THRESHOLD;
+
+        return (
+          <div key={facet.key} className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">{facet.key}</h2>
+              <span className="text-xs text-subtle">{facet.values.length}</span>
+            </div>
+            {showAttributeSearch && (
+              <label className="block text-sm text-subtle">
+                <span className="sr-only">Search {facet.key}</span>
+                <input
+                  ref={(element) => {
+                    if (element) attributeSearchRefs.current[facet.key] = element;
+                    else delete attributeSearchRefs.current[facet.key];
+                  }}
+                  value={attributeSearchValue}
+                  onChange={(event) => handleAttributeSearchChange(facet.key, event.target.value)}
+                  placeholder={`Search ${facet.key.toLowerCase()}`}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
+                />
+              </label>
             )}
+            <div
+              className={cn(
+                'space-y-2 text-sm text-subtle',
+                attributeShouldScroll && 'max-h-56 overflow-y-auto pr-1'
+              )}
+              data-filter-scrollable="true"
+            >
+              {filteredValues.length > 0 ? (
+                filteredValues.map((entry) => {
+                  const active = attributeFilters[facet.key]?.includes(entry.value) ?? false;
+                  return (
+                    <label key={entry.value} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                      <span className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          className="accent-indigo-500"
+                          checked={active}
+                          onChange={() => toggleAttribute(facet.key, entry.value)}
+                        />
+                        <span>{entry.value}</span>
+                      </span>
+                      <span className="text-xs text-subtle">{entry.count}</span>
+                    </label>
+                  );
+                })
+              ) : facet.values.length === 0 ? (
+                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
+                  No attribute values yet.
+                </p>
+              ) : (
+                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
+                  No matches for this filter.
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {activeFilterCount > 0 && (
         <button
@@ -470,8 +601,9 @@ function ProductsPageContent() {
           Clear all filters
         </button>
       )}
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-8">
