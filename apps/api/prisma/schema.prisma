@@ -8,16 +8,23 @@ datasource db {
 }
 
 model User {
-  id             String         @id @default(uuid())
-  email          String         @unique
-  passwordHash   String
-  role           Role           @default(customer)
-  createdAt      DateTime       @default(now())
-  orders         Order[]
-  events         Event[]
-  addresses      Address[]
-  wishlist       Wishlist[]
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  passwordHash String
+  role      String   @default("user")
+
+  // Relations
+  orders        Order[]
+  wishlist      Wishlist[]
+  addresses     Address[]
   paymentMethods PaymentMethod[]
+  events        Event[]
+  reviews       Review[]
+  reviewHelpful ReviewHelpful[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {
@@ -87,14 +94,38 @@ model Order {
   shippingAddress  Json?
   shippingOption   ShippingOption? @relation(fields: [shippingOptionId], references: [id])
   shippingOptionId String?
+
+  // Enhanced Order Tracking Fields
+  trackingNumber   String?
+  carrier          String?           // "fedex", "ups", "dhl", "usps", etc.
+  shippingStatus   ShippingStatus?   // current shipping status
+  trackingUrl      String?           // direct carrier tracking URL
+  shippedAt        DateTime?         // when order was shipped
+  estimatedDelivery DateTime?        // carrier estimated delivery
+  actualDelivery   DateTime?         // actual delivery timestamp
+  shippingNotes    String?           // internal shipping notes
+  packageWeight    Float?            // package weight in lbs/kg
+
   items            OrderItem[]
   payment          Payment?
+  trackingEvents   TrackingEvent[]
+  reviews          Review[]
 }
 
 enum OrderStatus {
   pending
   paid
   canceled
+}
+
+enum ShippingStatus {
+  pending
+  shipped
+  in_transit
+  out_for_delivery
+  delivered
+  failed_delivery
+  returned
 }
 
 model OrderItem {
@@ -139,3 +170,153 @@ model Wishlist {
   createdAt DateTime @default(now())
 
   @@unique([userId, productId])
+}
+
+model TrackingEvent {
+  id          String   @id @default(uuid())
+  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     String
+  carrier     String   // "fedex", "ups", "dhl", etc.
+  status      String   // tracking status from carrier
+  description String   // human readable status description
+  location    String?  // location information if available
+  timestamp   DateTime // when this event occurred
+  details     Json?    // additional carrier-specific details
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([carrier, status])
+}
+
+model Review {
+  id             String          @id @default(uuid())
+  productId      String          // Product ID this review is for
+  userId         String?         // User who wrote the review (null for anonymous)
+  user           User?           @relation(fields: [userId], references: [id])
+  orderId        String?         // Order this review is associated with
+  order          Order?          @relation(fields: [orderId], references: [id])
+
+  rating         Int             // 1-5 star rating
+  title          String?         // Review headline/title
+  body           String?         // Full review text
+  verified       Boolean         @default(false) // Verified purchase
+
+  helpfulCount   Int             @default(0) // Number of helpful votes
+  status         ReviewStatus    @default(draft) // Moderation status
+
+  authorName     String?         // Guest reviewer name
+  authorEmail    String?         // Guest reviewer email
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  reviewedAt     DateTime?       // When review was written
+
+  responses      ReviewResponse[]
+  helpfulVotes   ReviewHelpful[]
+
+  @@index([productId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ReviewResponse {
+  id        String   @id @default(uuid())
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId  String
+
+  // Store admin user who responded
+  adminId   String?
+  adminName String
+  response  String   // Admin response text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reviewId])
+}
+
+model ReviewHelpful {
+  id       String @id @default(uuid())
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId String
+  userId   String // User who voted helpful
+  user     User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
+}
+
+model ProductReview {
+  id             String          @id @default(uuid())
+  productId      String          // Product ID (from MongoDB collection)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  order          Order?          @relation(fields: [orderId], references: [id])
+  orderId        String?
+
+  rating         Int             // 1-5 star rating
+  title          String?         // Review headline/title
+  body           String?         // Full review text
+  verified       Boolean         @default(false) // Verified purchase
+  status         ReviewStatus    @default(draft) // Moderation status
+
+  authorName     String          // User's display name at time of review
+  authorEmail    String?         // User's email at time of review
+
+  helpfulCount   Int             @default(0) // Number of helpful votes
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  reviewedAt     DateTime?       // When review was written
+
+  responses      ProductReviewResponse[]
+  helpfulVotes   ProductReviewHelpful[]
+
+  @@index([productId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ProductReviewResponse {
+  id        String   @id @default(uuid())
+  review    ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId  String
+
+  // Store admin user who responded
+  adminId   String
+  admin     User    @relation(fields: [adminId], references: [id])
+  adminName String
+  response  String   // Admin response text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([reviewId])
+}
+
+model ProductReviewHelpful {
+  id       String @id @default(uuid())
+  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reviewId String
+  userId   String // User who voted helpful
+  user     User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
+  @@index([reviewId])
+  @@index([userId])
+}
+
+enum ReviewStatus {
+  draft       // Unmoderated
+  pending     // Awaiting moderation
+  published   // Approved and visible
+  rejected    // Rejected during moderation
+  hidden      // Hidden by admin or user
+}

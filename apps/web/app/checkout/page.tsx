@@ -101,8 +101,9 @@ export default function CheckoutPage() {
   // Calculate totals
   const subtotal = items.reduce((sum, item) => {
     const product = products[item.productId];
-    const unitPrice = Number.isFinite(item.unitPrice) && item.unitPrice !== null ? item.unitPrice : product?.price || 0;
-    return sum + (unitPrice * item.qty);
+    const rawUnit = Number.isFinite(item.unitPrice) && item.unitPrice !== null ? item.unitPrice : product?.price ?? 0;
+    const unitPrice = Number(rawUnit) || 0;
+    return sum + unitPrice * item.qty;
   }, 0);
 
   const shipping = subtotal > 5000 ? 0 : 499; // Free shipping over $50
@@ -283,7 +284,8 @@ export default function CheckoutPage() {
                   <div className="space-y-3">
                     {items.map((item) => {
                       const product = products[item.productId];
-                      const unitPrice = Number.isFinite(item.unitPrice) && item.unitPrice !== null ? item.unitPrice : product?.price || 0;
+                      const rawUnit = Number.isFinite(item.unitPrice) && item.unitPrice !== null ? item.unitPrice : product?.price ?? 0;
+                      const unitPrice = Number(rawUnit) || 0;
                       const itemTotal = unitPrice * item.qty;
 
                       return (

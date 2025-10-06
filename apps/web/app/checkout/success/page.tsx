@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -7,8 +8,7 @@ import { useCartState } from '../../../context/CartContext';
 
 export default function Success() {
   const { refresh } = useCartState();
-  const searchParams = useSearchParams();
-  const checkoutSessionId = searchParams.get('session_id');
+  const [checkoutSessionId, setCheckoutSessionId] = useState<string | null>(null);
   const [finalizing, setFinalizing] = useState(false);
   const [finalizeError, setFinalizeError] = useState<string | null>(null);
 
@@ -37,6 +37,15 @@ export default function Success() {
         }
         await refresh();
       }
+    }
+
+    // Read the session id from the URL on client side (avoid useSearchParams during prerender)
+    try {
+      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+      const sid = params.get('session_id');
+      setCheckoutSessionId(sid);
+    } catch (err) {
+      // ignore
     }
 
     finalizeSession();

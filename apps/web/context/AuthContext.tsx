@@ -7,9 +7,11 @@ import { getToken as getStoredToken, setToken as storeToken, clearToken as clear
 
 type User = { id: string; email: string; role: 'customer' | 'admin' } | null;
 
-type AuthContextType = {
+  type AuthContextType = {
   user: User;
   token: string | null;
+  // true while the initial refresh/login state is being determined
+  initializing: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -19,18 +21,41 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  // Read stored token synchronously so initial renders know whether a token exists.
+  // This prevents a brief "Access Denied" flash on pages that render before
+  // the async refresh completes (for example the admin page).
+  const [token, setToken] = useState<string | null>(() => getStoredToken());
   const [user, setUser] = useState<User>(null);
+  const [initializing, setInitializing] = useState<boolean>(true);
 
   const refresh = useCallback(async () => {
     const t = getStoredToken();
     setToken(t);
     if (!t) { setUser(null); identifyUser(null); return; }
-    const res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${t}` } });
-    if (!res.ok) { setUser(null); identifyUser(null); return; }
+    // Try the configured API_BASE first. If that fails in a way that looks
+    // like the frontend being served (404 HTML) or the host is misconfigured,
+    // attempt a relative '/api/auth/me' fallback before treating the token as invalid.
+    let res = await fetch(`${API_BASE}/auth/me`, { headers: { Authorization: `Bearer ${t}` } });
+    let ok = res.ok;
+    // If 404 or content-type isn't JSON, try fallback to same-origin API proxy
+    const contentType = res.headers.get('content-type') || '';
+    if (!ok || (!contentType.includes('application/json') && res.status === 404)) {
+      try {
+        const fallback = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${t}` } });
+        if (fallback.ok) {
+          res = fallback;
+          ok = true;
+        }
+      } catch (err) {
+        // ignore and treat as failure below
+      }
+    }
+
+    if (!ok) { setUser(null); identifyUser(null); setInitializing(false); return; }
     const u = await res.json();
     setUser(u);
     identifyUser(u?.id ?? null);
+    setInitializing(false);
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -108,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, refresh }}>
+    <AuthContext.Provider value={{ user, token, initializing, login, register, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

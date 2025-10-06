@@ -1,3 +1,13 @@
+// Use types from ReviewCard for ProductReviews API
+// Use types from ReviewCard for ProductReviews API
+import type { Review } from '../../../../components/ReviewCard';
+
+type ReviewFilters = {
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: string;
+};
 'use client';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -6,7 +16,8 @@ import { useParams } from 'next/navigation';
 import { Button } from '../../../../components/ui/Button';
 import { Card } from '../../../../components/ui/Card';
 import { WishlistButton } from '../../../../components/ui/WishlistButton';
-import { apiGet, ApiError } from '../../../../lib/api';
+import { ProductReviews } from '../../../../components/ProductReviews';
+import { apiGet, apiPost, ApiError } from '../../../../lib/api';
 import { useCartState } from '../../../../context/CartContext';
 
 type ProductVariant = {
@@ -541,6 +552,72 @@ export default function ProductDetailPage() {
               )}
             </div>
           </Card>
+        </section>
+      )}
+
+      {/* Product Reviews Section */}
+      {product && (
+        <section>
+          <ProductReviews
+            productId={product._id}
+            api={{
+              getReviewSummary: async (productId: string): Promise<any> => {
+                const response = await apiGet(`/products/${productId}/reviews/summary`) as any;
+                return {
+                  average: response.average ?? 0,
+                  count: response.count ?? 0,
+                  breakdown: Array.isArray(response.breakdown)
+                    ? response.breakdown
+                    : [],
+                  lastReviewedAt: response.lastReviewedAt ?? undefined,
+                };
+              },
+              getProductReviews: async (productId: string, filters: ReviewFilters): Promise<{ items: Review[]; total: number; hasMore: boolean; limit: number; offset: number; }> => {
+                const queryParams = new URLSearchParams();
+                if (filters.limit) queryParams.set('limit', filters.limit.toString());
+                if (filters.offset) queryParams.set('offset', filters.offset.toString());
+                if (filters.sortBy) queryParams.set('sortBy', filters.sortBy);
+                if (filters.sortOrder) queryParams.set('sortOrder', filters.sortOrder);
+
+                const response = await apiGet(`/products/${productId}/reviews?${queryParams}`) as any;
+                const items = Array.isArray(response.items)
+                  ? response.items.map((r: any) => ({
+                      ...r,
+                      id: r.id ?? r._id ?? '',
+                      verified: r.verified ?? false,
+                      status: r.status ?? 'published',
+                    }))
+                  : [];
+                return {
+                  items,
+                  total: response.total ?? items.length,
+                  hasMore: response.hasMore ?? false,
+                  limit: response.limit ?? filters.limit ?? 10,
+                  offset: response.offset ?? filters.offset ?? 0,
+                };
+              },
+              createReview: async (productId: string, data: any): Promise<Review> => {
+                const response = await apiPost(`/products/${productId}/reviews`, data) as any;
+                return {
+                  ...response,
+                  id: response.id ?? response._id ?? '',
+                  verified: response.verified ?? false,
+                  status: response.status ?? 'published',
+                };
+              },
+              markReviewHelpful: async (reviewId: string): Promise<void> => {
+                await apiPost(`/reviews/${reviewId}/helpful`, {});
+              },
+              addReviewResponse: async (reviewId: string, response: string): Promise<any> => {
+                const result = await apiPost(`/reviews/${reviewId}/responses`, { response });
+                return result;
+              }
+            }}
+            onUpdateSummary={(summary) => {
+              // Could update the product rating display here if needed
+              console.log('Updated review summary:', summary);
+            }}
+          />
         </section>
       )}
 

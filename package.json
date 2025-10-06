@@ -20,6 +20,7 @@
     "db:seed": "pnpm --filter @apps/api prisma:seed",
     "first-run": "node scripts/run-script.mjs migrate-and-seed",
     "dev": "pnpm -r --parallel dev",
+  "stop": "pnpm --filter @apps/api run dev:stop",
     "dev:recs": "node scripts/run-recs-dev.mjs",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",

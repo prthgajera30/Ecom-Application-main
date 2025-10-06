@@ -2,10 +2,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('product variants', () => {
   test('selecting a variant adds it to the cart', async ({ page }) => {
-    await page.goto('/product/product-1');
-    await expect(page.getByRole('heading', { name: /Product 1/i })).toBeVisible();
+    await page.goto('/product/aurora-running-sneaker');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: /Aurora Running Sneaker/i })).toBeVisible();
 
-    const optionGroups = page.locator('div.space-y-5').locator('div.space-y-2');
+    const optionGroups = page.locator('div.space-y-4').locator('div.space-y-2');
     const groupCount = await optionGroups.count();
     expect(groupCount).toBeGreaterThan(0);
 
@@ -33,7 +34,7 @@ test.describe('product variants', () => {
 
     await page.goto('/cart');
     await expect(page.getByRole('heading', { name: /Your Cart/i })).toBeVisible();
-    await expect(page.getByText('Product 1')).toBeVisible();
+    await expect(page.getByText('Aurora Running Sneaker')).toBeVisible();
     await expect(page.getByText(variantLabel)).toBeVisible();
   });
 });

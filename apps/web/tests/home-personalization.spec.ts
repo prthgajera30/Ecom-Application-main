@@ -5,7 +5,8 @@ test.describe('home personalization', () => {
 
   test('shows hero content', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /Trending collections/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Craft shopping journeys/i })).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('heading', { name: /Everything you love. Delivered fast./i })).toBeVisible();
+    await expect(page.getByText('Pulse Market')).toBeVisible();
   });
 });

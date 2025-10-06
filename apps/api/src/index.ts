@@ -9,6 +9,7 @@ import pino from 'pino';
 import pinoHttp from 'pino-http';
 import { connectMongo } from './db';
 import { ensureDatabasesSeeded } from './seeding';
+import { cache } from './cache';
 import authRoutes from './routes/auth';
 import catalogRoutes from './routes/catalog';
 import cartRoutes from './routes/cart';
@@ -19,6 +20,8 @@ import reviewsRoutes from './routes/reviews';
 import wishlistRoutes from './routes/wishlist';
 import addressRoutes from './routes/address';
 import paymentMethodRoutes from './routes/payment-methods';
+import adminRoutes from './routes/admin';
+import adminShippingRoutes from './routes/admin/shipping';
 
 export const app = express();
 const server = http.createServer(app);
@@ -51,6 +54,8 @@ app.use('/api', reviewsRoutes);
 app.use('/api', wishlistRoutes);
 app.use('/api', addressRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin/shipping', adminShippingRoutes);
 
 io.on('connection', (socket) => {
   logger.info({ id: socket.id }, 'socket connected');
@@ -71,7 +76,11 @@ io.on('connection', (socket) => {
 export async function start() {
   const PORT = process.env.PORT || 4000;
   const mongoUrl = process.env.MONGO_URL || 'mongodb://localhost:27017/shop';
+
+  // Connect to databases
   await connectMongo(mongoUrl);
+  await cache.connect();
+
   try {
     const seeded = await ensureDatabasesSeeded({ mongoUrl });
     if (seeded) {
@@ -83,6 +92,7 @@ export async function start() {
     logger.error({ err: error }, 'Failed to verify or seed databases.');
     throw error;
   }
+
   return new Promise<void>((resolve) => {
     server.listen(PORT, () => {
       logger.info(`API listening on ${PORT}`);

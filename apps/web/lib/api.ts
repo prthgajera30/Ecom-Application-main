@@ -95,6 +95,16 @@ export async function apiPost<T>(path: string, body: any): Promise<T> {
   return res.json();
 }
 
+export async function apiPatch<T>(path: string, body: any): Promise<T> {
+  const res = await fetch(withApiBase(path), {
+    method: 'PATCH',
+    headers: buildHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) await handleError(res);
+  return res.json();
+}
+
 export async function apiDelete<T>(path: string): Promise<T | void> {
   const res = await fetch(withApiBase(path), {
     method: 'DELETE',

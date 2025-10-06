@@ -9,7 +9,7 @@ const reorderSchema = z.object({
   orderId: z.string().min(1, 'Order ID is required'),
 });
 
-// Enhanced order fetching with items
+// Enhanced order fetching with items and tracking
 router.get('/orders', requireAuth, async (req, res) => {
   try {
     const userId = (req as any).user.userId as string;
@@ -32,6 +32,10 @@ router.get('/orders', requireAuth, async (req, res) => {
             name: true,
             amount: true,
           }
+        },
+        trackingEvents: {
+          orderBy: { timestamp: 'desc' },
+          take: 3 // Just the most recent events for summary
         }
       },
       orderBy: { createdAt: 'desc' },

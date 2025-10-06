@@ -7,10 +7,12 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+// 'outline' used in some pages (admin reviews)
+type ButtonVariantExtended = ButtonVariant | 'outline';
 type ButtonSize = 'md' | 'sm' | 'lg' | 'icon';
 
 type ButtonCommon = {
-  variant?: ButtonVariant;
+  variant?: ButtonVariantExtended;
   size?: ButtonSize;
   className?: string;
 };
@@ -21,10 +23,11 @@ type AnchorButtonProps = ButtonCommon & AnchorHTMLAttributes<HTMLAnchorElement>;
 type ButtonProps = NativeButtonProps & { as?: 'button' };
 type ButtonLinkProps = AnchorButtonProps & LinkProps;
 
-const variantClasses: Record<ButtonVariant, string> = {
+const variantClasses: Record<ButtonVariantExtended, string> = {
   primary: 'btn-primary',
   secondary: 'btn-secondary',
   ghost: 'btn-ghost',
+  outline: 'btn-outline',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

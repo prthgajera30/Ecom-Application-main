@@ -120,7 +120,7 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
       push({
         variant: 'error',
         title: 'Error',
-        description: address ? 'Failed to update address. Please try again.' : 'Failed to add address. Please try again.',
+        description: address ? 'Failed to update address. Please check your connection and try again.' : 'Failed to add address. Please check your connection and try again.',
       });
     } finally {
       setLoading(false);

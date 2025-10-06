@@ -3,6 +3,7 @@ import { z } from 'zod';
 import mongoose from 'mongoose';
 import { Product, Category } from '../db';
 import { recordEvent } from '../services/recs';
+import { cache } from '../cache';
 
 type AttributeFilters = Record<string, string[]>;
 
@@ -153,29 +154,63 @@ router.get('/products', async (req, res) => {
   const sessionId = getSessionId(req);
   const userId = getUserId(req) ?? queryUserId;
 
+  // Create filter object for cache key generation
+  const categoryFilters: string[] = [];
+  if (category) categoryFilters.push(category);
+  if (categories) {
+    categoryFilters.push(...categories.split(',').map((cat) => cat.trim()).filter(Boolean));
+  }
+
+  // Generate cache key that includes all filter parameters
+  const filterKey = JSON.stringify({
+    categoryIds: Array.from(new Set(categoryFilters)).sort(),
+    attributes: Object.keys(attributeFilters).sort().reduce<Record<string, string[]>>((acc, key) => {
+      acc[key] = [...attributeFilters[key]].sort();
+      return acc;
+    }, {}),
+    price: { minPrice, maxPrice },
+    sort: sort ?? 'newest',
+  });
+  const cacheKey = cache.getProductsKey(page, limit, search, filterKey);
+  const cachedData = await cache.getProducts(page, limit, search, filterKey);
+
+  if (cachedData) {
+    console.log(`Cache hit for products: page=${page}, limit=${limit}, search=${search || 'none'}, filters=${JSON.stringify(attributeFilters)}`);
+
+    // Record analytics for cached results too
+    if (sessionId && (cachedData as any).items?.length) {
+      await recordEvent({
+        sessionId,
+        userId,
+        productIdList: (cachedData as any).items.map((item: any) => String(item._id)),
+        eventType: search ? 'view' : 'impression',
+      });
+    }
+
+    return res.json(cachedData);
+  }
+
+  console.log(`Cache miss for products: page=${page}, limit=${limit}, search=${search || 'none'}, filters=${JSON.stringify(attributeFilters)}`);
+
   const filter: mongoose.FilterQuery<any> = {};
 
   if (search) {
     filter.title = { $regex: search, $options: 'i' };
   }
 
-  const categoryFilters: string[] = [];
-  if (category) categoryFilters.push(category);
-  if (categories) {
-    categoryFilters.push(...categories.split(',').map((cat) => cat.trim()).filter(Boolean));
-  }
   if (categoryFilters.length) {
     filter.categoryId = { $in: Array.from(new Set(categoryFilters)) };
   }
 
+  const filterWithAttributes = applyAttributeFilters(filter, attributeFilters);
+
+  // Apply price filters to the main query
   if (typeof minPrice === 'number') {
-    filter.price = { ...(filter.price ?? {}), $gte: minPrice };
+    (filterWithAttributes as any).price = { ...((filterWithAttributes as any).price ?? {}), $gte: minPrice };
   }
   if (typeof maxPrice === 'number') {
-    filter.price = { ...(filter.price ?? {}), $lte: maxPrice };
+    (filterWithAttributes as any).price = { ...((filterWithAttributes as any).price ?? {}), $lte: maxPrice };
   }
-
-  const filterWithAttributes = applyAttributeFilters(filter, attributeFilters);
 
   const sortStage = buildSort(sort);
 
@@ -256,7 +291,7 @@ router.get('/products', async (req, res) => {
     });
   }
 
-  res.json({
+  const responseData = {
     items: itemsWithImages,
     total,
     page,
@@ -269,7 +304,12 @@ router.get('/products', async (req, res) => {
       search: search ?? null,
       sort: sort ?? 'newest',
     },
-  });
+  };
+
+  // Cache the response - include filterKey in the cache key to handle all filter combinations
+  await cache.setProducts(page, limit, search, filterKey, responseData, 1800); // 30 minutes
+
+  res.json(responseData);
 });
 
 router.get('/products/:id', async (req, res) => {

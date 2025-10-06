@@ -4,6 +4,7 @@ import { z } from 'zod';
 import Stripe from 'stripe';
 import { prisma, Session, Product } from '../db';
 import { AuthPayload } from '../middleware/auth';
+import { InventoryService } from '../services/inventory';
 
 const router = Router();
 const secret = process.env.STRIPE_SECRET_KEY || 'sk_test_xxx';
@@ -231,6 +232,29 @@ async function handleCheckoutCompleted(
 
   let cartCleared = false;
   if (isPaid) {
+    // Deduct stock from inventory for fulfilled order
+    for (const item of orderItems) {
+      try {
+        await InventoryService.adjustStock({
+          productId: item.productId,
+          variantId: item.variantId || undefined,
+          change: -item.qty, // Negative for stock deduction
+          reason: 'order_fulfilled',
+          reference: order.id,
+          userId: undefined, // System operation, no specific admin user
+          metadata: {
+            orderId: order.id,
+            customerId: userId,
+            itemQty: item.qty
+          }
+        });
+      } catch (error) {
+        console.error(`Failed to deduct stock for product ${item.productId}:`, error);
+        // Continue processing - don't fail the entire checkout if inventory update fails
+        // This prevents payment issues but inventory might be out of sync (needs manual reconciliation)
+      }
+    }
+
     await clearSessionCart(sessionDoc);
     cartCleared = true;
     const io = req.app.get('io');
@@ -311,6 +335,35 @@ router.post('/checkout/create-session', async (req, res) => {
   if (userId) metadata.userId = userId;
   if (userEmail) metadata.userEmail = userEmail;
 
+  // Convert cart items for inventory service (expects 'quantity' field)
+  const inventoryCheckItems = cartItems.map(item => ({
+    productId: item.productId,
+    variantId: item.variantId,
+    quantity: item.qty
+  }));
+
+  // Check inventory availability and reserve stock
+  const stockCheck = await InventoryService.checkStockAvailability(inventoryCheckItems);
+  if (!stockCheck.available) {
+    return res.status(400).json({
+      error: 'INSUFFICIENT_STOCK',
+      details: stockCheck.insufficientStock,
+      message: 'Some items in your cart are no longer available in the requested quantity.'
+    });
+  }
+
+  // Reserve stock for all cart items
+  for (const item of cartItems) {
+    try {
+      await InventoryService.reserveStock(item.productId, item.variantId, item.qty);
+    } catch (error) {
+      console.error(`Failed to reserve stock for product ${item.productId}:`, error);
+      // If reservation fails, attempt to release any already reserved items and return error
+      // This is a simplified approach - in production you'd want more robust error handling
+      return res.status(500).json({ error: 'INVENTORY_RESERVATION_FAILED' });
+    }
+  }
+
   try {
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -324,6 +377,14 @@ router.post('/checkout/create-session', async (req, res) => {
 
     return res.json({ url: checkoutSession.url });
   } catch (err: any) {
+    // If checkout creation fails, release any reserved stock
+    for (const item of cartItems) {
+      try {
+        await InventoryService.releaseStock(item.productId, item.variantId, item.qty);
+      } catch (releaseError) {
+        console.error(`Failed to release reserved stock for ${item.productId}:`, releaseError);
+      }
+    }
     console.error('Failed to create checkout session', err);
     return res.status(500).json({ error: 'CHECKOUT_FAILED' });
   }

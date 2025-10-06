@@ -1223,25 +1223,51 @@ export async function seedPostgres(productIds: string[]) {
   const adminPassword = await bcrypt.hash('admin123', 10);
   const userPassword = await bcrypt.hash('user123', 10);
 
-  const admin = await prisma.user.upsert({
-    where: { email: ADMIN_EMAIL },
-    update: { passwordHash: adminPassword, role: 'admin' },
-    create: {
-      email: ADMIN_EMAIL,
-      passwordHash: adminPassword,
-      role: 'admin',
-    },
-  });
+  // Check for existing admin user instead of upsert
+  let existingAdmin = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL } });
+  let admin;
+  if (existingAdmin) {
+    admin = await prisma.user.update({
+      where: { email: ADMIN_EMAIL },
+      data: {
+        passwordHash: adminPassword,
+        role: 'admin',
+        name: existingAdmin.name || 'Admin User' // ensure name is set
+      }
+    });
+  } else {
+    admin = await prisma.user.create({
+      data: {
+        email: ADMIN_EMAIL,
+        passwordHash: adminPassword,
+        role: 'admin',
+        name: 'Admin User',
+      },
+    });
+  }
 
-  const customer = await prisma.user.upsert({
-    where: { email: CUSTOMER_EMAIL },
-    update: { passwordHash: userPassword, role: 'customer' },
-    create: {
-      email: CUSTOMER_EMAIL,
-      passwordHash: userPassword,
-      role: 'customer',
-    },
-  });
+  // Check for existing customer user instead of upsert
+  let existingCustomer = await prisma.user.findUnique({ where: { email: CUSTOMER_EMAIL } });
+  let customer;
+  if (existingCustomer) {
+    customer = await prisma.user.update({
+      where: { email: CUSTOMER_EMAIL },
+      data: {
+        passwordHash: userPassword,
+        role: 'customer',
+        name: existingCustomer.name || 'Demo Customer' // ensure name is set
+      }
+    });
+  } else {
+    customer = await prisma.user.create({
+      data: {
+        email: CUSTOMER_EMAIL,
+        passwordHash: userPassword,
+        role: 'customer',
+        name: 'Demo Customer',
+      },
+    });
+  }
 
   if (productIds.length >= 3) {
     await prisma.event.upsert({
@@ -1261,6 +1287,62 @@ export async function seedPostgres(productIds: string[]) {
       update: { userId: customer.id, payload: { productId: productIds[2] }, type: 'purchase' },
       create: { id: 'seed-event-purchase', userId: customer.id, payload: { productId: productIds[2] }, type: 'purchase' },
     });
+  }
+
+  // Create sample completed orders for admin dashboard
+  if (productIds.length >= 3) {
+    // Create sample order items and orders
+    for (let i = 0; i < 5; i++) {
+      const orderDate = new Date(Date.now() - (i * 86400000)); // One order per day for past 5 days
+
+      await prisma.$transaction(async (tx) => {
+        // Create order
+        const order = await tx.order.create({
+          data: {
+            userId: customer.id,
+            sessionId: `session-${i}`,
+            subtotal: 14000 + i * 1000,
+            taxAmount: Math.round((14000 + i * 1000) * 0.08),
+            shippingAmount: 0, // Free shipping
+            discountAmount: 0,
+            total: 14000 + i * 1000 + Math.round((14000 + i * 1000) * 0.08),
+            currency: 'USD',
+            status: i === 0 ? 'paid' : 'paid', // All orders are paid to show reorder functionality
+          },
+        });
+
+        // Create order items - use different products for each order
+        const productsToUse = productIds.slice(i % 2, (i % 2) + 2).slice(0, 2);
+
+        for (let j = 0; j < productsToUse.length; j++) {
+          const productId = productsToUse[j];
+          const price = 5000 + (j * 3000); // Varying prices
+
+          await tx.orderItem.create({
+            data: {
+              orderId: order.id,
+              productId: productId,
+              title: `Sample Product ${j + 1}`,
+              price: price,
+              qty: j === 0 ? 2 : 1, // First item: 2 qty, second item: 1 qty
+              variantId: null,
+              variantLabel: null,
+              variantOptions: undefined,
+            },
+          });
+        }
+
+        // Create payment record
+        await tx.payment.create({
+          data: {
+            orderId: order.id,
+            amount: order.total,
+            status: 'paid',
+            stripePaymentIntentId: `pi_demo_${order.id}`,
+          },
+        });
+      });
+    }
   }
 
   return { admin, customer };

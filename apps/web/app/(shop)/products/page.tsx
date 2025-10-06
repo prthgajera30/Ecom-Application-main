@@ -150,12 +150,8 @@ function ProductsPageContent() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
-    setPriceDraft({
-      min: priceRange.min !== undefined ? (priceRange.min / 100).toFixed(2) : '',
-      max: priceRange.max !== undefined ? (priceRange.max / 100).toFixed(2) : '',
-    });
-  }, [priceRange.min, priceRange.max]);
+  // Don't automatically sync priceDraft when priceRange changes after filters are initialized
+  // This was causing input focus loss when typing. Price draft is only set on initialization.
 
   useLayoutEffect(() => {
     const input = categorySearchInputRef.current;
@@ -249,6 +245,10 @@ function ProductsPageContent() {
           setPriceRange({
             min: typeof price.min === 'number' ? price.min : undefined,
             max: typeof price.max === 'number' ? price.max : undefined,
+          });
+          setPriceDraft({
+            min: typeof price.min === 'number' ? (price.min / 100).toFixed(2) : '',
+            max: typeof price.max === 'number' ? (price.max / 100).toFixed(2) : '',
           });
           initializedFilters.current = true;
         }
@@ -493,9 +493,11 @@ function ProductsPageContent() {
               <input
                 value={priceDraft.min}
                 onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
+                onBlur={() => applyPriceFilters()}
                 className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
                 placeholder="$0.00"
                 inputMode="numeric"
+                key="price-min"
               />
             </label>
             <label className="flex-1">
@@ -503,9 +505,11 @@ function ProductsPageContent() {
               <input
                 value={priceDraft.max}
                 onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
+                onBlur={() => applyPriceFilters()}
                 className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
                 placeholder="$500.00"
                 inputMode="numeric"
+                key="price-max"
               />
             </label>
           </div>

@@ -7,6 +7,7 @@ import { CartProvider } from '../context/CartContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { WishlistProvider } from '../context/WishlistContext';
 import { ProfileProvider } from '../context/ProfileContext';
+import { ErrorBoundary } from '../components/error/ErrorBoundary';
 import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-sans' });
@@ -44,7 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                         <div className="absolute bottom-[-6rem] left-[-3rem] h-[22rem] w-[22rem] rounded-full bg-[var(--bg-glow-2)] blur-3xl" />
                       </div>
                       <Header />
-                      <main className="relative z-10 container py-12 sm:py-16 lg:py-20">{children}</main>
+                      <ErrorBoundary>
+                        <main className="relative z-10 container py-12 sm:py-16 lg:py-20">{children}</main>
+                      </ErrorBoundary>
                       <ToastShelf />
                     </div>
                   </ProfileProvider>

@@ -1,7 +1,7 @@
 'use client';
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { apiGet, apiPost, apiDelete, ApiError } from '../lib/api';
+import { apiGet, apiPost, apiDelete, ApiError, API_BASE } from '../lib/api';
 
 interface WishlistContextType {
   wishlist: string[];

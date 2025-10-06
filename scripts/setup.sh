@@ -65,10 +65,10 @@ if command -v docker >/dev/null 2>&1 && [ ! -f .first-run-done ]; then
   docker compose down --volumes --remove-orphans >/dev/null 2>&1 || true
 fi
 
-log "Starting PostgreSQL and MongoDB containers"
+log "Starting PostgreSQL, MongoDB, and Redis containers"
 should_wait=1
 if command -v docker >/dev/null 2>&1; then
-  if run_cmd docker compose up -d db mongo; then
+  if run_cmd docker compose up -d db mongo redis; then
     log "Waiting for PostgreSQL to become ready"
     if ! node scripts/run-script.mjs db-wait; then
       echo "Postgres did not become healthy. Inspect containers or start your local database manually."
@@ -79,7 +79,7 @@ if command -v docker >/dev/null 2>&1; then
     should_wait=0
   fi
 else
-  echo "Docker is not installed or not on PATH. Start Postgres and Mongo manually before continuing."
+  echo "Docker is not installed or not on PATH. Start Postgres, Mongo, and Redis manually before continuing."
   should_wait=0
 fi
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button, ButtonLink } from '../components/ui/Button';
+import { ProductCard } from '../components/ui/ProductCard';
 import { WishlistButton } from '../components/ui/WishlistButton';
 import { apiGet, ApiError } from '../lib/api';
 import { getSocket } from '../lib/ws';
@@ -107,6 +108,7 @@ export default function Page() {
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [categoryProducts, setCategoryProducts] = useState<Record<string, Product[]>>({});
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryPagination, setCategoryPagination] = useState<Record<string, number>>({});
   const [homeSearch, setHomeSearch] = useState('');
   const rotationRef = useRef<number>(Date.now());
   const { addItem, pending } = useCartState();
@@ -222,6 +224,25 @@ export default function Page() {
   const handleCategorySelect = (categoryId: string) => {
     rotationRef.current = Date.now();
     setActiveCategory(categoryId);
+  };
+
+  const loadMoreCategoryProducts = async () => {
+    if (!activeCategory || categoryLoading) return;
+    setCategoryLoading(true);
+    const nextPage = (categoryPagination[activeCategory] || 0) + 1;
+    try {
+      const offset = nextPage * 4; // 4 products per page
+      const response = await apiGet<{ items: Product[] }>(`/products?limit=4&category=${activeCategory}&offset=${offset}`);
+      setCategoryProducts((prev) => ({
+        ...prev,
+        [activeCategory]: [...(prev[activeCategory] || []), ...response.items]
+      }));
+      setCategoryPagination((prev) => ({ ...prev, [activeCategory]: nextPage }));
+    } catch (err) {
+      // Handle error silently
+    } finally {
+      setCategoryLoading(false);
+    }
   };
 
   const submitHomeSearch = (e: React.FormEvent) => {
@@ -394,48 +415,30 @@ export default function Page() {
             </div>
           )}
           {activeCategoryProducts.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {activeCategoryProducts.map((product) => {
-                const variant = getDefaultVariant(product);
-                const price = variant?.price ?? product.price;
-                const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
-                return (
-                  <div key={product._id} className="group flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/5 p-4">
-                    <Link href={`/product/${product.slug}`} className="relative h-32 overflow-hidden rounded-xl">
-                      {product.images?.[0] ? (
-                        <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-xs text-indigo-100/60">No image</div>
-                      )}
-                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/80 via-transparent" />
-                      <div className="absolute right-3 top-3">
-                        <WishlistButton productId={product._id} variant="icon" size="sm" />
-                      </div>
-                    </Link>
-                    <div className="space-y-2 text-sm text-indigo-100/80">
-                      <div className="text-base font-semibold text-white line-clamp-1">{product.title}</div>
-                      {product.brand && (
-                        <div className="text-[11px] text-indigo-100/60">{product.brand}</div>
-                      )}
-                      <div className="flex items-center justify-between text-xs">
-                        <span>${(price / 100).toFixed(2)}</span>
-                        <button
-                          type="button"
-                          onClick={() => quickAdd(product._id, variant)}
-                          className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 disabled:opacity-60"
-                          disabled={addBusy}
-                        >
-                          {addBusy ? 'Adding…' : 'Quick add'}
-                        </button>
-                      </div>
-                      {productErrors[product._id] && (
-                        <p className="rounded-full bg-rose-500/15 px-2 py-1 text-[11px] text-rose-100">{productErrors[product._id]}</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {activeCategoryProducts.map((product) => (
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    variant="category"
+                    addItem={quickAdd}
+                    pendingItems={pending}
+                    errors={productErrors}
+                  />
+                ))}
+              </div>
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={loadMoreCategoryProducts}
+                  disabled={categoryLoading}
+                  className="rounded-full bg-white/10 border border-white/20 px-6 py-2 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-60 transition"
+                >
+                  {categoryLoading ? 'Loading more...' : 'Load more products'}
+                </button>
+              </div>
+            </>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-indigo-100/70">
               {activeCategoryName ? `No items in ${activeCategoryName} yet—try another category.` : 'Pick a category to preview items.'}
@@ -454,47 +457,18 @@ export default function Page() {
             <ButtonLink href="/products?sort=price_asc" variant="secondary">View all deals</ButtonLink>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {lightningDeals.map((product) => {
-              const variant = getDefaultVariant(product);
-              const price = variant?.price ?? product.price;
-              const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
-              return (
-                <div key={product._id} className="card flex h-full flex-col overflow-hidden">
-                  <Link href={`/product/${product.slug}`} className="group relative block h-44 overflow-hidden">
-                    {product.images?.[0] ? (
-                      <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
-                    )}
-                    <div className="absolute left-4 top-4 rounded-full bg-amber-500/90 px-3 py-1 text-xs font-semibold text-slate-900">
-                      Hot deal
-                    </div>
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
-                  </Link>
-                  <div className="flex flex-1 flex-col justify-between space-y-3 p-5">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-semibold text-white line-clamp-2">{product.title}</h3>
-                      <p className="text-sm text-amber-200/80">${(price / 100).toFixed(2)}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Button
-                        type="button"
-                        className="w-full justify-center"
-                        onClick={() => quickAdd(product._id, variant)}
-                        disabled={addBusy}
-                      >
-                        {addBusy ? 'Adding…' : 'Add to cart'}
-                      </Button>
-                      {productErrors[product._id] && (
-                        <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100 text-center">
-                          {productErrors[product._id]}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {lightningDeals.map((product) => (
+              <ProductCard
+                key={product._id}
+                product={product}
+                variant="default"
+                badgeLabel="Hot deal"
+                badgeColor="amber"
+                addItem={quickAdd}
+                pendingItems={pending}
+                errors={productErrors}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -509,47 +483,18 @@ export default function Page() {
             <ButtonLink href="/products?sort=popular" variant="secondary">View best sellers</ButtonLink>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {bestSellers.map((product) => {
-              const variant = getDefaultVariant(product);
-              const price = variant?.price ?? product.price;
-              const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
-              return (
-                <div key={product._id} className="card flex h-full flex-col overflow-hidden">
-                  <Link href={`/product/${product.slug}`} className="group relative block h-44 overflow-hidden">
-                    {product.images?.[0] ? (
-                      <img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
-                    )}
-                    <div className="absolute left-4 top-4 rounded-full bg-indigo-500/90 px-3 py-1 text-xs font-semibold text-slate-900">
-                      Best seller
-                    </div>
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
-                  </Link>
-                  <div className="flex flex-1 flex-col justify-between space-y-3 p-5">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-semibold text-white line-clamp-2">{product.title}</h3>
-                      <p className="text-sm text-indigo-100/80">${(price / 100).toFixed(2)}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Button
-                        type="button"
-                        className="w-full justify-center"
-                        onClick={() => quickAdd(product._id, variant)}
-                        disabled={addBusy}
-                      >
-                        {addBusy ? 'Adding…' : 'Add to cart'}
-                      </Button>
-                      {productErrors[product._id] && (
-                        <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100 text-center">
-                          {productErrors[product._id]}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {bestSellers.map((product) => (
+              <ProductCard
+                key={product._id}
+                product={product}
+                variant="default"
+                badgeLabel="Best seller"
+                badgeColor="indigo"
+                addItem={quickAdd}
+                pendingItems={pending}
+                errors={productErrors}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -564,29 +509,16 @@ export default function Page() {
         </div>
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {featured.map((product) => (
-            <div key={product._id} className="card group overflow-hidden">
-              <Link href={`/product/${product.slug}`} className="block">
-                <div className="relative h-52 overflow-hidden">
-                  {product.images?.[0] ? (
-                    <img
-                      src={product.images[0]}
-                      alt={product.title}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent" />
-                </div>
-                <div className="space-y-2 p-5">
-                  <div className="flex items-center justify-between text-sm text-indigo-200/80">
-                    <span>Featured</span>
-                    <span>${(product.price / 100).toFixed(2)}</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-white line-clamp-1">{product.title}</h3>
-                </div>
-              </Link>
-            </div>
+            <ProductCard
+              key={product._id}
+              product={product}
+              variant="featured"
+              badgeLabel="Featured"
+              badgeColor="emerald"
+              addItem={quickAdd}
+              pendingItems={pending}
+              errors={productErrors}
+            />
           ))}
         </div>
       </section>

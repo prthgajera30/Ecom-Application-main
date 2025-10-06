@@ -4,6 +4,8 @@ import bcrypt from 'bcryptjs';
 import { prisma, Session } from '../db';
 import { requireAuth, signToken } from '../middleware/auth';
 
+console.log('AUTH ROUTES LOADED - TESTING FILE UPDATE');
+
 const router = Router();
 
 const credsSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
@@ -71,7 +73,21 @@ router.post('/register', async (req, res) => {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return res.status(400).json({ error: 'EMAIL_EXISTS' });
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({ data: { email, passwordHash } });
+
+  // Generate a display name from the email username (part before @)
+  const name = email.split('@')[0] || 'User';
+
+  const user = await prisma.user.create({ data: { email, passwordHash, name } });
+
+  // POST-CREATION CHECK: Ensure name is set (workaround for dev server caching issues)
+  if (!user.name || user.name.trim() === '') {
+    const properName = user.email.split('@')[0] || 'User';
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { name: properName }
+    });
+  }
+
   await mergeSessionCart(req, user.id);
   const token = signToken({ userId: user.id, role: user.role as any });
   res.json({ token });

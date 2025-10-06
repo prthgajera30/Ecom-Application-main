@@ -83,10 +83,10 @@ if (-not (Test-Path '.first-run-done') -and (Get-Command docker -ErrorAction Sil
     [void](Run-Command 'docker' @('compose', 'down', '--volumes', '--remove-orphans') -AllowFailure)
 }
 
-Write-Step "Starting PostgreSQL and MongoDB containers"
+Write-Step "Starting PostgreSQL, MongoDB, and Redis containers"
 $shouldWait = $true
 if (Get-Command docker -ErrorAction SilentlyContinue) {
-    $result = Run-Command 'docker' @('compose', 'up', '-d', 'db', 'mongo') -AllowFailure -ErrorHint 'Docker Compose failed to start the containers. Ensure Docker Desktop is running or manage Postgres/Mongo manually.'
+    $result = Run-Command 'docker' @('compose', 'up', '-d', 'db', 'mongo', 'redis') -AllowFailure -ErrorHint 'Docker Compose failed to start the containers. Ensure Docker Desktop is running or manage Postgres/Mongo/Redis manually.'
     if ($result -eq 0) {
         Write-Step "Waiting for PostgreSQL to become ready"
         Run-Command 'node' @($NodeDispatcher, 'db-wait') -ErrorHint 'Postgres did not become healthy. Inspect the container logs or start your local database manually before continuing.'
@@ -94,7 +94,7 @@ if (Get-Command docker -ErrorAction SilentlyContinue) {
         $shouldWait = $false
     }
 } else {
-    Write-Warning "Docker is not installed or not on PATH. Start Postgres and Mongo manually before continuing."
+    Write-Warning "Docker is not installed or not on PATH. Start Postgres, Mongo, and Redis manually before continuing."
     $shouldWait = $false
 }
 

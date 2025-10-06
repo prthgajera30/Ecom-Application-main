@@ -33,7 +33,7 @@ router.get('/', requireAuth, async (req, res) => {
     });
 
     // Return card details safely (mask sensitive info but keep what's needed)
-    const safePaymentMethods = paymentMethods.map(pm => ({
+    const safePaymentMethods = paymentMethods.map((pm: any) => ({
       id: pm.id,
       stripePaymentMethodId: pm.stripePaymentMethodId,
       cardBrand: pm.cardBrand,
@@ -123,9 +123,9 @@ router.post('/', requireAuth, async (req, res) => {
     console.error('Error creating payment method:', error);
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Validation error', details: error.errors });
-    } else if (error instanceof Stripe.errors.StripeError) {
-      res.status(400).json({ error: error.message });
     } else {
+      const msg = (error as any)?.message;
+      if (msg) return res.status(400).json({ error: msg });
       res.status(500).json({ error: 'Failed to create payment method' });
     }
   }
