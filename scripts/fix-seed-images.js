@@ -1,5 +1,27 @@
 const dotenv = require('dotenv');
-dotenv.config();
+const path = require('path');
+const fs = require('fs');
+
+// Try to load .env from multiple possible locations
+const possibleEnvPaths = [
+  path.resolve(__dirname, '../apps/api/.env'),      // From scripts/
+  path.resolve(process.cwd(), 'apps/api/.env'),    // From project root
+  path.resolve(process.cwd(), '.env'),              // From project root
+];
+
+let envLoaded = false;
+for (const envPath of possibleEnvPaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    envLoaded = true;
+    console.log(`Loaded .env from: ${envPath}`);
+    break;
+  }
+}
+
+if (!envLoaded) {
+  console.log('Warning: No .env file found, using defaults');
+}
 const mongoose = require('mongoose');
 const http = require('http');
 const https = require('https');
