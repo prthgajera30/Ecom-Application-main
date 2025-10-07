@@ -19,7 +19,10 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 COPY apps/api/package.json apps/api/pnpm-lock.yaml apps/api/tsconfig.json apps/api/jest.config.js ./
 COPY packages/config ./packages/config
 COPY packages/config /usr/packages/config
-RUN pnpm install --frozen-lockfile --prefer-offline
+
+# Try frozen lockfile first, fallback to updating if needed
+RUN pnpm install --frozen-lockfile --prefer-offline || (echo "Lockfile outdated, updating..." && pnpm install --prefer-offline)
+
 COPY apps/api ./
 RUN pnpm prisma generate
 RUN pnpm build

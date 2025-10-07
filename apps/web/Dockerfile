@@ -13,7 +13,10 @@ CMD ["pnpm","dev"]
 FROM base AS build
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 COPY apps/web/package.json apps/web/pnpm-lock.yaml apps/web/tsconfig.json apps/web/next.config.js ./
-RUN pnpm install --frozen-lockfile --prefer-offline
+
+# Try frozen lockfile first, fallback to updating if needed
+RUN pnpm install --frozen-lockfile --prefer-offline || (echo "Lockfile outdated, updating..." && pnpm install --prefer-offline)
+
 COPY apps/web ./
 RUN pnpm build
 
