@@ -31,7 +31,7 @@ services:
       - ./env.prod
     environment:
       NODE_ENV: production
-      RECS_URL: http://recs:5000
+      RECS_URL: http://localhost:5000
     depends_on:
       - postgres
       - mongo
@@ -52,9 +52,9 @@ services:
     env_file:
       - ./env.prod
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: shop
+      POSTGRES_USER: ecom
+      POSTGRES_PASSWORD: ecom
+      POSTGRES_DB: shop_ubuntu
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -67,10 +67,22 @@ services:
       - mongodata:/data/db
     networks:
       - appnet
+      
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce_redis
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redisdata:/data
+    networks:
+      - appnet    
 
 volumes:
   pgdata:
   mongodata:
+  redisdata:
 
 networks:
   appnet:

@@ -7,7 +7,7 @@ services:
       - api
       - recs
     ports:
-      - "80:80"
+      - "8085:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
@@ -19,12 +19,8 @@ services:
       dockerfile: apps/web/Dockerfile
     container_name: ecommerce_web
     environment:
-      NEXT_PUBLIC_API_BASE: "/api"
-      NODE_ENV: development
-    volumes:
-      - ../apps/web:/usr/src/app
-      - /usr/src/app/node_modules
-    command: sh -c "pnpm install && pnpm dev"
+      NEXT_PUBLIC_API_BASE: /api
+      NODE_ENV: production
     depends_on:
       - api
     networks:
@@ -36,13 +32,13 @@ services:
       dockerfile: apps/api/Dockerfile
     container_name: ecommerce_api
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       JWT_SECRET: change_me
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/shop?schema=public
-      MONGO_URL: mongodb://mongo:27017/shop
+      DATABASE_URL: postgres://ecom:ecom@postgres:5432/shop_ubuntu?schema=public
+      MONGO_URL: mongodb://mongo:27017/shop_ubuntu
       STRIPE_SECRET_KEY: sk_test_xxx
       STRIPE_WEBHOOK_SECRET: whsec_xxx
-      RECS_URL: http://recs:5000
+      RECS_URL: http://localhost:5000
     volumes:
       - ../apps/api:/usr/src/app
       - ../scripts:/usr/src/app/scripts
@@ -73,8 +69,9 @@ services:
     image: postgres:16-alpine
     container_name: ecommerce_postgres
     environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: shop
+      POSTGRES_USER: ecom
+      POSTGRES_PASSWORD: ecom
+      POSTGRES_DB: shop_ubuntu
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -91,7 +88,7 @@ services:
       - "27017:27017"
     networks:
       - appnet
-
+      
   redis:
     image: redis:7-alpine
     container_name: ecommerce_redis
