@@ -250,68 +250,7 @@ model ReviewHelpful {
   @@index([userId])
 }
 
-model ProductReview {
-  id             String          @id @default(uuid())
-  productId      String          // Product ID (from MongoDB collection)
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
-  order          Order?          @relation(fields: [orderId], references: [id])
-  orderId        String?
 
-  rating         Int             // 1-5 star rating
-  title          String?         // Review headline/title
-  body           String?         // Full review text
-  verified       Boolean         @default(false) // Verified purchase
-  status         ReviewStatus    @default(draft) // Moderation status
-
-  authorName     String          // User's display name at time of review
-  authorEmail    String?         // User's email at time of review
-
-  helpfulCount   Int             @default(0) // Number of helpful votes
-
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  reviewedAt     DateTime?       // When review was written
-
-  responses      ProductReviewResponse[]
-  helpfulVotes   ProductReviewHelpful[]
-
-  @@index([productId])
-  @@index([userId])
-  @@index([status])
-  @@index([createdAt])
-}
-
-model ProductReviewResponse {
-  id        String   @id @default(uuid())
-  review    ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  reviewId  String
-
-  // Store admin user who responded
-  adminId   String
-  admin     User    @relation(fields: [adminId], references: [id])
-  adminName String
-  response  String   // Admin response text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([reviewId])
-}
-
-model ProductReviewHelpful {
-  id       String @id @default(uuid())
-  review   ProductReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
-  reviewId String
-  userId   String // User who voted helpful
-  user     User   @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@unique([reviewId, userId])
-  @@index([reviewId])
-  @@index([userId])
-}
 
 enum ReviewStatus {
   draft       // Unmoderated
