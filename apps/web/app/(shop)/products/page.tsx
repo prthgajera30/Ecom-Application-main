@@ -66,6 +66,8 @@ const sortOptions = [
   { value: 'popular', label: 'Most Popular' },
 ];
 
+const ALLOWED_ATTRIBUTES = ['brand', 'color', 'material', 'type'];
+
 const FILTER_SCROLL_THRESHOLD = 6;
 const FILTER_SEARCH_THRESHOLD = 8;
 
@@ -150,6 +152,8 @@ function ProductsPageContent() {
     return () => clearTimeout(timer);
   }, [search]);
 
+
+
   // Don't automatically sync priceDraft when priceRange changes after filters are initialized
   // This was causing input focus loss when typing. Price draft is only set on initialization.
 
@@ -173,7 +177,10 @@ function ProductsPageContent() {
 
   useEffect(() => {
     setAttributeSearchTerms((current) => {
-      const validKeys = new Set(facets.attributes.map((facet) => facet.key));
+      const allowedFacets = facets.attributes.filter(facet =>
+        ALLOWED_ATTRIBUTES.includes(facet.key.toLowerCase())
+      );
+      const validKeys = new Set(allowedFacets.map((facet) => facet.key));
       let changed = false;
       const next: Record<string, string> = {};
       Object.entries(current).forEach(([key, value]) => {
@@ -404,14 +411,57 @@ function ProductsPageContent() {
     }
   }, [attributeSearchTerms]);
 
-  const FiltersPanel = ({ onClose }: { onClose?: () => void }) => {
-    const categoryTerm = categorySearch.trim().toLowerCase();
-    const filteredCategories = categoryTerm
-      ? mergedCategories.filter((cat) => cat.name.toLowerCase().includes(categoryTerm))
-      : mergedCategories;
 
-    return (
-      <div className="space-y-6">
+// Move FiltersPanel out to top-level to avoid remounting on every ProductsPageContent render
+type FiltersPanelProps = {
+  onClose?: () => void;
+  mergedCategories: FacetCategory[];
+  categorySearch: string;
+  setCategorySearch: (v: string) => void;
+  toggleCategory: (id: string) => void;
+  selectedCategories: string[];
+  priceRange: { min?: number; max?: number };
+  priceDraft: { min: string; max: string };
+  setPriceDraft: React.Dispatch<React.SetStateAction<{ min: string; max: string }>>;
+  applyPriceFilters: () => void;
+  clearPriceFilter: () => void;
+  facets: ProductsResponse['facets'];
+  attributeSearchTerms: Record<string, string>;
+  attributeSearchRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
+  handleAttributeSearchChange: (key: string, value: string) => void;
+  activeFilterCount: number;
+  clearFilters: () => void;
+  attributeFilters: Record<string, string[]>;
+  toggleAttribute: (key: string, value: string) => void;
+};
+
+function FiltersPanel({
+  onClose,
+  mergedCategories,
+  categorySearch,
+  setCategorySearch,
+  toggleCategory,
+  priceRange,
+  priceDraft,
+  setPriceDraft,
+  applyPriceFilters,
+  clearPriceFilter,
+  facets,
+  attributeSearchTerms,
+  attributeSearchRefs,
+  handleAttributeSearchChange,
+  activeFilterCount,
+  clearFilters,
+  attributeFilters,
+  toggleAttribute,
+}: FiltersPanelProps) {
+  const categoryTerm = categorySearch.trim().toLowerCase();
+  const filteredCategories = categoryTerm
+    ? mergedCategories.filter((cat) => cat.name.toLowerCase().includes(categoryTerm))
+    : mergedCategories;
+
+  return (
+    <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <span
           className="text-sm font-semibold uppercase tracking-wide text-subtle"
@@ -438,7 +488,6 @@ function ProductsPageContent() {
         <label className="block text-sm text-subtle">
           <span className="sr-only">Search categories</span>
           <input
-            ref={categorySearchInputRef}
             value={categorySearch}
             onChange={(event) => setCategorySearch(event.target.value)}
             placeholder="Search categories"
@@ -449,15 +498,15 @@ function ProductsPageContent() {
           {filteredCategories.length > 0 ? (
             filteredCategories.map((cat) => (
               <label key={cat.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                <span className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
                     className="accent-indigo-500"
                     checked={selectedCategories.includes(cat.id)}
                     onChange={() => toggleCategory(cat.id)}
                   />
-                  <span>{cat.name}</span>
-                </span>
+                  <span className="text-sm">{cat.name}</span>
+                </div>
                 <span className="text-xs text-subtle">{cat.count}</span>
               </label>
             ))
@@ -493,11 +542,9 @@ function ProductsPageContent() {
               <input
                 value={priceDraft.min}
                 onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
-                onBlur={() => applyPriceFilters()}
                 className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
                 placeholder="$0.00"
                 inputMode="numeric"
-                key="price-min"
               />
             </label>
             <label className="flex-1">
@@ -505,93 +552,87 @@ function ProductsPageContent() {
               <input
                 value={priceDraft.max}
                 onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
-                onBlur={() => applyPriceFilters()}
                 className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
                 placeholder="$500.00"
                 inputMode="numeric"
-                key="price-max"
               />
             </label>
           </div>
-          <button onClick={applyPriceFilters} className="btn-primary w-full justify-center py-2 text-xs">
-            Apply price range
-          </button>
+          <button onClick={applyPriceFilters} className="btn-primary w-full justify-center py-2 text-xs">Apply price range</button>
           {facets.price.min !== undefined && facets.price.max !== undefined && (
             <p className="text-xs text-subtle">
-              Available range: ${(facets.price.min / 100).toFixed(2)} – ${(facets.price.max / 100).toFixed(2)}
+              Available range: ${(facets.price.min / 100).toFixed(2)} – {(facets.price.max / 100).toFixed(2)}
             </p>
           )}
         </div>
       </div>
 
-      {facets.attributes.map((facet) => {
-        const attributeSearchValue = attributeSearchTerms[facet.key] ?? '';
-        const attributeTerm = attributeSearchValue.trim().toLowerCase();
-        const filteredValues = attributeTerm
-          ? facet.values.filter((entry) => entry.value.toLowerCase().includes(attributeTerm))
-          : facet.values;
-        const showAttributeSearch = facet.values.length > FILTER_SEARCH_THRESHOLD;
-        const attributeShouldScroll = facet.values.length > FILTER_SCROLL_THRESHOLD;
+      {facets.attributes
+        .filter((facet) => ALLOWED_ATTRIBUTES.includes(facet.key.toLowerCase()))
+        .sort((a, b) => {
+          const order = ALLOWED_ATTRIBUTES;
+          return order.indexOf(a.key.toLowerCase()) - order.indexOf(b.key.toLowerCase());
+        })
+        .map((facet) => {
+          const attributeSearchValue = attributeSearchTerms[facet.key] ?? '';
+          const attributeTerm = attributeSearchValue.trim().toLowerCase();
+          const filteredValues = attributeTerm
+            ? facet.values.filter((entry) => entry.value.toLowerCase().includes(attributeTerm))
+            : facet.values;
+          const showAttributeSearch = facet.values.length > FILTER_SEARCH_THRESHOLD;
+          const attributeShouldScroll = facet.values.length > FILTER_SCROLL_THRESHOLD;
 
-        return (
-          <div key={facet.key} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">{facet.key}</h2>
-              <span className="text-xs text-subtle">{facet.values.length}</span>
-            </div>
-            {showAttributeSearch && (
-              <label className="block text-sm text-subtle">
-                <span className="sr-only">Search {facet.key}</span>
-                <input
-                  ref={(element) => {
-                    if (element) attributeSearchRefs.current[facet.key] = element;
-                    else delete attributeSearchRefs.current[facet.key];
-                  }}
-                  value={attributeSearchValue}
-                  onChange={(event) => handleAttributeSearchChange(facet.key, event.target.value)}
-                  placeholder={`Search ${facet.key.toLowerCase()}`}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
-                />
-              </label>
-            )}
-            <div
-              className={cn(
-                'space-y-2 text-sm text-subtle',
-                attributeShouldScroll && 'max-h-56 overflow-y-auto pr-1'
+          return (
+            <div key={facet.key} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">{facet.key}</h2>
+                <span className="text-xs text-subtle">{facet.values.length}</span>
+              </div>
+              {showAttributeSearch && (
+                <label className="block text-sm text-subtle">
+                  <span className="sr-only">Search {facet.key}</span>
+                  <input
+                    ref={(element) => {
+                      if (element) attributeSearchRefs.current[facet.key] = element;
+                      else delete attributeSearchRefs.current[facet.key];
+                    }}
+                    value={attributeSearchValue}
+                    onChange={(event) => handleAttributeSearchChange(facet.key, event.target.value)}
+                    placeholder={`Search ${facet.key.toLowerCase()}`}
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
+                  />
+                </label>
               )}
-              data-filter-scrollable="true"
-            >
-              {filteredValues.length > 0 ? (
-                filteredValues.map((entry) => {
-                  const active = attributeFilters[facet.key]?.includes(entry.value) ?? false;
-                  return (
+              <div
+                className={cn(
+                  'space-y-2 text-sm text-subtle',
+                  attributeShouldScroll && 'max-h-56 overflow-y-auto pr-1'
+                )}
+                data-filter-scrollable="true"
+              >
+                {filteredValues.length > 0 ? (
+                  filteredValues.map((entry) => (
                     <label key={entry.value} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-                      <span className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
-                          className="accent-indigo-500"
-                          checked={active}
+                          checked={Boolean(attributeFilters[facet.key] && attributeFilters[facet.key].includes(entry.value))}
                           onChange={() => toggleAttribute(facet.key, entry.value)}
                         />
-                        <span>{entry.value}</span>
-                      </span>
+                        <span className="text-sm">{entry.value}</span>
+                      </div>
                       <span className="text-xs text-subtle">{entry.count}</span>
                     </label>
-                  );
-                })
-              ) : facet.values.length === 0 ? (
-                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
-                  No attribute values yet.
-                </p>
-              ) : (
-                <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
-                  No matches for this filter.
-                </p>
-              )}
+                  ))
+                ) : facet.values.length === 0 ? (
+                  <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">No values</p>
+                ) : (
+                  <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">No values match</p>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
 
       {activeFilterCount > 0 && (
         <button
@@ -605,9 +646,9 @@ function ProductsPageContent() {
           Clear all filters
         </button>
       )}
-      </div>
-    );
-  };
+    </div>
+  );
+}
 
   return (
     <div className="space-y-8">
@@ -729,8 +770,27 @@ function ProductsPageContent() {
 
       <div className="lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
         <aside className="hidden lg:block">
-          <div className="sticky top-28 space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20">
-            <FiltersPanel />
+            <div className="sticky top-28 space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20">
+            <FiltersPanel
+              mergedCategories={mergedCategories}
+              categorySearch={categorySearch}
+              setCategorySearch={setCategorySearch}
+              toggleCategory={toggleCategory}
+              selectedCategories={selectedCategories}
+              priceRange={priceRange}
+              priceDraft={priceDraft}
+              setPriceDraft={setPriceDraft}
+              applyPriceFilters={applyPriceFilters}
+              clearPriceFilter={clearPriceFilter}
+              facets={facets}
+              attributeSearchTerms={attributeSearchTerms}
+              attributeSearchRefs={attributeSearchRefs}
+              handleAttributeSearchChange={handleAttributeSearchChange}
+              activeFilterCount={activeFilterCount}
+              clearFilters={clearFilters}
+              attributeFilters={attributeFilters}
+              toggleAttribute={toggleAttribute}
+            />
           </div>
         </aside>
 
@@ -760,7 +820,7 @@ function ProductsPageContent() {
             </div>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div data-testid="product-grid" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {loading
               ? Array.from({ length: 6 }).map((_, idx) => (
                   <div key={idx} className="card animate-pulse overflow-hidden">
@@ -771,13 +831,13 @@ function ProductsPageContent() {
                     </div>
                   </div>
                 ))
-              : items.map((product) => {
+                : items.map((product) => {
                   const variant = getDefaultVariant(product);
                   const displayPrice = variant?.price ?? product.price;
                   const pendingAdd = isAddPending(product, variant);
                   const rating = product.rating;
                   return (
-                    <div key={product._id} className="card group overflow-hidden">
+                    <div key={product._id} data-testid="product-card" className="card group overflow-hidden">
                       <Link href={`/product/${product.slug}`} className="block">
                         <div className="relative h-48 overflow-hidden">
                           {product.images?.[0] ? (
@@ -842,7 +902,27 @@ function ProductsPageContent() {
           />
           <div className="relative z-10 ml-auto flex h-full w-full max-w-sm flex-col overflow-hidden rounded-l-3xl border-l border-[var(--surface-border)] bg-[color:var(--surface-solid)] shadow-2xl shadow-slate-950/40">
             <div className="flex-1 overflow-y-auto px-5 py-6">
-              <FiltersPanel onClose={closeMobileFilters} />
+              <FiltersPanel
+                onClose={closeMobileFilters}
+                mergedCategories={mergedCategories}
+                categorySearch={categorySearch}
+                setCategorySearch={setCategorySearch}
+                toggleCategory={toggleCategory}
+                selectedCategories={selectedCategories}
+                priceRange={priceRange}
+                priceDraft={priceDraft}
+                setPriceDraft={setPriceDraft}
+                applyPriceFilters={applyPriceFilters}
+                clearPriceFilter={clearPriceFilter}
+                facets={facets}
+                attributeSearchTerms={attributeSearchTerms}
+                attributeSearchRefs={attributeSearchRefs}
+                handleAttributeSearchChange={handleAttributeSearchChange}
+                activeFilterCount={activeFilterCount}
+                clearFilters={clearFilters}
+                attributeFilters={attributeFilters}
+                toggleAttribute={toggleAttribute}
+              />
             </div>
           </div>
         </div>

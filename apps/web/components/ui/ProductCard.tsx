@@ -70,7 +70,7 @@ export function ProductCard({
   };
 
   const CardContent = (
-    <div key={product._id} className={`card group overflow-hidden ${variant === 'category' ? 'flex h-full flex-col' : ''}`}>
+    <div key={product._id} data-testid="product-card" className={`card group overflow-hidden ${variant === 'category' ? 'flex h-full flex-col' : ''}`}>
       <Link href={`/product/${product.slug}`} className="block">
         <div className={`relative overflow-hidden ${
           variant === 'featured' ? 'h-52' :

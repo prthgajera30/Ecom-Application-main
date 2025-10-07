@@ -98,14 +98,29 @@ function withImageFallback<T extends any>(doc: any) {
 
 function normalizeAttributeFilters(query: Record<string, unknown>): AttributeFilters {
   const filters: AttributeFilters = {};
+
+  // Handle both bracket notation and nested object notation
+  // Case 1: attr[brand]=value → {"attr[brand]": "value"}
+  // Case 2: attr[brand]=value → {"attr": {"brand": "value"}} (parsed by qs middleware)
   for (const [key, value] of Object.entries(query)) {
-    if (!key.startsWith('attr[') || !key.endsWith(']')) continue;
-    const attrKey = key.slice(5, -1);
-    if (!attrKey) continue;
-    if (Array.isArray(value)) {
-      filters[attrKey] = value.map((v) => String(v));
-    } else if (typeof value !== 'undefined') {
-      filters[attrKey] = String(value).split(',').map((v) => v.trim()).filter(Boolean);
+    if (key === 'attr' && typeof value === 'object' && value !== null) {
+      // Handle nested object case: {"attr": {"brand": "value"}}
+      for (const [attrKey, attrValue] of Object.entries(value)) {
+        if (Array.isArray(attrValue)) {
+          filters[attrKey] = attrValue.map((v) => String(v));
+        } else if (typeof attrValue !== 'undefined') {
+          filters[attrKey] = String(attrValue).split(',').map((v) => v.trim()).filter(Boolean);
+        }
+      }
+    } else if (key.startsWith('attr[') && key.endsWith(']')) {
+      // Handle bracket notation case: {"attr[brand]": "value"}
+      const attrKey = key.slice(5, -1);
+      if (!attrKey) continue;
+      if (Array.isArray(value)) {
+        filters[attrKey] = value.map((v) => String(v));
+      } else if (typeof value !== 'undefined') {
+        filters[attrKey] = String(value).split(',').map((v) => v.trim()).filter(Boolean);
+      }
     }
   }
   return filters;
@@ -149,6 +164,9 @@ router.get('/products', async (req, res) => {
     return res.status(400).json({ error: 'VALIDATION', details: parse.error.flatten() });
   }
 
+  // Debug: log the raw query to understand the structure
+  console.log('DEBUG: raw req.query:', JSON.stringify(req.query, null, 2));
+
   const attributeFilters = normalizeAttributeFilters(req.query as Record<string, unknown>);
   const { search, category, categories, sort, page = 1, limit = 12, userId: queryUserId, minPrice, maxPrice } = parse.data;
   const sessionId = getSessionId(req);
@@ -171,24 +189,8 @@ router.get('/products', async (req, res) => {
     price: { minPrice, maxPrice },
     sort: sort ?? 'newest',
   });
-  const cacheKey = cache.getProductsKey(page, limit, search, filterKey);
-  const cachedData = await cache.getProducts(page, limit, search, filterKey);
-
-  if (cachedData) {
-    console.log(`Cache hit for products: page=${page}, limit=${limit}, search=${search || 'none'}, filters=${JSON.stringify(attributeFilters)}`);
-
-    // Record analytics for cached results too
-    if (sessionId && (cachedData as any).items?.length) {
-      await recordEvent({
-        sessionId,
-        userId,
-        productIdList: (cachedData as any).items.map((item: any) => String(item._id)),
-        eventType: search ? 'view' : 'impression',
-      });
-    }
-
-    return res.json(cachedData);
-  }
+  // TEMPORARILY DISABLED CACHING TO DEBUG FILTERING
+  console.log(`DEBUG: Processing products request - page=${page}, limit=${limit}, search=${search || 'none'}, filters=${JSON.stringify(attributeFilters)}`);
 
   console.log(`Cache miss for products: page=${page}, limit=${limit}, search=${search || 'none'}, filters=${JSON.stringify(attributeFilters)}`);
 
@@ -212,6 +214,8 @@ router.get('/products', async (req, res) => {
     (filterWithAttributes as any).price = { ...((filterWithAttributes as any).price ?? {}), $lte: maxPrice };
   }
 
+  console.log('DEBUG: final MongoDB filter:', JSON.stringify(filterWithAttributes, null, 2));
+
   const sortStage = buildSort(sort);
 
   const skip = (page - 1) * limit;
@@ -220,6 +224,8 @@ router.get('/products', async (req, res) => {
     Product.find(filterWithAttributes).sort(sortStage).skip(skip).limit(limit).exec(),
     Product.countDocuments(filterWithAttributes),
   ]);
+
+  console.log(`DEBUG: Query returned ${items.length} items out of ${total} total matching docs`);
 
   const itemsWithImages = items.map(withImageFallback);
 
@@ -306,8 +312,8 @@ router.get('/products', async (req, res) => {
     },
   };
 
-  // Cache the response - include filterKey in the cache key to handle all filter combinations
-  await cache.setProducts(page, limit, search, filterKey, responseData, 1800); // 30 minutes
+  // Cache the response - TEMPORARILY DISABLED FOR DEBUGGING
+  // await cache.setProducts(page, limit, search, filterKey, responseData, 1800); // 30 minutes
 
   res.json(responseData);
 });

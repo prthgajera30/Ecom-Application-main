@@ -6,7 +6,10 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:e2e": "node test-runner.js",
+    "test:wishlist": "node wishlist-test-runner.js",
+    "test:manual": "playwright test"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.51.1",

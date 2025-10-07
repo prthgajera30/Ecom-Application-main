@@ -111,6 +111,12 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl space-y-8">
+      {/* Page Header */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold text-white">My Profile</h1>
+        <p className="text-sm text-indigo-100/70">Manage your account settings and preferences.</p>
+      </div>
+
       {/* Account Overview */}
       <Card className="max-w-lg">
         <div className="space-y-4 p-6">

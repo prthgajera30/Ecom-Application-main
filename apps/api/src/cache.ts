@@ -105,7 +105,8 @@ export class Cache {
 
   getProductsKey(page: number, limit: number, search?: string, filterKey?: string): string {
     const searchParam = search ? `:${search}` : '';
-    const filterParam = filterKey ? `:filters-${filterKey.length}` : '';
+    // Use hash of filterKey to avoid cache collisions with different filter combinations of same length
+    const filterParam = filterKey ? `:filters-${require('crypto').createHash('md5').update(filterKey).digest('hex').slice(0, 8)}` : '';
     return `products:${page}:${limit}${searchParam}${filterParam}`;
   }
 

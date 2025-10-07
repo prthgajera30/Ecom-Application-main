@@ -394,18 +394,20 @@ export default function Page() {
             <p className="section-subtitle">Browse popular categories and quickly add items to your cart.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {categories.slice(0, 6).map((category) => (
-              <button
-                key={category._id}
-                type="button"
-                onClick={() => handleCategorySelect(category._id)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                  activeCategory === category._id ? 'bg-white text-slate-900 shadow shadow-indigo-500/30' : 'bg-white/10 text-indigo-100/80 hover:bg-white/20'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
+            <div data-testid="category-nav">
+              {categories.slice(0, 6).map((category) => (
+                <button
+                  key={category._id}
+                  type="button"
+                  onClick={() => handleCategorySelect(category._id)}
+                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                    activeCategory === category._id ? 'bg-white text-slate-900 shadow shadow-indigo-500/30' : 'bg-white/10 text-indigo-100/80 hover:bg-white/20'
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         <div className="relative min-h-[220px] overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6">

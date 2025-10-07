@@ -84,8 +84,20 @@ export default function Header() {
   };
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
-  const cartBadge = itemCount > 0 ? (
-    <span className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
+  const desktopCartBadge = itemCount > 0 ? (
+    <span data-testid="cart-count-desktop" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
+      {itemCount}
+    </span>
+  ) : null;
+
+  const mobileNavCartBadge = itemCount > 0 ? (
+    <span data-testid="cart-count-mobile-nav" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
+      {itemCount}
+    </span>
+  ) : null;
+
+  const mobileDrawerCartBadge = itemCount > 0 ? (
+    <span data-testid="cart-count-mobile-drawer" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
       {itemCount}
     </span>
   ) : null;
@@ -128,7 +140,7 @@ export default function Header() {
               }`}
             >
               <span>{link.label}</span>
-              {link.href === '/cart' && cartBadge}
+              {link.href === '/cart' && desktopCartBadge}
             </Link>
           ))}
         </nav>
@@ -137,8 +149,8 @@ export default function Header() {
           <ThemeToggle className="hidden md:inline-flex" />
           <ButtonLink href="/cart" variant="secondary" size="sm" className="relative md:hidden">
             Cart
-            {cartBadge && (
-              <span className="absolute -right-2 -top-2 inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-slate-900">
+            {mobileNavCartBadge && (
+              <span data-testid="cart-count-mobile" className="absolute -right-2 -top-2 inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-slate-900">
                 {itemCount}
               </span>
             )}
@@ -191,7 +203,7 @@ export default function Header() {
               }`}
             >
               <span>{link.label}</span>
-              {link.href === '/cart' && cartBadge}
+              {link.href === '/cart' && mobileNavCartBadge}
             </Link>
           ))}
         </div>
@@ -238,7 +250,7 @@ export default function Header() {
                 >
                   <span className="flex items-center gap-2">
                     <span>{link.label}</span>
-                    {link.href === '/cart' && cartBadge}
+                    {link.href === '/cart' && mobileDrawerCartBadge}
                   </span>
                 </Link>
               ))}

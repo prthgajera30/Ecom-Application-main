@@ -35,6 +35,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-wider text-indigo-100/70">Email</label>
             <input
+              name="email"
               className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm text-white placeholder:text-indigo-100/40 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -45,6 +46,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-wider text-indigo-100/70">Password</label>
             <input
+              name="password"
               className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm text-white placeholder:text-indigo-100/40 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
               type="password"
               value={password}
