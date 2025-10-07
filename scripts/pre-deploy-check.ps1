@@ -76,11 +76,35 @@ $envProd = "infra/env.prod"
 if (Test-Path $envExample) {
     if (Test-Path $envProd) {
         Write-Host "✅ Production environment file exists" -ForegroundColor Green
+
+        # Check for required Redis configuration
+        $envContent = Get-Content $envProd -Raw
+        if ($envContent -match "REDIS_URL=") {
+            Write-Host "✅ Redis URL configured" -ForegroundColor Green
+        } else {
+            Write-Host "❌ Redis URL not configured in env.prod" -ForegroundColor Red
+            $allChecksPassed = $false
+        }
     } else {
         Write-Host "⚠️  Production environment file not found. Copy from env.prod.example" -ForegroundColor Yellow
     }
 } else {
     Write-Host "⚠️  No environment example file found" -ForegroundColor Yellow
+}
+
+# 5. Redis Configuration Check
+Write-Host "🔴 Checking Redis configuration..." -ForegroundColor Blue
+$redisHost = "localhost"
+$redisPort = 6379
+
+try {
+    $redisClient = New-Object System.Net.Sockets.TcpClient
+    $redisClient.Connect($redisHost, $redisPort)
+    $redisClient.Close()
+    Write-Host "✅ Redis is accessible on $redisHost`:$redisPort" -ForegroundColor Green
+} catch {
+    Write-Host "⚠️  Redis not accessible locally. This is expected in production environments." -ForegroundColor Yellow
+    Write-Host "   Make sure Redis container is running in production." -ForegroundColor Yellow
 }
 
 # Summary

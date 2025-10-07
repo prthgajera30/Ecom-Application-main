@@ -5,22 +5,59 @@ export class Cache {
   private connected = false;
 
   constructor(url?: string) {
-    this.client = createClient({
-      url: url || process.env.REDIS_URL || 'redis://localhost:6379',
-    });
+    const redisUrl = url || process.env.REDIS_URL || 'redis://localhost:6379';
+    const redisPassword = process.env.REDIS_PASSWORD;
+
+    // Configure Redis client with proper options
+    const clientOptions: any = {
+      url: redisUrl,
+      socket: {
+        connectTimeout: 60000,
+        lazyConnect: true,
+        keepAlive: 30000,
+      },
+      retry_strategy: (options: any) => {
+        if (options.error && options.error.code === 'ECONNREFUSED') {
+          console.error('Redis server connection refused');
+          return new Error('Redis server connection refused');
+        }
+        if (options.total_retry_time > 1000 * 60 * 60) {
+          console.error('Redis retry time exhausted');
+          return new Error('Retry time exhausted');
+        }
+        if (options.attempt > 10) {
+          console.error('Redis max retry attempts reached');
+          return new Error('Max retry attempts reached');
+        }
+        // Exponential backoff
+        return Math.min(options.attempt * 100, 3000);
+      }
+    };
+
+    // Add password if provided
+    if (redisPassword) {
+      clientOptions.password = redisPassword;
+    }
+
+    this.client = createClient(clientOptions);
 
     this.client.on('error', (err) => {
       console.warn('Redis connection error:', err.message);
+      this.connected = false;
     });
 
     this.client.on('connect', () => {
       this.connected = true;
-      console.log('Connected to Redis');
+      console.log('Connected to Redis successfully');
     });
 
     this.client.on('disconnect', () => {
       this.connected = false;
       console.log('Disconnected from Redis');
+    });
+
+    this.client.on('ready', () => {
+      console.log('Redis client ready');
     });
   }
 

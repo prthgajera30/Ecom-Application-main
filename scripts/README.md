@@ -40,6 +40,38 @@ Comprehensive pre-deployment validation script that runs multiple checks before 
 ### 🐧 `validate-lockfiles.sh`
 Linux/macOS version of the lockfile validation script.
 
+### 🔴 `check-redis.ps1`
+Comprehensive Redis connectivity and configuration testing script.
+
+**Usage:**
+```powershell
+.\scripts\check-redis.ps1
+```
+
+**Optional parameters:**
+- `-RedisUrl`: Custom Redis URL (defaults to $env:REDIS_URL)
+- `-RedisPassword`: Redis password (defaults to $env:REDIS_PASSWORD)
+- `-Host`: Redis host (defaults to "localhost")
+- `-Port`: Redis port (defaults to 6379)
+
+**What it tests:**
+1. **Basic Connectivity**: TCP connection to Redis server
+2. **Redis Ping**: Redis PING command response
+3. **Authentication**: Password authentication (if configured)
+4. **Operations**: Basic Redis SET/GET operations
+
+**Example usage:**
+```powershell
+# Test with environment variables
+.\scripts\check-redis.ps1
+
+# Test specific Redis instance
+.\scripts\check-redis.ps1 -Host "redis-server" -Port 6379 -RedisPassword "mypassword"
+
+# Test with custom URL
+.\scripts\check-redis.ps1 -RedisUrl "redis://redis:6379"
+```
+
 ## Docker Improvements
 
 ### Resilient Dockerfile Builds
