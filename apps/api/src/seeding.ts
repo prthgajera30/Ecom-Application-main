@@ -86,7 +86,7 @@ function mapImage(url: string) {
   }
 }
 
-const PLACEHOLDER_IMAGE = 'https://picsum.photos/1200/800?random=1';
+const PLACEHOLDER_IMAGE = 'https://picsum.photos/id/152/1200/800';
 
 const productCatalog: SeedProduct[] = [
   // Original products with corrected category slugs
@@ -99,9 +99,9 @@ const productCatalog: SeedProduct[] = [
     longDescription: 'Aurora blends a recycled engineered mesh upper with a pebax energy core midsole to deliver breathable comfort and serious rebound. The secure heel cradle and articulated outsole flex naturally with your stride, making it the go-to shoe for tempo sessions and long runs alike.',
     badges: ['Bestseller'],
     images: [
-      'https://picsum.photos/seed/aurora-running-sneaker-0/1200/800',
-      'https://picsum.photos/seed/aurora-running-sneaker-1/1200/800',
-      'https://picsum.photos/seed/aurora-running-sneaker-2/1200/800',
+      'https://picsum.photos/id/103/1200/800',
+      'https://picsum.photos/id/104/1200/800',
+      'https://picsum.photos/id/105/1200/800',
     ],
     price: 13900,
     currency: 'USD',
@@ -114,8 +114,8 @@ const productCatalog: SeedProduct[] = [
         stock: 12,
         options: { color: 'Onyx Black', size: 'US 7' },
         images: [
-          'https://picsum.photos/seed/aurora-running-sneaker-onyx-7-0/1200/800',
-          'https://picsum.photos/seed/aurora-running-sneaker-onyx-7-1/1200/800',
+          'https://picsum.photos/id/106/1200/800',
+          'https://picsum.photos/id/107/1200/800',
         ],
       },
       {
@@ -126,8 +126,8 @@ const productCatalog: SeedProduct[] = [
         stock: 16,
         options: { color: 'Onyx Black', size: 'US 8' },
         images: [
-          'https://picsum.photos/seed/aurora-running-sneaker-onyx-8-0/1200/800',
-          'https://picsum.photos/seed/aurora-running-sneaker-onyx-8-1/1200/800',
+          'https://picsum.photos/id/108/1200/800',
+          'https://picsum.photos/id/109/1200/800',
         ],
       },
       {
@@ -138,8 +138,8 @@ const productCatalog: SeedProduct[] = [
         stock: 20,
         options: { color: 'Onyx Black', size: 'US 9' },
         images: [
-          'https://picsum.photos/seed/aurora-running-sneaker-onyx-9-0/1200/800',
-          'https://picsum.photos/seed/aurora-running-sneaker-onyx-9-1/1200/800',
+          'https://picsum.photos/id/110/1200/800',
+          'https://picsum.photos/id/111/1200/800',
         ],
       },
       {
@@ -150,8 +150,8 @@ const productCatalog: SeedProduct[] = [
         stock: 15,
         options: { color: 'Onyx Black', size: 'US 10' },
         images: [
-          'https://picsum.photos/seed/aurora-running-sneaker-onyx-10-0/1200/800',
-          'https://picsum.photos/seed/aurora-running-sneaker-onyx-10-1/1200/800',
+          'https://picsum.photos/id/112/1200/800',
+          'https://picsum.photos/id/113/1200/800',
         ],
       },
       {
@@ -162,8 +162,8 @@ const productCatalog: SeedProduct[] = [
         stock: 14,
         options: { color: 'Cloud White', size: 'US 8' },
         images: [
-          'https://picsum.photos/seed/aurora-running-sneaker-white-8-0/1200/800',
-          'https://picsum.photos/seed/aurora-running-sneaker-white-8-1/1200/800',
+          'https://picsum.photos/id/114/1200/800',
+          'https://picsum.photos/id/115/1200/800',
         ],
       },
       {
@@ -174,8 +174,8 @@ const productCatalog: SeedProduct[] = [
         stock: 18,
         options: { color: 'Cloud White', size: 'US 9' },
         images: [
-          'https://picsum.photos/seed/aurora-running-sneaker-white-9-0/1200/800',
-          'https://picsum.photos/seed/aurora-running-sneaker-white-9-1/1200/800',
+          'https://picsum.photos/id/116/1200/800',
+          'https://picsum.photos/id/117/1200/800',
         ],
       },
     ],
@@ -199,7 +199,7 @@ const productCatalog: SeedProduct[] = [
     description: 'Moisture-wicking training tee with cooling minerals and bonded seams.',
     longDescription: 'The Lumen Active Tee is your go-to layer for high-output sessions.',
     badges: ['New Arrival'],
-    images: ['https://picsum.photos/seed/lumen-active-tee-0/1200/800'],
+    images: ['https://picsum.photos/id/118/1200/800'],
     price: 7800,
     variants: [
       {
@@ -209,7 +209,7 @@ const productCatalog: SeedProduct[] = [
         price: 7800,
         stock: 20,
         options: { color: 'Storm Grey', size: 'Small' },
-        images: ['https://picsum.photos/seed/lumen-tee-storm-s-0/1200/800'],
+        images: ['https://picsum.photos/id/119/1200/800'],
       },
     ],
     specs: [{ key: 'Fabric', value: '52% recycled polyester, 48% phase-change nylon' }],
@@ -225,8 +225,8 @@ const productCatalog: SeedProduct[] = [
     longDescription: 'Experience studio-quality sound with Nova wireless headphones. Featuring advanced active noise cancellation, customizable EQ, and premium materials for all-day comfort.',
     badges: ['Premium'],
     images: [
-      'https://picsum.photos/seed/nova-wireless-headphones-0/1200/800',
-      'https://picsum.photos/seed/nova-wireless-headphones-1/1200/800'
+      'https://picsum.photos/id/120/1200/800',
+      'https://picsum.photos/id/121/1200/800'
     ],
     price: 24900,
     variants: [
@@ -237,7 +237,7 @@ const productCatalog: SeedProduct[] = [
         price: 24900,
         stock: 25,
         options: { color: 'Midnight Black' },
-        images: ['https://picsum.photos/seed/nova-headphones-black-0/1200/800'],
+        images: ['https://picsum.photos/id/122/1200/800'],
       },
       {
         variantId: 'nova-headphones-white',
@@ -246,7 +246,7 @@ const productCatalog: SeedProduct[] = [
         price: 24900,
         stock: 18,
         options: { color: 'Pearl White' },
-        images: ['https://picsum.photos/seed/nova-headphones-white-0/1200/800'],
+        images: ['https://picsum.photos/id/123/1200/800'],
       },
     ],
     specs: [
@@ -268,9 +268,9 @@ const productCatalog: SeedProduct[] = [
     longDescription: 'Designed for serious trail enthusiasts, the Hike Pro provides superior ankle stability and weather protection for multi-day hikes.',
     badges: ['Sale'],
     images: [
-      'https://picsum.photos/seed/hike-pro-boot-0/1200/800',
-      'https://picsum.photos/seed/hike-pro-boot-1/1200/800',
-      'https://picsum.photos/seed/hike-pro-boot-2/1200/800'
+      'https://picsum.photos/id/124/1200/800',
+      'https://picsum.photos/id/125/1200/800',
+      'https://picsum.photos/id/126/1200/800'
     ],
     price: 18900,
     variants: [
@@ -281,7 +281,7 @@ const productCatalog: SeedProduct[] = [
         price: 18900,
         stock: 22,
         options: { color: 'Rich Brown', size: 'US 9' },
-        images: ['https://picsum.photos/seed/hike-boot-brown-9-0/1200/800'],
+        images: ['https://picsum.photos/id/127/1200/800'],
       },
       {
         variantId: 'hike-boot-brown-10',
@@ -290,7 +290,7 @@ const productCatalog: SeedProduct[] = [
         price: 18900,
         stock: 28,
         options: { color: 'Rich Brown', size: 'US 10' },
-        images: ['https://picsum.photos/seed/hike-boot-brown-10-0/1200/800'],
+        images: ['https://picsum.photos/id/128/1200/800'],
       },
       {
         variantId: 'hike-boot-black-9',
@@ -299,7 +299,7 @@ const productCatalog: SeedProduct[] = [
         price: 18900,
         stock: 15,
         options: { color: 'Onyx Black', size: 'US 9' },
-        images: ['https://picsum.photos/seed/hike-boot-black-9-0/1200/800'],
+        images: ['https://picsum.photos/id/129/1200/800'],
       },
     ],
     specs: [
@@ -321,8 +321,8 @@ const productCatalog: SeedProduct[] = [
     longDescription: 'Our Zen collection combines the perfect blend of comfort and performance for your yoga practice, with fabric that moves with you.',
     badges: [],
         images: [
-          'https://picsum.photos/seed/zen-yoga-leggings-0/1200/800',
-          'https://picsum.photos/seed/zen-yoga-leggings-1/1200/800'
+          'https://picsum.photos/id/130/1200/800',
+          'https://picsum.photos/id/131/1200/800'
         ],
     price: 8900,
     variants: [
@@ -333,7 +333,7 @@ const productCatalog: SeedProduct[] = [
         price: 8900,
         stock: 45,
         options: { color: 'Cosmic Black', size: 'Small' },
-        images: ['https://picsum.photos/seed/zen-leggings-black-s-0/1200/800'],
+        images: ['https://picsum.photos/id/132/1200/800'],
       },
       {
         variantId: 'zen-leggings-black-m',
@@ -342,7 +342,7 @@ const productCatalog: SeedProduct[] = [
         price: 8900,
         stock: 52,
         options: { color: 'Cosmic Black', size: 'Medium' },
-        images: ['https://picsum.photos/seed/zen-leggings-black-m-0/1200/800'],
+        images: ['https://picsum.photos/id/133/1200/800'],
       },
       {
         variantId: 'zen-leggings-grey-m',
@@ -383,7 +383,7 @@ const productCatalog: SeedProduct[] = [
     badges: ['Best Seller'],
     images: [
       'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=1200&q=80',
-      'https://picsum.photos/seed/summit-down-jacket-1/1200/800',
+      'https://picsum.photos/id/134/1200/800',
       'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=1200&q=80'
     ],
     price: 29900,
@@ -413,7 +413,7 @@ const productCatalog: SeedProduct[] = [
         price: 29900,
         stock: 12,
         options: { color: 'Alpine Blue', size: 'Medium' },
-        images: ['https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80'],
       },
     ],
     specs: [
@@ -477,7 +477,7 @@ const productCatalog: SeedProduct[] = [
     longDescription: 'The perfect urban companion for work or travel, combining classic style with modern functionality.',
     badges: ['New'],
     images: [
-      'https://picsum.photos/seed/wander-messenger-bag-0/1200/800',
+      'https://picsum.photos/id/135/1200/800',
       'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80'
     ],
     price: 12900,
@@ -489,7 +489,7 @@ const productCatalog: SeedProduct[] = [
         price: 12900,
         stock: 32,
         options: { color: 'Vintage Brown' },
-        images: ['https://images.unsplash.com/photo-1559942778-4e6290c32c4e?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80'],
       },
       {
         variantId: 'wander-messenger-black',
@@ -520,7 +520,7 @@ const productCatalog: SeedProduct[] = [
     badges: [],
     images: [
       'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80',
-      'https://picsum.photos/seed/globe-trotter-wheelie-1/1200/800'
+      'https://picsum.photos/id/136/1200/800'
     ],
     price: 18900,
     variants: [
@@ -540,7 +540,7 @@ const productCatalog: SeedProduct[] = [
         price: 18900,
         stock: 19,
         options: { color: 'Charcoal Grey', size: '28"' },
-        images: ['https://images.unsplash.com/photo-1581553680321-4fffa59fc9a7?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80'],
       },
       {
         variantId: 'globe-wheelie-blue-22',
@@ -572,7 +572,7 @@ const productCatalog: SeedProduct[] = [
     badges: ['Premium'],
     images: [
       'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=1200&q=80',
-      'https://picsum.photos/seed/aerial-coffee-grinder-1/1200/800'
+      'https://picsum.photos/id/137/1200/800'
     ],
     price: 22900,
     variants: [
@@ -592,7 +592,7 @@ const productCatalog: SeedProduct[] = [
         price: 22900,
         stock: 12,
         options: { color: 'Stainless Steel' },
-        images: ['https://images.unsplash.com/photo-1587734195503-904fca47e744?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=1200&q=80'],
       },
     ],
     specs: [
@@ -614,8 +614,8 @@ const productCatalog: SeedProduct[] = [
     longDescription: 'Eliminate dead zones with intelligent mesh technology that learns your home layout.',
     badges: [],
     images: [
-      'https://picsum.photos/seed/voyage-wireless-router-0/1200/800',
-      'https://picsum.photos/seed/voyage-wireless-router-1/1200/800'
+      'https://picsum.photos/id/138/1200/800',
+      'https://picsum.photos/id/139/1200/800'
     ],
     price: 39900,
     variants: [
@@ -626,7 +626,7 @@ const productCatalog: SeedProduct[] = [
         price: 39900,
         stock: 14,
         options: { pack: '2-Pack' },
-        images: ['https://images.unsplash.com/photo-1606904820-870321b6b1b5?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://picsum.photos/id/153/1200/800'],
       },
       {
         variantId: 'voyage-router-3pack',
@@ -635,7 +635,7 @@ const productCatalog: SeedProduct[] = [
         price: 54900,
         stock: 8,
         options: { pack: '3-Pack' },
-        images: ['https://images.unsplash.com/photo-1564473456868-bc9d811d3cf8?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://picsum.photos/id/154/1200/800'],
       },
     ],
     specs: [
@@ -904,7 +904,7 @@ const productCatalog: SeedProduct[] = [
     longDescription: 'Essential layering piece for variable weather conditions without bulk.',
     badges: [],
     images: [
-      'https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80',
       'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=1200&q=80'
     ],
     price: 11900,
@@ -916,7 +916,7 @@ const productCatalog: SeedProduct[] = [
         price: 11900,
         stock: 29,
         options: { color: 'Obsidian Black', size: 'Large' },
-        images: ['https://images.unsplash.com/photo-1544966503-7cc5ac882d5e?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80'],
       },
       {
         variantId: 'arctic-vest-navy-l',
@@ -947,7 +947,7 @@ const productCatalog: SeedProduct[] = [
     badges: [],
     images: [
       'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80',
-      'https://picsum.photos/seed/travel-daypack-1/1200/800'
+      'https://picsum.photos/id/140/1200/800'
     ],
     price: 6900,
     variants: [
@@ -958,7 +958,7 @@ const productCatalog: SeedProduct[] = [
         price: 6900,
         stock: 51,
         options: { color: 'Charcoal Grey' },
-        images: ['https://images.unsplash.com/photo-1580854256161-2a14e9d10435?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=1200&q=80'],
       },
       {
         variantId: 'travel-daypack-navy',
@@ -988,7 +988,7 @@ const productCatalog: SeedProduct[] = [
     longDescription: 'Achieve restaurant-quality results at home with powerful motor and durable blades.',
     badges: ['Premium'],
     images: [
-      'https://picsum.photos/seed/artisan-blender-0/1200/800',
+      'https://picsum.photos/id/141/1200/800',
       'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=1200&q=80'
     ],
     price: 17900,
@@ -1000,7 +1000,7 @@ const productCatalog: SeedProduct[] = [
         price: 17900,
         stock: 22,
         options: { color: 'Matte Black' },
-        images: ['https://images.unsplash.com/photo-1579791549258-b64d6fde664a?auto=format&fit=crop&w=1200&q=80'],
+        images: ['https://picsum.photos/id/155/1200/800'],
       },
       {
         variantId: 'artisan-blender-silver',
@@ -1122,16 +1122,16 @@ export async function seedMongo(mongoUrl = process.env.MONGO_URL ?? DEFAULT_MONG
 
   // Simplified image validation for this fix
   const categoryFallbacks: Record<string, string> = {
-    footwear: 'https://picsum.photos/seed/footwear/1200/800',
-    clothing: 'https://picsum.photos/seed/clothing/1200/800',
-    outerwear: 'https://picsum.photos/seed/outerwear/1200/800',
-    'bags-luggage': 'https://picsum.photos/seed/bags-luggage/1200/800',
-    'home-kitchen': 'https://picsum.photos/seed/home-kitchen/1200/800',
-    electronics: 'https://picsum.photos/seed/electronics/1200/800',
-    'sports-outdoors': 'https://picsum.photos/seed/sports-outdoors/1200/800',
-    'beauty-personal-care': 'https://picsum.photos/seed/beauty-personal-care/1200/800',
-    accessories: 'https://picsum.photos/seed/accessories/1200/800',
-    jewelry: 'https://picsum.photos/seed/jewelry/1200/800',
+    footwear: 'https://picsum.photos/id/142/1200/800',
+    clothing: 'https://picsum.photos/id/143/1200/800',
+    outerwear: 'https://picsum.photos/id/144/1200/800',
+    'bags-luggage': 'https://picsum.photos/id/145/1200/800',
+    'home-kitchen': 'https://picsum.photos/id/146/1200/800',
+    electronics: 'https://picsum.photos/id/147/1200/800',
+    'sports-outdoors': 'https://picsum.photos/id/148/1200/800',
+    'beauty-personal-care': 'https://picsum.photos/id/149/1200/800',
+    accessories: 'https://picsum.photos/id/150/1200/800',
+    jewelry: 'https://picsum.photos/id/151/1200/800',
   };
 
   // Simplified resolveImages
