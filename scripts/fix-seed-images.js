@@ -22,6 +22,9 @@ for (const envPath of possibleEnvPaths) {
 if (!envLoaded) {
   console.log('Warning: No .env file found, using defaults');
 }
+
+// Allow MONGO_URL override from command line or environment
+const mongoUrl = process.env.MONGO_URL || process.argv[2] || DEFAULT_MONGO;
 const mongoose = require('mongoose');
 const http = require('http');
 const https = require('https');
