@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { apiGet } from '../../../lib/api';
 import { useCartState } from '../../../context/CartContext';
 import { ApiError } from '../../../lib/api';
-import { cn } from '../../../lib/cn';
+import { cn } from '@/lib/utils';
 import ProductCardSkeleton from '../../../components/ui/ProductCardSkeleton';
 
 type ProductVariant = {
@@ -663,11 +663,12 @@ function FiltersPanel({
                   setSort(option.value);
                   setPage(1);
                 }}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                className={cn(
+                  'rounded-full px-4 py-1.5 text-sm font-medium transition',
                   sort === option.value
-            ? 'bg-[color:var(--brand)] text-primary shadow shadow-[color:var(--brand)]/30'
-              : 'bg-ghost-10 text-muted hover:bg-ghost-20'
-                }`}
+                    ? 'bg-[color:var(--brand)] text-primary shadow shadow-[color:var(--brand)]/30'
+                    : 'bg-ghost-10 text-muted hover:bg-ghost-20'
+                )}
               >
                 {option.label}
               </button>
