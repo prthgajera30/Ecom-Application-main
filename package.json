@@ -31,5 +31,13 @@
     "concurrently": "^8.2.1",
     "dotenv": "^16.4.5",
     "tsx": "^4.20.6"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.299.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7"
   }
 }

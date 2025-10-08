@@ -1,0 +1,38 @@
+{
+  "text-yellow-400": "text-[color:var(--accent)]",
+  "bg-yellow-400": "bg-[color:var(--accent)]/10",
+  "text-yellow-300": "text-[color:var(--accent)]",
+  "text-yellow-200": "text-[color:var(--accent)]",
+  "bg-yellow-200": "bg-[color:var(--accent)]/10",
+
+  "text-emerald-200": "text-[color:var(--success)]",
+  "text-emerald-300": "text-[color:var(--success)]",
+  "text-emerald-400": "text-[color:var(--success)]",
+  "bg-emerald-200": "bg-[color:var(--success)]/10",
+  "bg-emerald-300": "bg-[color:var(--success)]/10",
+
+  "text-indigo-200": "text-[color:var(--brand)]",
+  "text-indigo-300": "text-[color:var(--brand)]",
+  "bg-indigo-200": "bg-[color:var(--brand)]/10",
+  "bg-indigo-300": "bg-[color:var(--brand)]/10",
+
+  "text-red-500": "text-[color:var(--danger)]",
+  "bg-red-100": "bg-[color:var(--danger)]/10",
+
+  "text-white": "text-[color:var(--text-primary)]",
+  "bg-white": "bg-[color:var(--surface)]",
+
+  "text-gray-50": "text-muted",
+  "text-gray-100": "text-muted",
+  "text-gray-200": "text-muted",
+  "text-gray-300": "text-muted",
+  "text-gray-400": "text-muted",
+  "text-gray-500": "text-muted",
+  "text-gray-600": "text-muted",
+  "text-gray-700": "text-default",
+  "bg-gray-50": "bg-ghost-10",
+
+  "border-yellow-400": "border-[color:var(--accent)]",
+  "border-indigo-300": "border-[color:var(--brand)]",
+  "border-gray-200": "border-[color:var(--surface-border)]"
+}
