@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from './Button';
 import { WishlistButton } from './WishlistButton';
-import { cn } from '../../lib/cn';
+import { cn } from '@/lib/utils';
 
 interface ProductVariant {
   variantId?: string;
@@ -97,7 +97,7 @@ export function ProductCard({
             )}
             {badgeLabel && (
               <div
-                className="absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-semibold text-primary"
+                className={cn('absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-semibold text-primary')}
                 style={{ background: badgeColors[badgeColor] }}
               >
                 {badgeLabel}
@@ -124,7 +124,7 @@ export function ProductCard({
   <div className={cn('flex flex-1 flex-col justify-between', variant === 'default' && 'space-y-3 p-5')}>
             <div className="space-y-1">
             <h3 className={cn('font-semibold text-primary line-clamp-2', 'text-base')}>{product.title}</h3>
-            <p className={`text-sm text-muted`}>
+            <p className={cn('text-sm text-muted')}>
               ${(price / 100).toFixed(2)}
             </p>
           </div>
