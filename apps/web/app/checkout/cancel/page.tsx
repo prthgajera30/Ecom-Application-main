@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import { ButtonLink } from '../../../components/ui/Button';
 
 export default function Cancel() {
   return (
@@ -11,8 +12,8 @@ export default function Cancel() {
           Your Stripe test session was closed before completing payment. You can jump back to the cart to retry or keep browsing for more products.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
-          <Link href="/cart" className="btn-primary">Return to cart</Link>
-          <Link href="/products" className="btn-secondary">Browse catalog</Link>
+          <ButtonLink href="/cart" variant="primary">Return to cart</ButtonLink>
+          <ButtonLink href="/products" variant="secondary">Browse catalog</ButtonLink>
         </div>
       </div>
       <div className="rounded-2xl border border-ghost-10 bg-ghost-5 p-6 text-sm text-muted">

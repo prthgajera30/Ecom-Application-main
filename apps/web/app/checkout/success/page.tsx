@@ -1,6 +1,7 @@
 "use client";
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
+import { ButtonLink } from '../../../components/ui/Button';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ApiError, apiPost } from '../../../lib/api';
@@ -70,8 +71,8 @@ export default function Success() {
           <p className="mt-4 rounded-full bg-[var(--danger-10)] px-4 py-2 text-xs text-[var(--danger-100)]">{finalizeError}</p>
         )}
         <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
-          <Link href="/orders" className="btn-primary">View orders</Link>
-          <Link href="/products" className="btn-secondary">Continue shopping</Link>
+          <ButtonLink href="/orders" variant="primary">View orders</ButtonLink>
+          <ButtonLink href="/products" variant="secondary">Continue shopping</ButtonLink>
         </div>
       </div>
   <div className="rounded-2xl border border-ghost-10 bg-ghost-5 p-6 text-sm text-muted text-left">

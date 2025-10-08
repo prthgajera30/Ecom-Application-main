@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { API_BASE } from '../../../lib/api';
 import { Card } from '../../../components/ui/Card';
+import { Button, ButtonLink } from '../../../components/ui/Button';
 
 type InventoryOverview = {
   totalProducts: number;
@@ -194,7 +195,7 @@ export default function AdminInventoryPage() {
           <p className="text-muted mb-6">
             You don't have permission to access the admin panel.
           </p>
-          <Link href="/" className="btn-primary">Back to Store</Link>
+          <ButtonLink href="/" variant="primary">Back to Store</ButtonLink>
         </Card>
       </AdminLayout>
     );
@@ -311,12 +312,7 @@ export default function AdminInventoryPage() {
                 <option value="outOfStock">Out of Stock</option>
               </select>
             </div>
-            <button
-              onClick={fetchProducts}
-              className="btn-primary whitespace-nowrap"
-            >
-              Search
-            </button>
+            <Button onClick={fetchProducts} variant="primary" className="whitespace-nowrap">Search</Button>
           </div>
         </Card>
 

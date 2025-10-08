@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 import { API_BASE } from '../../../lib/api';
 import { Card } from '../../../components/ui/Card';
-import { Button } from '../../../components/ui/Button';
+import { Button, ButtonLink } from '../../../components/ui/Button';
 
 type Product = {
   id: string;
@@ -106,9 +106,9 @@ export default function AdminProductsPage() {
             <h1 className="text-3xl font-semibold text-primary">Products</h1>
             <p className="text-muted mt-1">Manage your product catalog</p>
           </div>
-          <Link href="/admin/products/new" className="btn-primary">
+          <ButtonLink href="/admin/products/new" variant="primary">
             Add Product
-          </Link>
+          </ButtonLink>
         </div>
 
         {error && (
@@ -230,9 +230,9 @@ export default function AdminProductsPage() {
                 <p className="text-muted mb-6">
                   {searchTerm ? 'Try adjusting your search criteria' : 'Get started by adding your first product'}
                 </p>
-                <Link href="/admin/products/new" className="btn-primary">
+                <ButtonLink href="/admin/products/new" variant="primary">
                   Add First Product
-                </Link>
+                </ButtonLink>
               </div>
             )}
           </div>

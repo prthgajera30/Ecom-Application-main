@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import Link from 'next/link';
+import { Button } from '../../../components/ui/Button';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -54,7 +55,7 @@ export default function LoginPage() {
               placeholder="Password"
             />
           </div>
-          <button className="btn-primary w-full" type="submit">Sign in</button>
+          <Button className="w-full" type="submit" variant="primary">Sign in</Button>
         </form>
   {msg && <p className="rounded-lg bg-[var(--danger-10)] px-4 py-2 text-sm text-[var(--danger-100)]">{msg}</p>}
         <p className="text-center text-sm text-muted">

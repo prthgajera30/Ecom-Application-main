@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ButtonLink } from '../../components/ui/Button';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE } from '../../lib/api';
@@ -150,9 +151,9 @@ export default function AdminDashboard() {
             <p className="text-muted mb-6">
               You don't have permission to access the admin panel.
             </p>
-             <Link href="/" className="btn-primary">
+             <ButtonLink href="/" variant="primary">
               Back to Store
-            </Link>
+            </ButtonLink>
           </Card>
         </div>
       </div>
@@ -184,7 +185,8 @@ export default function AdminDashboard() {
           <p className="text-[var(--danger-100)] mb-6">{error}</p>
           <button
             onClick={fetchDashboardStats}
-            className="btn-primary"
+            className=""
+            // replaced by ButtonLink where appropriate
           >
             Try Again
           </button>

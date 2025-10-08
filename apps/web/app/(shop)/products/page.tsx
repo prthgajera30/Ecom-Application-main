@@ -6,6 +6,7 @@ import { apiGet } from '../../../lib/api';
 import { useCartState } from '../../../context/CartContext';
 import { ApiError } from '../../../lib/api';
 import { cn } from '../../../lib/cn';
+import { Button, ButtonLink } from '../../../components/ui/Button';
 import ProductCardSkeleton from '../../../components/ui/ProductCardSkeleton';
 
 type ProductVariant = {
@@ -473,7 +474,8 @@ function FiltersPanel({
         {onClose && (
           <button
             type="button"
-            className="btn-secondary !w-auto justify-center px-4 py-1 text-xs"
+            className="!w-auto justify-center px-4 py-1 text-xs"
+            // replaced by ButtonLink below
             onClick={onClose}
           >
             Done
@@ -553,7 +555,9 @@ function FiltersPanel({
               />
             </label>
           </div>
-          <button onClick={applyPriceFilters} className="btn-primary w-full justify-center py-2 text-xs">Apply price range</button>
+          <Button onClick={applyPriceFilters} className="w-full justify-center py-2 text-xs" variant="primary">
+            Apply price range
+          </Button>
           {facets.price.min !== undefined && facets.price.max !== undefined && (
             <p className="text-xs text-subtle">
               Available range: ${(facets.price.min / 100).toFixed(2)} – {(facets.price.max / 100).toFixed(2)}
@@ -705,7 +709,8 @@ function FiltersPanel({
                   <button
               type="button"
               onClick={openMobileFilters}
-              className="btn-secondary flex-1 justify-center"
+              className="flex-1 justify-center"
+              // will be replaced by ButtonLink
             >
               Filters
                 {activeFilterCount ? (
@@ -796,7 +801,8 @@ function FiltersPanel({
             </span>
             <div className="flex items-center gap-2">
               <button
-                className="btn-secondary px-3 py-1 text-xs"
+                className="px-3 py-1 text-xs"
+                // replaced by Button
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={page === 1}
               >
@@ -806,7 +812,8 @@ function FiltersPanel({
                 Page {page} of {totalPages}
               </span>
               <button
-                className="btn-secondary px-3 py-1 text-xs"
+                className="px-3 py-1 text-xs"
+                // replaced by Button
                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                 disabled={page >= totalPages}
               >
@@ -858,7 +865,8 @@ function FiltersPanel({
                       </Link>
                       <div className="border-t border-ghost-10 bg-ghost-5 p-4">
                         <button
-                          className="btn-primary w-full justify-center disabled:opacity-60"
+                          className="w-full justify-center disabled:opacity-60"
+                          // replaced by Button
                           onClick={() => add(product)}
                           disabled={pendingAdd}
                         >
@@ -965,7 +973,7 @@ function ProductsPageSkeleton() {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={<ProductsPageSkeleton />}>
+    <Suspense>
       <ProductsPageContent />
     </Suspense>
   );

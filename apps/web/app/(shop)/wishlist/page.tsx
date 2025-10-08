@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useWishlist } from '../../../context/WishlistContext';
 import { useAuth } from '../../../context/AuthContext';
 import { apiGet } from '../../../lib/api';
-import { Button } from '../../../components/ui/Button';
+import { Button, ButtonLink } from '../../../components/ui/Button';
 
 type Product = {
   _id: string;
@@ -111,12 +111,12 @@ export default function WishlistPage() {
           Create an account or sign in to save items you'd like to purchase later.
         </p>
         <div className="flex gap-3 mt-6">
-          <Link href="/login" className="btn btn-secondary">
+          <ButtonLink href="/login" variant="secondary">
             Sign in
-          </Link>
-          <Link href="/register" className="btn btn-primary">
+          </ButtonLink>
+          <ButtonLink href="/register" variant="primary">
             Create account
-          </Link>
+          </ButtonLink>
         </div>
       </div>
     );
@@ -140,9 +140,9 @@ export default function WishlistPage() {
             <h2 className="text-xl font-semibold text-[var(--text-primary)]">Your wishlist is empty</h2>
             <p className="text-[var(--text-muted)]">Discover products and save them for later shopping.</p>
           </div>
-          <Link href="/products" className="btn btn-primary">
+          <ButtonLink href="/products" variant="primary">
             Start Shopping
-          </Link>
+          </ButtonLink>
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -230,9 +230,9 @@ export default function WishlistPage() {
 
       {wishlist.length > 0 && (
         <div className="text-center">
-          <Link href="/products" className="btn btn-secondary">
+          <ButtonLink href="/products" variant="secondary">
             Continue Shopping
-          </Link>
+          </ButtonLink>
         </div>
       )}
     </div>
