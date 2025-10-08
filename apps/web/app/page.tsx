@@ -258,20 +258,20 @@ export default function Page() {
 
   const liveSnapshot = useMemo(
     () => [
-      {
-        label: 'Store status',
-        value: health === 'OK' ? 'Online' : 'Check back soon',
-        tone: health === 'OK' ? 'text-emerald-300 bg-emerald-500/10' : 'text-rose-200 bg-rose-500/10',
-      },
-      {
-        label: 'Live updates',
-        value: connected ? 'Realtime' : 'Paused',
-        tone: connected ? 'text-sky-200 bg-sky-500/10' : 'text-rose-200 bg-rose-500/10',
-      },
+  {
+    label: 'Store status',
+    value: health === 'OK' ? 'Online' : 'Check back soon',
+  tone: health === 'OK' ? 'text-[color:var(--text-primary)] bg-[color:var(--brand)]/10' : 'text-[color:var(--danger-100)] bg-[color:var(--danger-10)]',
+  },
+  {
+    label: 'Live updates',
+    value: connected ? 'Realtime' : 'Paused',
+  tone: connected ? 'text-[color:var(--text-primary)] bg-[color:var(--brand)]/10' : 'text-[color:var(--danger-100)] bg-[color:var(--danger-10)]',
+  },
       {
         label: 'Deals today',
-        value: featured.length ? `${featured.length}+ active` : 'Loading…',
-        tone: 'text-indigo-200 bg-indigo-500/10',
+        value: featured.length ? `${featured.length}+ active` : 'Loading',
+  tone: 'text-[color:var(--text-muted)] bg-ghost-10',
       },
     ],
     [connected, featured.length, health]
@@ -279,7 +279,7 @@ export default function Page() {
 
   return (
     <div className="space-y-24">
-      <section className="relative overflow-hidden rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-strong)] p-8 shadow-xl shadow-slate-950/30 backdrop-blur-xl transition-colors md:p-14">
+  <section className="relative overflow-hidden rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-strong)] p-8 shadow-xl shadow-slate-950/30 backdrop-blur-xl transition-colors md:p-14">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--bg-glow-1)_0%,transparent_55%)]" />
           <div className="absolute -right-20 top-10 hidden h-72 w-72 rounded-full bg-[var(--bg-glow-2)] blur-3xl lg:block" />
@@ -396,12 +396,12 @@ export default function Page() {
           <div className="flex flex-wrap gap-2">
             <div data-testid="category-nav">
               {categories.slice(0, 6).map((category) => (
-                <button
+                  <button
                   key={category._id}
                   type="button"
                   onClick={() => handleCategorySelect(category._id)}
                   className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                    activeCategory === category._id ? 'bg-white text-slate-900 shadow shadow-indigo-500/30' : 'bg-white/10 text-indigo-100/80 hover:bg-white/20'
+                    activeCategory === category._id ? 'bg-surface-solid text-[var(--text-primary)] shadow shadow-[color:var(--brand)]/30' : 'bg-ghost-10 text-muted hover:bg-ghost-20'
                   }`}
                 >
                   {category.name}
@@ -410,9 +410,9 @@ export default function Page() {
             </div>
           </div>
         </div>
-        <div className="relative min-h-[220px] overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6">
+  <div className="relative min-h-[220px] overflow-hidden rounded-3xl border border-ghost-10 bg-ghost-5 p-6">
           {categoryLoading && (
-            <div className="absolute inset-0 z-10 grid place-items-center bg-slate-950/40 backdrop-blur-sm text-xs text-indigo-100/70">
+            <div className="absolute inset-0 z-10 grid place-items-center bg-[color:var(--surface-strong)]/40 backdrop-blur-sm text-xs text-muted">
               Loading personalized picks…
             </div>
           )}
@@ -424,7 +424,7 @@ export default function Page() {
                     key={product._id}
                     product={product}
                     variant="category"
-                    addItem={quickAdd}
+                    onQuickAdd={quickAdd}
                     pendingItems={pending}
                     errors={productErrors}
                   />
@@ -435,14 +435,14 @@ export default function Page() {
                   type="button"
                   onClick={loadMoreCategoryProducts}
                   disabled={categoryLoading}
-                  className="rounded-full bg-white/10 border border-white/20 px-6 py-2 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-60 transition"
+                  className="rounded-full bg-ghost-10 border border-ghost-20 px-6 py-2 text-sm font-semibold text-primary hover:bg-ghost-20 disabled:opacity-60 transition"
                 >
                   {categoryLoading ? 'Loading more...' : 'Load more products'}
                 </button>
               </div>
             </>
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-indigo-100/70">
+            <div className="flex h-full items-center justify-center text-sm text-muted">
               {activeCategoryName ? `No items in ${activeCategoryName} yet—try another category.` : 'Pick a category to preview items.'}
             </div>
           )}
@@ -458,7 +458,7 @@ export default function Page() {
             </div>
             <ButtonLink href="/products?sort=price_asc" variant="secondary">View all deals</ButtonLink>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {lightningDeals.map((product) => (
               <ProductCard
                 key={product._id}
@@ -466,7 +466,7 @@ export default function Page() {
                 variant="default"
                 badgeLabel="Hot deal"
                 badgeColor="amber"
-                addItem={quickAdd}
+                onQuickAdd={quickAdd}
                 pendingItems={pending}
                 errors={productErrors}
               />
@@ -492,7 +492,7 @@ export default function Page() {
                 variant="default"
                 badgeLabel="Best seller"
                 badgeColor="indigo"
-                addItem={quickAdd}
+                onQuickAdd={quickAdd}
                 pendingItems={pending}
                 errors={productErrors}
               />
@@ -517,7 +517,7 @@ export default function Page() {
               variant="featured"
               badgeLabel="Featured"
               badgeColor="emerald"
-              addItem={quickAdd}
+              onQuickAdd={quickAdd}
               pendingItems={pending}
               errors={productErrors}
             />
@@ -541,26 +541,28 @@ export default function Page() {
               const price = variant?.price ?? product.price;
               const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
               return (
-                <div key={product._id} className="card flex h-full flex-col overflow-hidden">
+                  <div key={product._id} className="card flex h-full flex-col overflow-hidden">
                   <Link href={product.slug ? `/product/${product.slug}` : '#'} className="group relative block h-48 overflow-hidden">
                     {product.images?.[0] ? (
                       <img
                         src={product.images[0]}
                         alt={product.title}
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
+                      <div className="flex h-full items-center justify-center bg-[var(--surface-strong)]" role="img" aria-label="No image">No image</div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
-                    <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-900">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--surface-strong)] via-transparent" />
+                    <div className="absolute left-4 top-4 rounded-full bg-surface-solid px-3 py-1 text-xs font-medium text-primary">
                       Match {(item.score ?? 0).toFixed(2)}
                     </div>
                   </Link>
                   <div className="flex flex-1 flex-col justify-between space-y-3 p-5">
                     <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-white line-clamp-1">{product.title}</h3>
-                      <p className="text-sm text-indigo-100/70">${(price / 100).toFixed(2)}</p>
+                      <h3 className="text-lg font-semibold text-primary line-clamp-1">{product.title}</h3>
+                      <p className="text-sm text-muted">${(price / 100).toFixed(2)}</p>
                     </div>
                     <div className="space-y-2">
                       <Button
@@ -569,10 +571,10 @@ export default function Page() {
                         onClick={() => quickAdd(product._id, variant)}
                         disabled={addBusy}
                       >
-                        {addBusy ? 'Adding…' : 'Add to cart'}
+                        {addBusy ? 'Adding…' : 'Add to Cart'}
                       </Button>
                       {productErrors[product._id] && (
-                        <p className="rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100 text-center">
+                        <p className="rounded-full bg-[var(--danger-10)] px-3 py-2 text-xs text-[var(--danger-100)] text-center">
                           {productErrors[product._id]}
                         </p>
                       )}
@@ -585,11 +587,11 @@ export default function Page() {
         </section>
       )}
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center shadow-xl shadow-indigo-950/30">
+  <section className="rounded-3xl border border-ghost-10 bg-ghost-5 p-8 text-center shadow-xl shadow-[color:var(--brand)]/30">
         {(!user) ? (
           <div className="space-y-4">
-            <h2 className="text-3xl font-semibold text-white">Sign in for your best experience</h2>
-            <p className="mx-auto max-w-2xl text-sm text-indigo-100/70">Track orders, save items, and get better recommendations.</p>
+            <h2 className="text-3xl font-semibold text-primary">Sign in for your best experience</h2>
+            <p className="mx-auto max-w-2xl text-sm text-muted">Track orders, save items, and get better recommendations.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-3">
               <ButtonLink href="/login" variant="secondary">Sign in</ButtonLink>
               <ButtonLink href="/register">Create account</ButtonLink>
@@ -597,8 +599,8 @@ export default function Page() {
           </div>
         ) : (
           <div className="space-y-4">
-            <h2 className="text-3xl font-semibold text-white">Welcome back</h2>
-            <p className="mx-auto max-w-2xl text-sm text-indigo-100/70">Jump to your orders or keep shopping today's deals.</p>
+            <h2 className="text-3xl font-semibold text-primary">Welcome back</h2>
+            <p className="mx-auto max-w-2xl text-sm text-muted">Jump to your orders or keep shopping today's deals.</p>
             <div className="mt-2 flex flex-wrap justify-center gap-3">
               <ButtonLink href="/orders" variant="secondary">Your orders</ButtonLink>
               <ButtonLink href="/products?sort=price">Today's deals</ButtonLink>

@@ -138,11 +138,11 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
   return (
     <Card className="max-w-2xl">
       <div className="space-y-6 p-6">
-        <div>
-          <h3 className="text-lg font-semibold text-white">
+          <div>
+          <h3 className="text-lg font-semibold text-primary">
             {address ? 'Edit Address' : 'Add New Address'}
           </h3>
-          <p className="text-sm text-indigo-100/70">
+          <p className="text-sm text-muted">
             {address ? 'Update your address information below.' : 'Enter your address information below.'}
           </p>
         </div>
@@ -150,7 +150,7 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="label" className="block text-sm font-medium text-white">
+              <label htmlFor="label" className="block text-sm font-medium text-primary">
                 Label (Optional)
               </label>
               <input
@@ -159,12 +159,12 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
                 value={formData.label}
                 onChange={(e) => handleInputChange('label', e.target.value)}
                 placeholder="e.g., Home, Work"
-                className="mt-1 block w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-white placeholder:text-indigo-100/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                className="mt-1 block w-full rounded-xl border border-surface bg-surface-muted px-3 py-2 text-primary placeholder:text-muted focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/40"
               />
             </div>
 
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-white">
+              <label htmlFor="fullName" className="block text-sm font-medium text-primary">
                 Full Name *
               </label>
               <input
@@ -172,21 +172,21 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
                 type="text"
                 value={formData.fullName}
                 onChange={(e) => handleInputChange('fullName', e.target.value)}
-                className={`mt-1 block w-full rounded-xl border px-3 py-2 text-white placeholder:text-indigo-100/50 focus:outline-none focus:ring-2 ${
+                className={`mt-1 block w-full rounded-xl border px-3 py-2 text-primary placeholder:text-muted focus:outline-none focus:ring-2 ${
                   errors.fullName
-                    ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/40'
-                    : 'border-white/15 bg-white/10 focus:border-indigo-400 focus:ring-indigo-400/40'
+            ? 'border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]/40'
+              : 'border-surface bg-[var(--surface-muted)] focus:border-[var(--brand-dark)] focus:ring-[var(--brand-dark)]/40'
                 }`}
                 required
               />
               {errors.fullName && (
-                <p className="mt-1 text-sm text-rose-400">{errors.fullName}</p>
+                <p className="mt-1 text-sm text-[var(--danger-100)]">{errors.fullName}</p>
               )}
             </div>
           </div>
 
           <div>
-            <label htmlFor="line1" className="block text-sm font-medium text-white">
+            <label htmlFor="line1" className="block text-sm font-medium text-primary">
               Address Line 1 *
             </label>
             <input
@@ -195,20 +195,20 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
               value={formData.line1}
               onChange={(e) => handleInputChange('line1', e.target.value)}
               placeholder="Street address, P.O. box, company name"
-              className={`mt-1 block w-full rounded-xl border px-3 py-2 text-white placeholder:text-indigo-100/50 focus:outline-none focus:ring-2 ${
+              className={`mt-1 block w-full rounded-xl border px-3 py-2 text-primary placeholder:text-muted focus:outline-none focus:ring-2 ${
                 errors.line1
-                  ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/40'
-                  : 'border-white/15 bg-white/10 focus:border-indigo-400 focus:ring-indigo-400/40'
+                  ? 'border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]/40'
+                    : 'border-surface bg-[var(--surface-muted)] focus:border-[var(--brand-dark)] focus:ring-[var(--brand-dark)]/40'
               }`}
               required
             />
             {errors.line1 && (
-              <p className="mt-1 text-sm text-rose-400">{errors.line1}</p>
+              <p className="mt-1 text-sm text-[var(--danger-100)]">{errors.line1}</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="line2" className="block text-sm font-medium text-white">
+            <label htmlFor="line2" className="block text-sm font-medium text-primary">
               Address Line 2 (Optional)
             </label>
             <input
@@ -217,13 +217,13 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
               value={formData.line2}
               onChange={(e) => handleInputChange('line2', e.target.value)}
               placeholder="Apartment, suite, unit, building, floor"
-              className="mt-1 block w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-white placeholder:text-indigo-100/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+              className="mt-1 block w-full rounded-xl border border-surface bg-surface-muted px-3 py-2 text-primary placeholder:text-muted focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/40"
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="city" className="block text-sm font-medium text-white">
+              <label htmlFor="city" className="block text-sm font-medium text-primary">
                 City *
               </label>
               <input
@@ -231,20 +231,20 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
                 type="text"
                 value={formData.city}
                 onChange={(e) => handleInputChange('city', e.target.value)}
-                className={`mt-1 block w-full rounded-xl border px-3 py-2 text-white placeholder:text-indigo-100/50 focus:outline-none focus:ring-2 ${
+                className={`mt-1 block w-full rounded-xl border px-3 py-2 text-primary placeholder:text-muted focus:outline-none focus:ring-2 ${
                   errors.city
-                    ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/40'
-                    : 'border-white/15 bg-white/10 focus:border-indigo-400 focus:ring-indigo-400/40'
+            ? 'border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]/40'
+              : 'border-surface bg-[var(--surface-muted)] focus:border-[var(--brand-dark)] focus:ring-[var(--brand-dark)]/40'
                 }`}
                 required
               />
               {errors.city && (
-                <p className="mt-1 text-sm text-rose-400">{errors.city}</p>
+                <p className="mt-1 text-sm text-[var(--danger-100)]">{errors.city}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="state" className="block text-sm font-medium text-white">
+              <label htmlFor="state" className="block text-sm font-medium text-primary">
                 State/Province (Optional)
               </label>
               <input
@@ -252,14 +252,14 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
                 type="text"
                 value={formData.state}
                 onChange={(e) => handleInputChange('state', e.target.value)}
-                className="mt-1 block w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-white placeholder:text-indigo-100/50 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+                className="mt-1 block w-full rounded-xl border border-surface bg-surface-muted px-3 py-2 text-primary placeholder:text-muted focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/40"
               />
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="postalCode" className="block text-sm font-medium text-white">
+              <label htmlFor="postalCode" className="block text-sm font-medium text-primary">
                 Postal Code *
               </label>
               <input
@@ -267,30 +267,30 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
                 type="text"
                 value={formData.postalCode}
                 onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                className={`mt-1 block w-full rounded-xl border px-3 py-2 text-white placeholder:text-indigo-100/50 focus:outline-none focus:ring-2 ${
+                className={`mt-1 block w-full rounded-xl border px-3 py-2 text-primary placeholder:text-muted focus:outline-none focus:ring-2 ${
                   errors.postalCode
-                    ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/40'
-                    : 'border-white/15 bg-white/10 focus:border-indigo-400 focus:ring-indigo-400/40'
+            ? 'border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]/40'
+              : 'border-surface bg-[var(--surface-muted)] focus:border-[var(--brand-dark)] focus:ring-[var(--brand-dark)]/40'
                 }`}
                 required
               />
               {errors.postalCode && (
-                <p className="mt-1 text-sm text-rose-400">{errors.postalCode}</p>
+                <p className="mt-1 text-sm text-[var(--danger-100)]">{errors.postalCode}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="country" className="block text-sm font-medium text-white">
+              <label htmlFor="country" className="block text-sm font-medium text-primary">
                 Country *
               </label>
               <select
                 id="country"
                 value={formData.country}
                 onChange={(e) => handleInputChange('country', e.target.value)}
-                className={`mt-1 block w-full rounded-xl border px-3 py-2 text-white focus:outline-none focus:ring-2 ${
+                className={`mt-1 block w-full rounded-xl border px-3 py-2 text-primary focus:outline-none focus:ring-2 ${
                   errors.country
-                    ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/40'
-                    : 'border-white/15 bg-white/10 focus:border-indigo-400 focus:ring-indigo-400/40'
+            ? 'border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]/40'
+              : 'border-surface bg-[var(--surface-muted)] focus:border-[var(--brand-dark)] focus:ring-[var(--brand-dark)]/40'
                 }`}
                 required
               >
@@ -304,13 +304,13 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
                 {/* Add more countries as needed */}
               </select>
               {errors.country && (
-                <p className="mt-1 text-sm text-rose-400">{errors.country}</p>
+                <p className="mt-1 text-sm text-[var(--danger-100)]">{errors.country}</p>
               )}
             </div>
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-white">
+              <label htmlFor="phone" className="block text-sm font-medium text-primary">
               Phone Number (Optional)
             </label>
             <input
@@ -319,14 +319,14 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
               placeholder="+1 (555) 123-4567"
-              className={`mt-1 block w-full rounded-xl border px-3 py-2 text-white placeholder:text-indigo-100/50 focus:outline-none focus:ring-2 ${
+              className={`mt-1 block w-full rounded-xl border px-3 py-2 text-primary placeholder:text-muted focus:outline-none focus:ring-2 ${
                 errors.phone
-                  ? 'border-rose-400 focus:border-rose-400 focus:ring-rose-400/40'
-                  : 'border-white/15 bg-white/10 focus:border-indigo-400 focus:ring-indigo-400/40'
+                  ? 'border-[var(--danger)] focus:border-[var(--danger)] focus:ring-[var(--danger)]/40'
+                    : 'border-surface bg-[var(--surface-muted)] focus:border-[var(--brand-dark)] focus:ring-[var(--brand-dark)]/40'
               }`}
             />
             {errors.phone && (
-              <p className="mt-1 text-sm text-rose-400">{errors.phone}</p>
+              <p className="mt-1 text-sm text-[var(--danger-100)]">{errors.phone}</p>
             )}
           </div>
 
@@ -336,9 +336,9 @@ export function AddressForm({ address, onSuccess, onCancel }: AddressFormProps) 
               type="checkbox"
               checked={formData.isDefault}
               onChange={(e) => handleInputChange('isDefault', e.target.checked)}
-              className="h-4 w-4 rounded border border-white/15 bg-white/10 text-indigo-600 focus:ring-2 focus:ring-indigo-400/40 focus:ring-offset-0"
+              className="h-4 w-4 rounded border border-surface bg-surface-muted text-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/40 focus:ring-offset-0"
             />
-            <label htmlFor="isDefault" className="text-sm text-white">
+            <label htmlFor="isDefault" className="text-sm text-primary">
               Set as default address
             </label>
           </div>

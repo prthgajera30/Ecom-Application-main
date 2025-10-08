@@ -28,14 +28,14 @@ export default function RegisterPage() {
       <div className="card-elevated space-y-6 p-8">
         <div className="space-y-2 text-center">
           <span className="badge inline-flex">Get started</span>
-          <h1 className="text-2xl font-semibold text-white">Create an account</h1>
-          <p className="text-sm text-indigo-100/70">Seeded credentials already exist, but you can provision your own to test login flows.</p>
+          <h1 className="text-2xl font-semibold text-primary">Create an account</h1>
+          <p className="text-sm text-muted">Seeded credentials already exist, but you can provision your own to test login flows.</p>
         </div>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wider text-indigo-100/70">Email</label>
+            <label className="text-xs font-medium uppercase tracking-wider text-muted">Email</label>
             <input
-              className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm text-white placeholder:text-indigo-100/40 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+              className="w-full rounded-xl border border-ghost-10 bg-ghost-5 px-4 py-2 text-sm text-primary placeholder:text-subtle focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/40"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
@@ -43,9 +43,9 @@ export default function RegisterPage() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-medium uppercase tracking-wider text-indigo-100/70">Password</label>
+            <label className="text-xs font-medium uppercase tracking-wider text-muted">Password</label>
             <input
-              className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-2 text-sm text-white placeholder:text-indigo-100/40 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/40"
+              className="w-full rounded-xl border border-ghost-10 bg-ghost-5 px-4 py-2 text-sm text-primary placeholder:text-subtle focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/40"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -54,10 +54,10 @@ export default function RegisterPage() {
           </div>
           <button className="btn-primary w-full" type="submit">Create account</button>
         </form>
-        {msg && <p className="rounded-lg bg-rose-500/20 px-4 py-2 text-sm text-rose-100">{msg}</p>}
-        <p className="text-center text-sm text-indigo-100/70">
+  {msg && <p className="rounded-lg bg-[var(--danger-10)] px-4 py-2 text-sm text-[var(--danger-100)]">{msg}</p>}
+        <p className="text-center text-sm text-muted">
           Already have an account?
-          <Link className="ml-2 text-white underline hover:text-indigo-200" href="/login">Sign in</Link>
+          <Link className="ml-2 text-primary underline hover:text-muted" href="/login">Sign in</Link>
         </p>
       </div>
     </div>

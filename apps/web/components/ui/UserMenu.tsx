@@ -58,13 +58,13 @@ export function UserMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-xl border border-[var(--surface-border)] bg-[color:var(--surface-strong)] px-3 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+        className="flex items-center gap-2 rounded-xl border border-[var(--surface-border)] bg-surface-strong px-3 py-2 text-sm font-medium text-primary transition hover:bg-surface-muted"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
-            <span className="text-sm font-bold text-white">
+            <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--brand)] to-[color:var(--brand-dark)]">
+            <span className="text-sm font-bold text-primary">
               {user.email?.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -82,11 +82,11 @@ export function UserMenu() {
           <Card className="p-2 shadow-2xl">
             <div className="space-y-1">
               {/* User Info Header */}
-              <div className="border-b border-white/10 px-3 py-3">
-                <div className="text-sm font-medium text-white truncate">
+              <div className="border-b border-surface px-3 py-3">
+                <div className="text-sm font-medium text-primary truncate">
                   {user.email}
                 </div>
-                <div className="text-xs text-indigo-100/60 capitalize">
+                <div className="text-xs text-muted capitalize">
                   {user.role} account
                 </div>
               </div>
@@ -98,9 +98,9 @@ export function UserMenu() {
                   <Link
                     href="/profile"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary transition hover:bg-surface-muted"
                   >
-                    <span className="text-indigo-400 text-sm">⚙️</span>
+                    <span className="text-[var(--brand)] text-sm">⚙️</span>
                     <span>Profile Settings</span>
                   </Link>
 
@@ -108,9 +108,9 @@ export function UserMenu() {
                   <Link
                     href="/orders"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary transition hover:bg-surface-muted"
                   >
-                    <span className="text-indigo-400 text-sm">📦</span>
+                    <span className="text-[var(--brand)] text-sm">📦</span>
                     <span>My Orders</span>
                   </Link>
 
@@ -118,30 +118,30 @@ export function UserMenu() {
                   <Link
                     href="/wishlist"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary transition hover:bg-surface-muted"
                   >
-                    <span className="text-pink-400 text-sm">❤️</span>
+                    <span className="text-[var(--danger-100)] text-sm">❤️</span>
                     <span>Wishlist</span>
                     {itemCount > 0 && (
-                      <span className="ml-auto rounded-full bg-pink-500/20 px-2 py-0.5 text-xs text-pink-200">
+                      <span className="ml-auto rounded-full bg-[var(--danger-10)] px-2 py-0.5 text-xs text-[var(--danger-100)]">
                         ♥
                       </span>
                     )}
                   </Link>
 
                   {/* Divider */}
-                  <hr className="border-white/10 my-2" />
+                  <hr className="border-surface my-2" />
 
                   {/* Cart Link */}
                   <Link
                     href="/cart"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-primary)] transition hover:bg-[color:var(--surface-muted)]"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-primary transition hover:bg-surface-muted"
                   >
-                    <span className="text-emerald-400 text-sm">🛒</span>
+                    <span className="text-[var(--accent)] text-sm">🛒</span>
                     <span>Shopping Cart</span>
                     {itemCount > 0 && (
-                      <span className="ml-auto rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs text-emerald-200">
+                      <span className="ml-auto rounded-full bg-[var(--accent)]/20 px-2 py-0.5 text-xs text-[var(--accent)]/90">
                         {itemCount}
                       </span>
                     )}
@@ -150,26 +150,26 @@ export function UserMenu() {
                   {/* Checkout Button */}
                   {itemCount > 0 && (
                     <Button
-                      onClick={startCheckout}
-                      disabled={Boolean(pending.checkout)}
-                      className="w-full justify-center text-sm bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
-                      size="sm"
-                    >
-                      {pending.checkout ? 'Preparing...' : 'Checkout'} ({itemCount})
-                    </Button>
+                        onClick={startCheckout}
+                        disabled={Boolean(pending.checkout)}
+                        className="w-full justify-center text-sm bg-gradient-to-r from-[color:var(--brand)] to-[color:var(--brand-dark)] hover:from-[color:var(--brand-dark)] hover:to-[color:var(--brand)]"
+                        size="sm"
+                      >
+                        {pending.checkout ? 'Preparing...' : 'Checkout'} ({itemCount})
+                      </Button>
                   )}
                 </div>
               </div>
 
               {/* Divider */}
-              <hr className="border-white/10 my-2" />
+              <hr className="border-surface my-2" />
 
               {/* Logout */}
               <div className="px-1">
                 <Button
                   onClick={handleLogout}
                   variant="ghost"
-                  className="w-full justify-start px-3 py-2.5 text-sm font-medium text-red-200 hover:bg-red-500/10 hover:text-red-100"
+                  className="w-full justify-start px-3 py-2.5 text-sm font-medium text-[var(--danger-100)] hover:bg-[var(--danger-10)] hover:text-[var(--danger-100)]"
                 >
                   <span className="mr-3 text-base">🚪</span>
                   Sign Out

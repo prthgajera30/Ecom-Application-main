@@ -82,9 +82,9 @@ export function WishlistButton({
         variant="ghost"
         className={cn(
           'shrink-0 transition-colors',
-          inWishlist
-            ? 'text-red-400 hover:text-red-300'
-            : 'text-[var(--text-muted)] hover:text-red-400',
+      inWishlist
+        ? 'text-[var(--danger-100)] hover:text-[var(--danger-100)]/90'
+        : 'text-[var(--text-muted)] hover:text-[var(--danger-100)]',
           className
         )}
         title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
@@ -113,8 +113,8 @@ export function WishlistButton({
       className={cn(
         'gap-2 transition-colors',
         inWishlist
-          ? 'text-red-400 hover:text-red-300'
-          : 'text-[var(--text-muted)] hover:text-red-400',
+          ? 'text-[var(--danger-100)] hover:text-[var(--danger-100)]/90'
+          : 'text-[var(--text-muted)] hover:text-[var(--danger-100)]',
         className
       )}
     >

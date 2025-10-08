@@ -133,7 +133,7 @@ export default function OrdersPage() {
 
   if (!token) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-indigo-100/70">
+      <div className="rounded-3xl border border-ghost-10 bg-ghost-5 p-8 text-sm text-muted">
         Please login to view your orders.
       </div>
     );
@@ -143,12 +143,12 @@ export default function OrdersPage() {
     <div className="space-y-8">
       <div>
         <span className="badge">Order history</span>
-        <h2 className="mt-3 text-2xl font-semibold text-white">Your Orders</h2>
-        <p className="text-sm text-indigo-100/70">
+  <h2 className="mt-3 text-2xl font-semibold text-primary">Your Orders</h2>
+        <p className="text-sm text-muted">
           View your order history and quickly reorder your favorite items.
         </p>
         {error && (
-          <p className="mt-3 rounded-full bg-rose-500/15 px-4 py-2 text-xs text-rose-100">{error}</p>
+          <p className="mt-3 rounded-full bg-[var(--danger-10)] px-4 py-2 text-xs text-[var(--danger-100)]">{error}</p>
         )}
       </div>
 
@@ -156,15 +156,15 @@ export default function OrdersPage() {
         <div className="grid gap-4 md:grid-cols-2">
           {Array.from({ length: 3 }).map((_, idx) => (
             <div key={idx} className="card animate-pulse p-5">
-              <div className="h-4 w-2/3 rounded-full bg-white/10" />
-              <div className="mt-4 h-4 w-1/2 rounded-full bg-white/10" />
-              <div className="mt-4 h-4 w-1/3 rounded-full bg-white/10" />
+              <div className="h-4 w-2/3 rounded-full bg-ghost-10" />
+              <div className="mt-4 h-4 w-1/2 rounded-full bg-ghost-10" />
+              <div className="mt-4 h-4 w-1/3 rounded-full bg-ghost-10" />
             </div>
           ))}
         </div>
       ) : orders.length === 0 ? (
         <Card className="p-8">
-          <div className="text-center text-indigo-100/70">
+          <div className="text-center text-muted">
             <p className="mb-4">No orders found yet.</p>
             <p className="text-sm mb-6">Complete a checkout to see your order history.</p>
             <Link href="/products" className="btn-primary">
@@ -181,53 +181,53 @@ export default function OrdersPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-white">Order #{order.id.slice(-8)}</span>
+                      <span className="text-sm font-medium text-primary">Order #{order.id.slice(-8)}</span>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        order.status === 'paid' ? 'bg-green-500/20 text-green-200' :
-                        order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-200' :
-                        'bg-gray-500/20 text-gray-200'
+                        order.status === 'paid' ? 'bg-[color:var(--brand)]/20 text-[color:var(--brand)]' :
+                        order.status === 'pending' ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent)]' :
+                        'bg-ghost-10 text-muted'
                       }`}>
                         {order.status.toUpperCase()}
                       </span>
                     </div>
-                    <div className="text-xs text-indigo-100/50">
+                    <div className="text-xs text-muted">
                       {new Date(order.createdAt).toLocaleDateString()} at{' '}
                       {new Date(order.createdAt).toLocaleTimeString()}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-semibold text-white">
+                    <div className="text-lg font-semibold text-primary">
                       {formatPrice(order.total)}
                     </div>
-                    <div className="text-xs text-indigo-100/60">
+                    <div className="text-xs text-muted">
                       {order.currency.toUpperCase()}
                     </div>
                   </div>
                 </div>
 
                 {/* Order Items Summary */}
-                <div className="border-t border-white/10 pt-4">
-                  <div className="text-sm font-medium text-white mb-2">
+                <div className="border-t border-ghost-10 pt-4">
+                  <div className="text-sm font-medium text-primary mb-2">
                     {order.items.length} item{order.items.length !== 1 ? 's' : ''}
                   </div>
                   <div className="space-y-2">
                     {order.items.slice(0, 3).map((item, idx) => (
                       <div key={idx} className="flex justify-between text-sm">
                         <div className="flex-1 min-w-0">
-                          <span className="text-indigo-100/80 block truncate">
+                          <span className="text-muted block truncate">
                             {item.title || 'Product'}
                           </span>
                           {item.variantLabel && (
-                            <span className="text-xs text-indigo-100/60">{item.variantLabel}</span>
+                            <span className="text-xs text-muted">{item.variantLabel}</span>
                           )}
                         </div>
-                        <div className="text-white ml-2">
+                        <div className="text-primary ml-2">
                           {item.qty}x {formatPrice(item.price)}
                         </div>
                       </div>
                     ))}
                     {order.items.length > 3 && (
-                      <div className="text-xs text-indigo-100/60 text-center pt-2">
+                      <div className="text-xs text-muted text-center pt-2">
                         +{order.items.length - 3} more item{order.items.length - 3 !== 1 ? 's' : ''}
                       </div>
                     )}
@@ -235,20 +235,20 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Order Summary */}
-                <div className="border-t border-white/10 pt-4 space-y-1 text-xs">
+                <div className="border-t border-ghost-10 pt-4 space-y-1 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-indigo-100/70">Subtotal</span>
-                    <span className="text-indigo-100/80">{formatPrice(order.subtotal)}</span>
+                    <span className="text-muted">Subtotal</span>
+                    <span className="text-muted">{formatPrice(order.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-indigo-100/70">Shipping</span>
-                    <span className="text-indigo-100/80">{order.shippingAmount ? formatPrice(order.shippingAmount) : 'Free'}</span>
+                    <span className="text-muted">Shipping</span>
+                    <span className="text-muted">{order.shippingAmount ? formatPrice(order.shippingAmount) : 'Free'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-indigo-100/70">Tax</span>
-                    <span className="text-indigo-100/80">{formatPrice(order.taxAmount)}</span>
+                    <span className="text-muted">Tax</span>
+                    <span className="text-muted">{formatPrice(order.taxAmount)}</span>
                   </div>
-                  <div className="flex justify-between font-medium text-white pt-1 border-t border-white/10">
+                  <div className="flex justify-between font-medium text-primary pt-1 border-t border-ghost-10">
                     <span>Total</span>
                     <span>{formatPrice(order.total)}</span>
                   </div>

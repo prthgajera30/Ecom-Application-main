@@ -114,11 +114,11 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
           onClick={() => handleRatingClick(starRating)}
           onMouseEnter={() => setHoverRating(starRating)}
           onMouseLeave={() => setHoverRating(0)}
-          className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+          className="focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)] focus:ring-offset-2 rounded"
         >
           <span
             className={`text-3xl ${
-              isActive ? 'text-yellow-400' : 'text-gray-300 hover:text-yellow-200'
+              isActive ? 'text-[color:var(--accent)]' : 'text-subtle hover:text-[color:var(--accent)]'
             }`}
           >
             ★
@@ -132,8 +132,8 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
     <Card className="p-6">
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Write a Review</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <h3 className="text-lg font-semibold text-muted">Write a Review</h3>
+          <p className="text-sm text-muted mt-1">
             Share your experience with this product
           </p>
         </div>
@@ -141,25 +141,25 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Rating */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+        <label className="block text-sm font-medium text-muted mb-3">
               Rating *
             </label>
             <div className="flex items-center space-x-2">
               {renderStars()}
               {rating > 0 && (
-                <span className="text-sm text-gray-600 ml-2">
+                <span className="text-sm text-muted ml-2">
                   {rating} star{rating !== 1 ? 's' : ''}
                 </span>
               )}
             </div>
             {errors.rating && (
-              <p className="text-sm text-red-600 mt-1">{errors.rating}</p>
+              <p className="text-sm text-[var(--danger-100)] mt-1">{errors.rating}</p>
             )}
           </div>
 
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="title" className="block text-sm font-medium text-muted mb-2">
               Review Title
             </label>
             <input
@@ -169,13 +169,13 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
               onChange={(e) => handleInputChange('title', e.target.value)}
               maxLength={120}
               placeholder="Sum up your experience"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[var(--surface-solid)] text-[var(--text-primary)] border border-[var(--surface-border)] rounded-md focus:ring-[var(--brand)] focus:border-[var(--brand)]"
             />
             <div className="flex justify-between mt-1">
               {errors.title && (
-                <p className="text-sm text-red-600">{errors.title}</p>
+                <p className="text-sm text-[var(--danger-100)]">{errors.title}</p>
               )}
-              <span className="text-xs text-gray-500 ml-auto">
+              <span className="text-xs text-muted ml-auto">
                 {formData.title.length}/120
               </span>
             </div>
@@ -183,7 +183,7 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
 
           {/* Body */}
           <div>
-            <label htmlFor="body" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="body" className="block text-sm font-medium text-muted mb-2">
               Review Details
             </label>
             <textarea
@@ -193,13 +193,13 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
               maxLength={2000}
               rows={6}
               placeholder="Tell others about your experience with this product"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[var(--surface-solid)] text-[var(--text-primary)] border border-[var(--surface-border)] rounded-md focus:ring-[var(--brand)] focus:border-[var(--brand)]"
             />
             <div className="flex justify-between mt-1">
               {errors.body && (
-                <p className="text-sm text-red-600">{errors.body}</p>
+                <p className="text-sm text-[var(--danger-100)]">{errors.body}</p>
               )}
-              <span className="text-xs text-gray-500 ml-auto">
+              <span className="text-xs text-muted ml-auto">
                 {formData.body.length}/2000
               </span>
             </div>
@@ -207,15 +207,15 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
 
           {/* Guest fields (only shown if not authenticated) */}
           {!isAuthenticated && (
-            <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <div className="space-y-4 p-4 bg-[var(--surface-muted)] rounded-lg">
+              <div className="flex items-center space-x-2 text-sm text-muted">
                 <span className="text-sm">👤</span>
                 <span>Your information is kept private</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="authorName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="authorName" className="block text-sm font-medium text-muted mb-2">
                     Name *
                   </label>
                   <input
@@ -224,15 +224,15 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
                     value={formData.authorName}
                     onChange={(e) => handleInputChange('authorName', e.target.value)}
                     maxLength={80}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-[var(--surface-solid)] text-[var(--text-primary)] border border-[var(--surface-border)] rounded-md focus:ring-[var(--brand)] focus:border-[var(--brand)]"
                   />
                   {errors.authorName && (
-                    <p className="text-sm text-red-600 mt-1">{errors.authorName}</p>
+                    <p className="text-sm text-[var(--danger-100)] mt-1">{errors.authorName}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="authorEmail" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="authorEmail" className="block text-sm font-medium text-muted mb-2">
                     Email *
                   </label>
                   <div className="relative">
@@ -242,13 +242,13 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
                       value={formData.authorEmail}
                       onChange={(e) => handleInputChange('authorEmail', e.target.value)}
                       maxLength={100}
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full pl-9 pr-3 py-2 bg-[var(--surface-solid)] text-[var(--text-primary)] border border-[var(--surface-border)] rounded-md focus:ring-[var(--brand)] focus:border-[var(--brand)]"
                       placeholder="your.email@example.com"
                     />
-                    <span className="absolute left-3 top-2.5 text-sm text-gray-400">@</span>
+                    <span className="absolute left-3 top-2.5 text-sm text-muted">@</span>
                   </div>
                   {errors.authorEmail && (
-                    <p className="text-sm text-red-600 mt-1">{errors.authorEmail}</p>
+                    <p className="text-sm text-[var(--danger-100)] mt-1">{errors.authorEmail}</p>
                   )}
                 </div>
               </div>
@@ -256,7 +256,7 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
           )}
 
           {/* Submit Buttons */}
-          <div className="flex space-x-3 pt-4 border-t border-gray-200">
+          <div className="flex space-x-3 pt-4 border-t border-[var(--surface-border)]">
             <Button type="submit" disabled={loading}>
               {loading ? 'Submitting...' : 'Submit Review'}
             </Button>
@@ -270,10 +270,10 @@ export function ReviewForm({ onSubmit, onCancel, isAuthenticated, loading }: Rev
 
           {/* Submit Error */}
           {submitError && (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-4 mt-4">
+            <div className="rounded-lg bg-[var(--danger-10)] border border-[var(--danger)]/20 p-4 mt-4">
               <div className="flex items-center">
-                <span className="text-red-500 text-lg mr-2">⚠️</span>
-                <p className="text-sm text-red-700">{submitError}</p>
+                <span className="text-[var(--danger-100)] text-lg mr-2">⚠️</span>
+                <p className="text-sm text-[var(--danger-100)]">{submitError}</p>
               </div>
             </div>
           )}

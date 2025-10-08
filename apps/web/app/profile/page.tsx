@@ -91,11 +91,11 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="card-elevated max-w-lg space-y-4 p-8">
-        <div className="h-4 w-24 rounded-full bg-white/10" />
-        <div className="h-6 w-48 rounded-full bg-white/10" />
-        <div className="space-y-3">
-          <div className="h-12 rounded-xl bg-white/10" />
-          <div className="h-12 rounded-xl bg-white/10" />
+            <div className="h-4 w-24 rounded-full bg-ghost-10" />
+            <div className="h-6 w-48 rounded-full bg-ghost-10" />
+            <div className="space-y-3">
+              <div className="h-12 rounded-xl bg-ghost-10" />
+              <div className="h-12 rounded-xl bg-ghost-10" />
         </div>
       </div>
     );
@@ -103,7 +103,7 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-indigo-100/70">
+          <div className="rounded-3xl border border-ghost-10 bg-ghost-5 p-8 text-sm text-muted">
         Please login to view your profile.
       </div>
     );
@@ -113,8 +113,8 @@ export default function ProfilePage() {
     <div className="max-w-4xl space-y-8">
       {/* Page Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold text-white">My Profile</h1>
-        <p className="text-sm text-indigo-100/70">Manage your account settings and preferences.</p>
+    <h1 className="text-3xl font-semibold text-primary">My Profile</h1>
+    <p className="text-sm text-muted">Manage your account settings and preferences.</p>
       </div>
 
       {/* Account Overview */}
@@ -122,16 +122,16 @@ export default function ProfilePage() {
         <div className="space-y-4 p-6">
           <div>
             <span className="badge">Account</span>
-            <h2 className="mt-3 text-2xl font-semibold text-white">Profile overview</h2>
-            <p className="text-sm text-indigo-100/70">Manage your account information and preferences.</p>
+            <h2 className="mt-3 text-2xl font-semibold text-primary">Profile overview</h2>
+            <p className="text-sm text-muted">Manage your account information and preferences.</p>
           </div>
-          <dl className="space-y-3 text-sm text-indigo-100/80">
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <dt className="font-medium text-white">Email</dt>
+          <dl className="space-y-3 text-sm text-muted">
+            <div className="flex items-center justify-between rounded-xl border border-ghost-10 bg-ghost-5 px-4 py-3">
+              <dt className="font-medium text-primary">Email</dt>
               <dd>{user.email}</dd>
             </div>
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-              <dt className="font-medium text-white">Role</dt>
+            <div className="flex items-center justify-between rounded-xl border border-ghost-10 bg-ghost-5 px-4 py-3">
+              <dt className="font-medium text-primary">Role</dt>
               <dd className="capitalize">{user.role}</dd>
             </div>
           </dl>
@@ -141,11 +141,11 @@ export default function ProfilePage() {
       {/* Address Management */}
       <Card>
         <div className="space-y-6 p-6">
-          <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
             <div>
               <span className="badge">Shipping</span>
-              <h3 className="mt-3 text-xl font-semibold text-white">Address Book</h3>
-              <p className="text-sm text-indigo-100/70">Manage your shipping addresses.</p>
+              <h3 className="mt-3 text-xl font-semibold text-primary">Address Book</h3>
+              <p className="text-sm text-muted">Manage your shipping addresses.</p>
             </div>
             {!showAddForm && !editingAddress && (
               <Button onClick={() => setShowAddForm(true)}>
@@ -171,20 +171,20 @@ export default function ProfilePage() {
 
           {!showAddForm && !editingAddress && (
             <div className="space-y-4">
-              {profileState.loading && profileState.addresses.length === 0 ? (
+                  {profileState.loading && profileState.addresses.length === 0 ? (
                 <div className="space-y-4">
                   {Array.from({ length: 2 }).map((_, idx) => (
-                    <div key={idx} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                      <div className="h-4 w-24 rounded-full bg-white/10 mb-2" />
+                    <div key={idx} className="rounded-xl border border-ghost-10 bg-ghost-5 p-4">
+                      <div className="h-4 w-24 rounded-full bg-ghost-10 mb-2" />
                       <div className="space-y-2">
-                        <div className="h-3 rounded-full bg-white/10" />
-                        <div className="h-3 w-3/4 rounded-full bg-white/10" />
+                        <div className="h-3 rounded-full bg-ghost-10" />
+                        <div className="h-3 w-3/4 rounded-full bg-ghost-10" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : profileState.addresses.length === 0 ? (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm text-indigo-100/70">
+                <div className="rounded-xl border border-ghost-10 bg-ghost-5 p-6 text-center text-sm text-muted">
                   You haven't added any addresses yet.
                   <Button
                     variant="ghost"
@@ -199,13 +199,13 @@ export default function ProfilePage() {
                   {profileState.addresses.map((address) => (
                     <div
                       key={address.id}
-                      className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3"
+                      className="rounded-xl border border-ghost-10 bg-ghost-5 p-4 space-y-3"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           {address.label && (
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-100/60">
+                              <span className="text-xs font-semibold uppercase tracking-wider text-muted">
                                 {address.label}
                               </span>
                               {address.isDefault && (
@@ -213,7 +213,7 @@ export default function ProfilePage() {
                               )}
                             </div>
                           )}
-                          <div className="text-sm text-white space-y-1">
+                          <div className="text-sm text-primary space-y-1">
                             <div className="font-medium">{address.fullName}</div>
                             <div>{address.line1}</div>
                             {address.line2 && <div>{address.line2}</div>}
@@ -222,7 +222,7 @@ export default function ProfilePage() {
                             </div>
                             <div>{address.country}</div>
                             {address.phone && (
-                              <div className="mt-2 text-indigo-100/70">{address.phone}</div>
+                              <div className="mt-2 text-muted">{address.phone}</div>
                             )}
                           </div>
                         </div>
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDeleteAddress(address.id)}
-                          className="text-rose-200 hover:text-rose-100 flex-1"
+                          className="text-[var(--danger-100)] hover:text-[var(--danger-100)]/90 flex-1"
                         >
                           Delete
                         </Button>
@@ -264,8 +264,8 @@ export default function ProfilePage() {
           )}
 
           {profileState.error && (
-            <div className="rounded-lg bg-rose-500/10 border border-rose-500/20 p-4">
-              <p className="text-sm text-rose-200">{profileState.error}</p>
+            <div className="rounded-lg bg-[var(--danger-10)] border border-[var(--danger)]/20 p-4">
+              <p className="text-sm text-[var(--danger-100)]">{profileState.error}</p>
             </div>
           )}
         </div>
@@ -277,15 +277,15 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between">
             <div>
               <span className="badge">Payment</span>
-              <h3 className="mt-3 text-xl font-semibold text-white">Saved Cards</h3>
-              <p className="text-sm text-indigo-100/70">Manage your saved payment methods.</p>
+              <h3 className="mt-3 text-xl font-semibold text-primary">Saved Cards</h3>
+              <p className="text-sm text-muted">Manage your saved payment methods.</p>
             </div>
-            <Button variant="secondary" className="text-indigo-200 hover:text-white">
+            <Button variant="secondary" className="text-muted hover:text-primary">
               Add Card
             </Button>
           </div>
 
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm text-indigo-100/70">
+          <div className="rounded-xl border border-ghost-10 bg-ghost-5 p-6 text-center text-sm text-muted">
             Payment methods management is available. Cards are securely handled through Stripe.
           </div>
         </div>

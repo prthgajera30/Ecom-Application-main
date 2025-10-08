@@ -94,11 +94,10 @@ async function startServer() {
       // Ignore if ports aren't in use
     }
 
-    // Start the servers
+    // Start the servers (not detached so parent can clean up reliably on all OSes)
     serverProcess = spawn('npm', ['run', 'dev'], {
       stdio: 'pipe',
       shell: true,
-      detached: true
     });
 
     let startupTimeout = setTimeout(() => {
@@ -132,8 +131,11 @@ async function startServer() {
 async function stopServer() {
   if (serverProcess && !serverProcess.killed) {
     console.log('🛑 Stopping server...');
-    process.kill(-serverProcess.pid);
-    await sleep(3000);
+    try {
+      serverProcess.kill('SIGTERM');
+      await sleep(1000);
+      if (!serverProcess.killed) serverProcess.kill('SIGKILL');
+    } catch (e) {}
   }
 }
 

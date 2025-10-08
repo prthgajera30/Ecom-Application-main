@@ -23,20 +23,20 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex h-64 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/5">
+        <div className="flex h-64 items-center justify-center rounded-lg border border-[var(--danger)]/20 bg-[var(--danger-10)]">
           <div className="text-center">
-            <div className="mb-4 text-4xl">⚠️</div>
-            <h3 className="mb-2 text-lg font-semibold text-white">Something went wrong</h3>
-            <p className="text-sm text-slate-400">
-              We encountered an unexpected error. Please refresh the page or try again later.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              Refresh Page
-            </button>
-          </div>
+              <div className="mb-4 text-4xl">⚠️</div>
+              <h3 className="mb-2 text-lg font-semibold text-primary">Something went wrong</h3>
+              <p className="text-sm text-muted">
+                We encountered an unexpected error. Please refresh the page or try again later.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 rounded-lg bg-[linear-gradient(120deg,var(--brand),#7c3aed)] px-4 py-2 text-sm font-medium text-primary hover:opacity-95"
+              >
+                Refresh Page
+              </button>
+            </div>
         </div>
       );
     }

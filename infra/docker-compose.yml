@@ -19,7 +19,9 @@ services:
       dockerfile: apps/web/Dockerfile
     container_name: ecommerce_web
     environment:
-      NEXT_PUBLIC_API_BASE: /api
+      NEXT_PUBLIC_API_BASE: http://api:4000/api
+      # Websocket endpoint for frontend to connect to the api container's socket server
+      NEXT_PUBLIC_WS_URL: http://api:4000
       NODE_ENV: production
     depends_on:
       - api

@@ -162,7 +162,7 @@ export default function WishlistPage() {
                       <div className="text-sm text-[var(--text-muted)] mb-2">Product unavailable</div>
                       <button
                         onClick={() => handleRemoveFromWishlist(productId)}
-                        className="text-xs text-red-400 hover:text-red-300"
+                        className="text-xs text-[var(--danger-100)] hover:text-[var(--danger-100)]/90"
                       >
                         Remove
                       </button>
@@ -183,14 +183,16 @@ export default function WishlistPage() {
                       <img
                         src={product.images[0]}
                         alt={product.title}
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center bg-slate-800 text-xs text-[var(--text-muted)]">
+                      <div className="flex h-full items-center justify-center bg-[var(--surface-strong)] text-xs text-[var(--text-muted)]" role="img" aria-label="No image">
                         No image
                       </div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--surface-strong)] via-transparent" />
                   </div>
                   <div className="space-y-3 p-5">
                     <div>
@@ -213,7 +215,7 @@ export default function WishlistPage() {
                           e.preventDefault();
                           handleRemoveFromWishlist(productId);
                         }}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-[var(--danger-100)] hover:text-[var(--danger-100)]/90"
                       >
                         Remove
                       </Button>

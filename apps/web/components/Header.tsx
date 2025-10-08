@@ -85,19 +85,19 @@ export default function Header() {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const desktopCartBadge = itemCount > 0 ? (
-    <span data-testid="cart-count-desktop" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
+    <span data-testid="cart-count-desktop" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-[color:var(--brand)]/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
       {itemCount}
     </span>
   ) : null;
 
   const mobileNavCartBadge = itemCount > 0 ? (
-    <span data-testid="cart-count-mobile-nav" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
+    <span data-testid="cart-count-mobile-nav" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-[color:var(--brand)]/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
       {itemCount}
     </span>
   ) : null;
 
   const mobileDrawerCartBadge = itemCount > 0 ? (
-    <span data-testid="cart-count-mobile-drawer" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
+    <span data-testid="cart-count-mobile-drawer" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-[color:var(--brand)]/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
       {itemCount}
     </span>
   ) : null;
@@ -121,12 +121,12 @@ export default function Header() {
     <header className="sticky top-0 z-40 border-b border-[var(--surface-border)] bg-[color:var(--surface-solid)] backdrop-blur-2xl transition-colors">
       <div className="container flex items-center justify-between gap-3 py-3 sm:py-4">
         <Link href="/" className="group flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 text-lg font-semibold text-white shadow-lg shadow-indigo-600/40 transition-transform group-hover:scale-105">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[color:var(--brand)] via-[color:var(--brand-dark)] to-[color:var(--brand-dark)] text-lg font-semibold text-primary shadow-lg shadow-[color:var(--brand)]/40 transition-transform group-hover:scale-105">
             PC
           </span>
           <div className="leading-tight max-sm:hidden">
-            <span className="block text-sm font-semibold text-white sm:text-base">Pulse Commerce</span>
-            <span className="block text-[11px] text-indigo-200/80 sm:text-xs">Realtime personalization suite</span>
+            <span className="block text-sm font-semibold text-primary sm:text-base">Pulse Commerce</span>
+            <span className="block text-[11px] text-muted sm:text-xs">Realtime personalization suite</span>
           </div>
         </Link>
 
@@ -147,10 +147,10 @@ export default function Header() {
 
         <div className="flex items-center gap-2 md:gap-3">
           <ThemeToggle className="hidden md:inline-flex" />
-          <ButtonLink href="/cart" variant="secondary" size="sm" className="relative md:hidden">
+                <ButtonLink href="/cart" variant="secondary" size="sm" className="relative md:hidden">
             Cart
             {mobileNavCartBadge && (
-              <span data-testid="cart-count-mobile" className="absolute -right-2 -top-2 inline-flex items-center justify-center rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-slate-900">
+                      <span data-testid="cart-count-mobile" className="absolute -right-2 -top-2 inline-flex items-center justify-center rounded-full bg-[color:var(--brand)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-primary)]">
                 {itemCount}
               </span>
             )}
@@ -171,7 +171,7 @@ export default function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden border border-white/15 bg-white/5 text-[var(--text-primary)] hover:bg-white/10"
+            className="md:hidden border border-ghost-10 bg-ghost-5 text-[var(--text-primary)] hover:bg-ghost-10"
             onClick={toggleMobile}
             aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileOpen}
@@ -199,8 +199,8 @@ export default function Header() {
               key={`mobile-${link.href}`}
               href={link.href}
               className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 transition ${
-                isActive(link.href) ? 'bg-white/10 text-[var(--text-primary)]' : 'hover:text-[var(--text-primary)]'
-              }`}
+                  isActive(link.href) ? 'bg-ghost-10 text-[var(--text-primary)]' : 'hover:text-[var(--text-primary)]'
+                }`}
             >
               <span>{link.label}</span>
               {link.href === '/cart' && mobileNavCartBadge}
@@ -214,7 +214,7 @@ export default function Header() {
           <button
             type="button"
             aria-hidden="true"
-            className={`fixed inset-0 z-30 bg-black/55 backdrop-blur-sm transition-opacity duration-300 ${mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            className={`fixed inset-0 z-30 bg-[color:var(--surface-strong)]/40 backdrop-blur-sm transition-opacity duration-300 ${mobileOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
             onClick={closeMobile}
           />
           <div

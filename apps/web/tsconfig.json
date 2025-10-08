@@ -4,6 +4,9 @@
     "jsx": "preserve",
     "allowJs": true,
     "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "noEmit": true,
     "incremental": true,
     "esModuleInterop": true,

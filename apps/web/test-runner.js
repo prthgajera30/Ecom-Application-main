@@ -83,11 +83,11 @@ async function main() {
       cwd: process.cwd(),
       stdio: 'inherit',
       shell: true,
-      detached: true, // Allow it to run independently
+      // Not detached: keep as a child so it receives signals and can be cleaned up
     });
 
-    // Store the process so we can kill it later
-    global.__DEV_SERVER_PROCESS__ = devProcess;
+  // Store the process so we can kill it later
+  global.__DEV_SERVER_PROCESS__ = devProcess;
 
     // Give servers a moment to start up
     log('⏳ Waiting for servers to initialize...', 'yellow');
@@ -135,9 +135,13 @@ async function main() {
 
     // Step 5: Cleanup
     log('🧹 Cleaning up servers...', 'yellow');
-    devProcess.kill('SIGTERM');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    devProcess.kill('SIGKILL'); // Force kill if needed
+    try {
+      devProcess.kill('SIGTERM');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!devProcess.killed) devProcess.kill('SIGKILL'); // Force kill if needed
+    } catch (e) {
+      // ignore
+    }
 
     log('✅ Test execution completed!', 'green');
     process.exit(exitCode);

@@ -2,9 +2,9 @@
 import { useToast } from '../context/ToastContext';
 
 const variantClasses: Record<string, string> = {
-  success: 'bg-emerald-500/20 border-emerald-300/40 text-emerald-100',
-  error: 'bg-rose-500/20 border-rose-300/40 text-rose-100',
-  info: 'bg-white/10 border-white/20 text-indigo-100',
+  success: 'bg-[color:var(--brand)]/20 border-[color:var(--brand)]/40 text-[var(--text-primary)]',
+  error: 'bg-[var(--danger-10)] border-[var(--danger)]/40 text-[var(--danger-100)]',
+  info: 'bg-ghost-10 border-ghost-20 text-muted',
 };
 
 export default function ToastShelf() {
@@ -23,12 +23,12 @@ export default function ToastShelf() {
           >
             <div className="flex items-start gap-3">
               <div className="flex-1">
-                {toast.title && <p className="text-sm font-semibold text-white">{toast.title}</p>}
-                {toast.description && <p className="text-xs leading-relaxed text-indigo-100/80">{toast.description}</p>}
+                {toast.title && <p className="text-sm font-semibold text-primary">{toast.title}</p>}
+                {toast.description && <p className="text-xs leading-relaxed text-muted">{toast.description}</p>}
               </div>
               <button
                 type="button"
-                className="rounded-full border border-white/20 bg-white/10 px-2 py-1 text-xs font-medium text-white transition hover:bg-white/20"
+                className="rounded-full border border-ghost-20 bg-ghost-10 px-2 py-1 text-xs font-medium text-primary transition hover:bg-ghost-20"
                 onClick={() => dismiss(toast.id)}
               >
                 Close

@@ -324,9 +324,9 @@ export default function ProductDetailPage() {
 
   if (error || !product) {
     return (
-      <div className="rounded-3xl border border-rose-500/30 bg-rose-500/10 p-10 text-center text-sm text-rose-100">
+  <div className="rounded-3xl border border-[var(--danger)]/30 bg-[var(--danger-10)] p-10 text-center text-sm text-[var(--danger-100)]">
         We couldn't find that product.
-        <Link href="/products" className="ml-2 text-[var(--text-primary)] underline hover:text-rose-100">
+  <Link href="/products" className="ml-2 text-[var(--text-primary)] underline hover:text-[var(--danger-100)]">
           Back to products
         </Link>
       </div>
@@ -337,29 +337,35 @@ export default function ProductDetailPage() {
     <div className="space-y-10 sm:space-y-12">
       <section className="lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-10">
         <div className="space-y-5 lg:max-w-[560px]">
-          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg shadow-indigo-900/20 sm:rounded-3xl lg:aspect-[4/5] lg:max-h-[540px] lg:rounded-[26px]">
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-ghost-10 bg-ghost-5 shadow-lg shadow-[color:var(--brand)]/20 sm:rounded-3xl lg:aspect-[4/5] lg:max-h-[540px] lg:rounded-[26px]">
             {activeImage ? (
-              <img src={activeImage} alt={product.title} className="h-full w-full object-cover" />
+              <img
+                src={activeImage}
+                alt={product.title}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-subtle">
+              <div className="flex h-full items-center justify-center text-sm text-subtle" role="img" aria-label="No imagery available">
                 No imagery available
               </div>
             )}
           </div>
           {gallery.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-1">
-              {gallery.map((image) => {
+                    {gallery.map((image) => {
                 const isSelected = image === activeImage;
                 return (
                   <button
                     key={image}
                     type="button"
                     className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border transition duration-200 xs:h-20 xs:w-20 xs:rounded-2xl ${
-                      isSelected ? 'border-white/80 ring-2 ring-indigo-300/80' : 'border-white/10 hover:border-indigo-400/60'
+                      isSelected ? 'border-ghost-20 ring-2 ring-[color:var(--brand)]/80' : 'border-ghost-10 hover:border-[color:var(--brand)]/60'
                     }`}
                     onClick={() => setActiveImage(image)}
                   >
-                    <img src={image} alt="Product preview" className="h-full w-full object-cover" />
+                    <img src={image} alt="Product preview" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   </button>
                 );
               })}
@@ -374,44 +380,44 @@ export default function ProductDetailPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-wider text-subtle">
               <Link
                 href="/products"
-                className="inline-flex items-center gap-2 text-subtle hover:text-[var(--text-primary)]"
+                className="inline-flex items-center gap-2 text-subtle hover:text-primary"
               >
                 <span aria-hidden>←</span>
                 Back to products
               </Link>
-              <span className="rounded-full border border-white/10 px-3 py-1 text-[11px] text-subtle">
+              <span className="rounded-full border border-ghost-10 px-3 py-1 text-[11px] text-subtle">
                 {stockMessage}
               </span>
             </div>
-            <h1 className="text-3xl font-semibold leading-tight text-[var(--text-primary)] sm:text-4xl">
+            <h1 className="text-3xl font-semibold leading-tight text-primary sm:text-4xl">
               {product.title}
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider text-subtle">
               {product.brand && (
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[var(--text-primary)]">
+                <span className="rounded-full border border-ghost-10 bg-ghost-5 px-3 py-1 text-primary">
                   {product.brand}
                 </span>
               )}
               {ratingAverage ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/10 px-3 py-1 text-amber-100">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--accent)]/40 bg-[var(--accent)]/10 px-3 py-1 text-[var(--accent)]">
                   <span className="text-base leading-none">★</span>
-                  <span className="font-semibold text-white">{ratingAverage}</span>
-                  <span className="text-[11px] uppercase tracking-wider text-amber-100/80">({ratingCount} reviews)</span>
+                  <span className="font-semibold text-primary">{ratingAverage}</span>
+                  <span className="text-[11px] uppercase tracking-wider text-[var(--accent)]/80">({ratingCount} reviews)</span>
                 </span>
               ) : (
                 <span className="text-[11px] uppercase tracking-wider text-subtle">Reviews coming soon</span>
               )}
             </div>
-            <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-indigo-900/10">
+            <div className="rounded-xl border border-ghost-10 bg-ghost-5 px-4 py-3 shadow-inner shadow-[color:var(--brand)]/10">
               <span className="text-[11px] uppercase tracking-wider text-subtle">Price</span>
-              <div className="mt-1 text-2xl font-semibold text-[var(--text-primary)]">
+              <div className="mt-1 text-2xl font-semibold text-primary">
                 {formatCurrency(displayPrice, currency)}
               </div>
             </div>
             {product.badges && product.badges.length > 0 && (
               <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-wider text-subtle">
                 {product.badges.map((badge) => (
-                  <span key={badge} className="rounded-full border border-indigo-300/40 px-3 py-1 text-[var(--text-primary)]">
+                  <span key={badge} className="rounded-full border border-ghost-10/40 px-3 py-1 text-primary">
                     {badge}
                   </span>
                 ))}
@@ -451,10 +457,10 @@ export default function ProductDetailPage() {
                       {values.map((entry) => {
                         const isSelected = entry.value === selectedValue;
                         const disabled = !entry.available && !isSelected;
-                        const baseClasses = 'group relative min-w-[64px] rounded-xl border px-3 py-2 text-[13px] font-semibold uppercase tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/70 sm:min-w-[80px]';
+                        const baseClasses = 'group relative min-w-[64px] rounded-xl border px-3 py-2 text-[13px] font-semibold uppercase tracking-wide transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)]/70 sm:min-w-[80px]';
                         const colorClasses = isSelected
-                          ? 'border-white/70 bg-white/20 text-[var(--text-primary)] shadow-inner shadow-indigo-500/20'
-                          : 'border-white/10 bg-white/5 text-subtle hover:border-indigo-400/60 hover:bg-white/10';
+                          ? 'border-ghost-20 bg-ghost-20 text-primary shadow-inner shadow-[color:var(--brand)]/20'
+                          : 'border-ghost-10 bg-ghost-5 text-subtle hover:border-[color:var(--brand)]/60 hover:bg-ghost-10';
                         const disabledClasses = disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer';
                         return (
                           <button
@@ -479,38 +485,38 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          <div className="space-y-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 shadow-inner shadow-indigo-900/10">
-            <div className="flex items-center justify-between text-xs uppercase tracking-wider text-subtle">
+          <div className="space-y-3 rounded-xl border border-ghost-10 bg-ghost-5 px-4 py-3.5 shadow-inner shadow-[color:var(--brand)]/10">
+              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-subtle">
               <span>{selectedVariant?.label || (optionKeys.length ? 'Select options for availability' : 'Availability')}</span>
-              <span className={isOutOfStock ? 'text-rose-200' : 'text-emerald-200'}>{stockMessage}</span>
+              <span className={isOutOfStock ? 'text-[var(--danger-100)]' : 'text-[var(--text-primary)]'}>{stockMessage}</span>
             </div>
             <div className="flex gap-3">
               <Button className="flex-1 justify-center" onClick={add} disabled={pendingAdd || isOutOfStock}>
-                {pendingAdd ? 'Adding…' : isOutOfStock ? 'Out of stock' : 'Add to cart'}
+                {pendingAdd ? 'Adding…' : isOutOfStock ? 'Out of stock' : 'Add to Cart'}
               </Button>
               <WishlistButton productId={product._id} size="md" variant="button" />
             </div>
             {addError && (
-              <p className="rounded-full bg-rose-500/15 px-4 py-2 text-sm text-rose-100">
+              <p className="rounded-full bg-[var(--danger-10)] px-4 py-2 text-sm text-[var(--danger-100)]">
                 {addError}
               </p>
             )}
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs uppercase tracking-wider text-subtle">
-            SKU: <span className="text-[var(--text-primary)]">{product._id}</span>
+          <div className="rounded-2xl border border-ghost-10 bg-ghost-5 px-4 py-3 text-xs uppercase tracking-wider text-subtle">
+            SKU: <span className="text-primary">{product._id}</span>
           </div>
         </Card>
       </section>
 
       {(product.longDescription || (product.specs && product.specs.length > 0)) && (
         <section>
-          <Card className="p-5 shadow-lg shadow-indigo-900/20 backdrop-blur sm:p-6">
+          <Card className="p-5 shadow-lg shadow-[color:var(--brand)]/20 backdrop-blur sm:p-6">
             <div className="flex gap-3">
               <Button
                 type="button"
                 variant={selectedTab === 'details' ? 'secondary' : 'ghost'}
                 size="sm"
-                className={selectedTab === 'details' ? 'bg-white/20 text-[var(--text-primary)]' : ''}
+                className={selectedTab === 'details' ? 'bg-ghost-20 text-primary' : ''}
                 onClick={() => setSelectedTab('details')}
               >
                 Details
@@ -520,7 +526,7 @@ export default function ProductDetailPage() {
                   type="button"
                   variant={selectedTab === 'specs' ? 'secondary' : 'ghost'}
                   size="sm"
-                  className={selectedTab === 'specs' ? 'bg-white/20 text-[var(--text-primary)]' : ''}
+                  className={selectedTab === 'specs' ? 'bg-ghost-20 text-primary' : ''}
                   onClick={() => setSelectedTab('specs')}
                 >
                   Specs
@@ -543,9 +549,9 @@ export default function ProductDetailPage() {
               ) : (
                 <dl className="grid gap-3 sm:grid-cols-2">
                   {product.specs?.map((spec) => (
-                    <div key={`${spec.key}-${spec.value}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div key={`${spec.key}-${spec.value}`} className="rounded-2xl border border-ghost-10 bg-ghost-5 p-4">
                       <dt className="text-xs uppercase tracking-wider text-subtle">{spec.key}</dt>
-                      <dd className="mt-1 text-sm text-[var(--text-primary)]">{spec.value}</dd>
+                      <dd className="mt-1 text-sm text-primary">{spec.value}</dd>
                     </div>
                   ))}
                 </dl>
@@ -639,21 +645,23 @@ export default function ProductDetailPage() {
                   <Link
                     key={related._id || item.productId}
                     href={href}
-                    className="w-[220px] flex-shrink-0 snap-start rounded-3xl border border-white/10 bg-white/5 text-subtle shadow-lg shadow-indigo-900/10 transition hover:border-indigo-400/60 hover:bg-white/10"
+                    className="w-[220px] flex-shrink-0 snap-start rounded-3xl border border-ghost-10 bg-ghost-5 text-subtle shadow-lg shadow-[color:var(--brand)]/10 transition hover:border-[var(--brand)]/60 hover:bg-ghost-10"
                   >
                     <div className="relative h-44 overflow-hidden rounded-t-3xl">
                       {related.images?.[0] ? (
                         <img
                           src={related.images[0]}
                           alt={related.title}
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover transition duration-500 hover:scale-105"
                         />
                       ) : (
-                        <div className="flex h-full items-center justify-center bg-slate-900/40 text-xs text-indigo-100/50">
+                        <div className="flex h-full items-center justify-center bg-[var(--surface-strong)]/40 text-xs text-muted">
                           No image
                         </div>
                       )}
-                      <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[11px] font-medium text-slate-900">
+                      <span className="absolute left-4 top-4 rounded-full bg-[var(--surface-solid)] px-3 py-1 text-[11px] font-medium text-[var(--text-primary)]">
                         Match {(item.score ?? 0).toFixed(2)}
                       </span>
                     </div>

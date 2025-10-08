@@ -120,9 +120,9 @@ export default function AdminReviewsPage() {
     if (pendingReviews.length === 0) {
       return (
         <Card className="p-8 text-center">
-          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">All caught up!</h3>
-          <p className="text-gray-600">No reviews are waiting for moderation.</p>
+          <CheckCircle className="h-12 w-12 text-[color:var(--brand)] mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-[var(--text-primary)] mb-2">All caught up!</h3>
+          <p className="text-muted">No reviews are waiting for moderation.</p>
         </Card>
       );
     }
@@ -134,12 +134,12 @@ export default function AdminReviewsPage() {
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <User className="h-5 w-5 text-gray-400" />
-                  <span className="font-medium">
+                  <User className="h-5 w-5 text-muted" />
+                  <span className="font-medium text-muted">
                     {review.authorName || review.user?.email || 'Anonymous'}
                   </span>
                   {review.verified && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-[color:var(--brand)]/10 text-[color:var(--brand)]">
                       Verified Purchase
                     </span>
                   )}
@@ -147,29 +147,29 @@ export default function AdminReviewsPage() {
                 <div className="flex items-center space-x-1">
                   {Array.from({ length: 5 }, (_, i) => (
                     <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                      }`}
-                    />
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < review.rating ? 'fill-[color:var(--accent)] text-[color:var(--accent)]' : 'text-subtle'
+                        }`}
+                      />
                   ))}
                 </div>
               </div>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-muted">
                 {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
               </span>
             </div>
 
             {review.title && (
-              <h4 className="text-lg font-semibold text-gray-900 mb-2">{review.title}</h4>
+              <h4 className="text-lg font-semibold text-[var(--text-primary)] mb-2">{review.title}</h4>
             )}
 
             {review.body && (
-              <p className="text-gray-700 mb-4">{review.body}</p>
+              <p className="text-muted mb-4">{review.body}</p>
             )}
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 text-sm text-gray-600">
+              <div className="flex items-center space-x-4 text-sm text-muted">
                 {review.order && (
                   <span>Order #{review.order.id}</span>
                 )}
@@ -182,7 +182,7 @@ export default function AdminReviewsPage() {
                   size="sm"
                   onClick={() => handleReviewAction(review.id, 'publish')}
                   disabled={actionLoading === review.id}
-                  className="text-green-600 border-green-300 hover:bg-green-50"
+                  className="text-[color:var(--brand)] border-[color:var(--brand)]/30 hover:bg-[color:var(--brand)]/10"
                 >
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Approve
@@ -193,7 +193,7 @@ export default function AdminReviewsPage() {
                   size="sm"
                   onClick={() => handleReviewAction(review.id, 'reject')}
                   disabled={actionLoading === review.id}
-                  className="text-red-600 border-red-300 hover:bg-red-50"
+                  className="text-[color:var(--danger)] border-[color:var(--danger)]/30 hover:bg-[color:var(--danger)]/10"
                 >
                   <XCircle className="h-4 w-4 mr-1" />
                   Reject
@@ -203,7 +203,7 @@ export default function AdminReviewsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setSelectedReview(review)}
-                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  className="text-[color:var(--brand)] border-[color:var(--brand)]/30 hover:bg-[color:var(--brand)]/10"
                 >
                   <MessageSquare className="h-4 w-4 mr-1" />
                   Respond
@@ -222,7 +222,7 @@ export default function AdminReviewsPage() {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <Card className="w-full max-w-2xl mx-4 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
             Respond to Review by {selectedReview.authorName || selectedReview.user?.email || 'Anonymous'}
           </h3>
 
@@ -240,7 +240,7 @@ export default function AdminReviewsPage() {
               placeholder="Write your response to this review..."
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-3 border border-[var(--surface-border)] rounded-md focus:ring-[color:var(--brand)] focus:border-[color:var(--brand)]"
               rows={4}
             />
 
@@ -271,8 +271,8 @@ export default function AdminReviewsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Review Management</h1>
-          <p className="text-gray-600 mt-1">Moderate and respond to customer reviews</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Review Management</h1>
+          <p className="text-muted mt-1">Moderate and respond to customer reviews</p>
         </div>
         <div className="flex items-center space-x-4">
           <Button variant="outline" onClick={loadReviews}>
@@ -282,14 +282,14 @@ export default function AdminReviewsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-[var(--surface-border)]">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('pending')}
             className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'pending'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-[color:var(--brand)] text-[color:var(--brand)]'
+                : 'border-transparent text-muted hover:text-[var(--text-primary)] hover:border-[var(--surface-border)]'
             }`}
           >
             Pending Reviews ({pendingReviews.length})
@@ -298,8 +298,8 @@ export default function AdminReviewsPage() {
             onClick={() => setActiveTab('recent')}
             className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'recent'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-[color:var(--brand)] text-[color:var(--brand)]'
+                : 'border-transparent text-muted hover:text-[var(--text-primary)] hover:border-[var(--surface-border)]'
             }`}
           >
             Recent Reviews ({recentReviews.length})
@@ -311,14 +311,14 @@ export default function AdminReviewsPage() {
       <div>
         {loading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-gray-600 mt-2">Loading reviews...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[color:var(--brand)] mx-auto"></div>
+              <p className="text-muted mt-2">Loading reviews...</p>
           </div>
         ) : activeTab === 'pending' ? (
           renderPendingReviews()
         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-600">Recent reviews view coming soon...</p>
+            <p className="text-muted">Recent reviews view coming soon...</p>
           </div>
         )}
       </div>

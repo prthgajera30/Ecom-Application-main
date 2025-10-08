@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { ReviewCard, Review } from './ReviewCard';
@@ -61,12 +61,20 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
     sortBy: 'createdAt',
     sortOrder: 'desc'
   });
+  const reviewFormRef = useRef<HTMLDivElement>(null);
 
   // Load summary and initial reviews
   useEffect(() => {
     loadSummary();
     loadReviews(true);
   }, [productId]);
+
+  // Auto-scroll to review form when it opens
+  useEffect(() => {
+    if (showReviewForm && reviewFormRef.current) {
+      reviewFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showReviewForm]);
 
   const loadSummary = async () => {
     try {
@@ -170,14 +178,14 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
 
     const renderStars = (rating: number) => {
       return Array.from({ length: 5 }, (_, i) => (
-        <span
-          key={i}
-          className={`inline-block text-lg ${
-            i < rating ? 'text-yellow-400' : 'text-gray-300'
-          }`}
-        >
-          ★
-        </span>
+          <span
+            key={i}
+            className={`inline-block text-lg ${
+              i < rating ? 'text-[color:var(--accent)]' : 'text-subtle'
+            }`}
+          >
+            ★
+          </span>
       ));
     };
 
@@ -186,14 +194,14 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
         {/* Overall Rating */}
         <div className="text-center md:text-left">
           <div className="flex items-center justify-center md:justify-start mb-2">
-            <span className="text-3xl font-bold text-gray-400 mr-2">
+            <span className="text-3xl font-bold text-muted mr-2">
               {summary.average.toFixed(1)}
             </span>
             <div className="flex">
               {renderStars(Math.round(summary.average))}
             </div>
           </div>
-          <p className="text-gray-500">
+          <p className="text-muted">
             Based on {summary.count} review{summary.count !== 1 ? 's' : ''}
           </p>
         </div>
@@ -206,15 +214,15 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
 
             return (
               <div key={rating} className="flex items-center text-sm">
-                <span className="w-3 text-gray-600">{rating}</span>
-                <span className="inline-block text-yellow-400 ml-1 mr-2">★</span>
-                <div className="flex-1 bg-gray-200 rounded-full h-2 mx-2">
-                  <div
-                    className="bg-yellow-400 h-2 rounded-full"
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-                <span className="w-10 text-right text-gray-600">
+                  <span className="w-3 text-subtle">{rating}</span>
+                <span className="inline-block text-[color:var(--accent)] ml-1 mr-2">★</span>
+                    <div className="flex-1 bg-ghost-10 rounded-full h-2 mx-2">
+                      <div
+                        className="bg-[color:var(--accent)] h-2 rounded-full"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  <span className="w-10 text-right text-subtle">
                   {breakdown?.count || 0}
                 </span>
               </div>
@@ -233,9 +241,9 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
     ];
 
     return (
-      <div className="flex items-center justify-between py-4 border-b border-gray-200">
+      <div className="flex items-center justify-between py-4 border-b border-[var(--surface-border)]">
         <div className="flex items-center space-x-4">
-          <span className="font-medium text-gray-400">
+            <span className="font-medium text-muted">
             {totalReviews} Review{totalReviews !== 1 ? 's' : ''}
           </span>
 
@@ -246,7 +254,7 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
                 const [sortBy, sortOrder] = e.target.value.split('-');
                 changeSorting(sortBy as any);
               }}
-              className="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-[color:var(--surface-solid)] text-[var(--text-primary)]"
+              className="text-sm border-[var(--surface-border)] rounded-md focus:ring-[var(--brand)] focus:border-[var(--brand)] bg-[color:var(--surface-solid)] text-[var(--text-primary)]"
             >
               {sortOptions.map(option => (
                 <option key={`${option.value}-desc`} value={`${option.value}-desc`}>
@@ -262,7 +270,7 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
             onClick={() => setShowReviewForm(!showReviewForm)}
             className="flex items-center space-x-2"
           >
-            <span className="text-gray-500 text-sm">💬</span>
+            <span className="text-muted text-sm">💬</span>
             <span>Write Review</span>
           </Button>
         )}
@@ -271,7 +279,7 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
   };
 
   return (
-    <div className="space-y-6 text-gray-500">
+    <div className="space-y-6 text-muted">
       {/* Rating Summary */}
       {summary && (
         <Card className="p-6">
@@ -282,28 +290,30 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
 
       {/* Review Form */}
       {showReviewForm && user && (
-        <ReviewForm
-          onSubmit={handleSubmitReview}
-          onCancel={() => setShowReviewForm(false)}
-          isAuthenticated={!!user}
-          loading={false}
-        />
+        <div ref={reviewFormRef}>
+          <ReviewForm
+            onSubmit={handleSubmitReview}
+            onCancel={() => setShowReviewForm(false)}
+            isAuthenticated={!!user}
+            loading={false}
+          />
+        </div>
       )}
 
       {/* Filters and Actions */}
       {renderFilters()}
 
       {/* Reviews List */}
-      <div className="space-y-4 text-gray-500">
+      <div className="space-y-4 text-muted">
         {loading ? (
-          <div className="text-center py-8 text-gray-500">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto text-gray-500"></div>
+          <div className="text-center py-8 text-muted">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[color:var(--brand)] mx-auto text-muted"></div>
             <p className="mt-2">Loading reviews...</p>
           </div>
         ) : reviews.length === 0 ? (
-          <Card className="p-8 text-center text-gray-500">
-            <span className="text-4xl mx-auto mb-4 block text-gray-500">💬</span>
-            <h3 className="text-lg font-medium mb-2 text-gray-500">No reviews yet</h3>
+          <Card className="p-8 text-center text-muted">
+        <span className="text-4xl mx-auto mb-4 block text-muted">💬</span>
+            <h3 className="text-lg font-medium mb-2 text-muted">No reviews yet</h3>
             <p className="mb-4">
               Be the first to share your thoughts about this product.
             </p>
@@ -336,7 +346,7 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
                 >
                   {loadingMore ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[color:var(--brand)] mr-2"></div>
                       Loading...
                     </>
                   ) : (

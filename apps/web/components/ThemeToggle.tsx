@@ -36,10 +36,10 @@ export function ThemeToggle({ className }: { className?: string }) {
       variant="ghost"
       size="icon"
       type="button"
-      className={cn(
-        'shrink-0 border border-white/10 bg-white/5 text-[var(--text-primary)] transition-colors hover:bg-white/10 focus-visible:ring-indigo-300/70 h-12 w-12 sm:h-11 sm:w-11 rounded-2xl shadow-sm shadow-slate-900/10',
-        className
-      )}
+  className={cn(
+  'shrink-0 border border-ghost-10 bg-ghost-5 text-[var(--text-primary)] transition-colors hover:bg-ghost-10 focus-visible:ring-[color:var(--brand)]/70 h-12 w-12 sm:h-11 sm:w-11 rounded-2xl shadow-sm shadow-slate-900/10',
+    className
+  )}
       aria-label={label}
       title={label}
       onClick={toggleTheme}

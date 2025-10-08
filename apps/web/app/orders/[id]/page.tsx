@@ -132,7 +132,7 @@ export default function OrderDetailPage() {
 
   if (!token) {
     return (
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-sm text-indigo-100/70">
+      <div className="rounded-3xl border border-ghost-10 bg-ghost-5 p-8 text-sm text-muted">
         Please login to view your order details.
       </div>
     );
@@ -142,11 +142,11 @@ export default function OrderDetailPage() {
     return (
       <div className="space-y-8">
         <div className="card-elevated max-w-lg space-y-4 p-8">
-          <div className="h-4 w-32 rounded-full bg-white/10" />
-          <div className="h-6 w-48 rounded-full bg-white/10" />
+          <div className="h-4 w-32 rounded-full bg-ghost-10" />
+          <div className="h-6 w-48 rounded-full bg-ghost-10" />
           <div className="space-y-3">
-            <div className="h-12 rounded-xl bg-white/10" />
-            <div className="h-12 rounded-xl bg-white/10" />
+            <div className="h-12 rounded-xl bg-ghost-10" />
+            <div className="h-12 rounded-xl bg-ghost-10" />
           </div>
         </div>
       </div>
@@ -158,8 +158,8 @@ export default function OrderDetailPage() {
       <div className="space-y-8">
         <Card className="max-w-lg p-8">
           <div className="text-center">
-            <h2 className="text-xl font-semibold text-white mb-4">Order Not Found</h2>
-            <p className="text-indigo-100/70 mb-6">{error}</p>
+            <h2 className="text-xl font-semibold text-primary mb-4">Order Not Found</h2>
+            <p className="text-muted mb-6">{error}</p>
             <Link href="/orders" className="btn-primary">
               Back to Orders
             </Link>
@@ -174,28 +174,28 @@ export default function OrderDetailPage() {
   return (
     <div className="container max-w-4xl py-8">
       {/* Header */}
-      <div className="mb-8">
-        <Link href="/orders" className="inline-flex items-center gap-2 text-sm text-indigo-200 hover:text-white mb-4">
+        <div className="mb-8">
+        <Link href="/orders" className="inline-flex items-center gap-2 text-sm text-muted hover:text-primary mb-4">
           <span className="text-sm">⬅</span>
           Back to orders
         </Link>
-        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-white">Order #{order.id.slice(-8)}</h1>
-            <p className="text-indigo-100/70 mt-1">
+            <h1 className="text-3xl font-semibold text-primary">Order #{order.id.slice(-8)}</h1>
+            <p className="text-muted mt-1">
               Ordered on {new Date(order.createdAt).toLocaleDateString()} at{' '}
               {new Date(order.createdAt).toLocaleTimeString()}
             </p>
           </div>
           <div className="text-right">
             <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
-              order.status === 'paid' ? 'bg-green-500/20 text-green-200' :
-              order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-200' :
-              'bg-gray-500/20 text-gray-200'
+              order.status === 'paid' ? 'bg-[color:var(--brand)]/20 text-[color:var(--brand)]' :
+              order.status === 'pending' ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent)]' :
+              'bg-ghost-10 text-muted'
             }`}>
               {order.status.toUpperCase()}
             </div>
-            <div className="text-2xl font-semibold text-white mt-2">
+            <div className="text-2xl font-semibold text-primary mt-2">
               {formatPrice(order.total)}
             </div>
           </div>
@@ -208,31 +208,31 @@ export default function OrderDetailPage() {
           {/* Order Items */}
           <Card>
             <div className="p-6">
-              <h2 className="text-xl font-semibold text-white mb-6">Order Items</h2>
+              <h2 className="text-xl font-semibold text-primary mb-6">Order Items</h2>
               <div className="space-y-6">
                 {order.items.map((item, idx) => (
                   <div key={`${item.productId}-${item.variantId}-${idx}`} className="flex items-start gap-4">
-                    <div className="w-20 h-20 rounded-lg bg-white/10 flex items-center justify-center text-xs text-white/60">
+                    <div className="w-20 h-20 rounded-lg bg-ghost-10 flex items-center justify-center text-xs text-muted">
                       {item.qty}x
                     </div>
                     <div className="flex-1">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="font-medium text-white">{item.title || 'Product'}</h3>
+                          <h3 className="font-medium text-primary">{item.title || 'Product'}</h3>
                           {item.variantLabel && (
-                            <p className="text-sm text-indigo-100/60 mt-1">{item.variantLabel}</p>
+                            <p className="text-sm text-muted mt-1">{item.variantLabel}</p>
                           )}
                           {item.variantOptions && Object.keys(item.variantOptions).length > 0 && (
-                            <div className="text-xs text-indigo-100/50 mt-1">
+                            <div className="text-xs text-muted mt-1">
                               {Object.entries(item.variantOptions).map(([key, value]) => `${key}: ${value}`).join(', ')}
                             </div>
                           )}
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-medium text-white">
+                          <div className="text-lg font-medium text-primary">
                             {formatPrice(item.price * item.qty)}
                           </div>
-                          <div className="text-sm text-indigo-100/70">
+                          <div className="text-sm text-muted">
                             {item.qty}x {formatPrice(item.price)}
                           </div>
                         </div>
@@ -244,7 +244,7 @@ export default function OrderDetailPage() {
 
               {/* Reorder Button */}
               {order.canReorder && (
-                <div className="border-t border-white/10 pt-6 mt-6">
+                <div className="border-t border-ghost-10 pt-6 mt-6">
                   <Button
                     onClick={handleReorder}
                     disabled={reorderLoading}
@@ -262,11 +262,11 @@ export default function OrderDetailPage() {
             <Card>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <span className="text-xl text-indigo-400">📍</span>
-                  <h3 className="text-lg font-semibold text-white">Shipping Address</h3>
+                  <span className="text-xl text-[var(--brand)]">📍</span>
+                  <h3 className="text-lg font-semibold text-primary">Shipping Address</h3>
                 </div>
-                <div className="text-sm text-indigo-100/80 space-y-1">
-                  <div className="font-medium text-white">{order.shippingAddress.fullName}</div>
+                <div className="text-sm text-muted space-y-1">
+                  <div className="font-medium text-primary">{order.shippingAddress.fullName}</div>
                   <div>{order.shippingAddress.line1}</div>
                   {order.shippingAddress.line2 && <div>{order.shippingAddress.line2}</div>}
                   <div>
@@ -274,7 +274,7 @@ export default function OrderDetailPage() {
                   </div>
                   <div>{order.shippingAddress.country}</div>
                   {order.shippingAddress.phone && (
-                    <div className="mt-2 text-indigo-100/70">{order.shippingAddress.phone}</div>
+                    <div className="mt-2 text-muted">{order.shippingAddress.phone}</div>
                   )}
                 </div>
               </div>
@@ -287,63 +287,63 @@ export default function OrderDetailPage() {
           <Card className="sticky top-8">
             <div className="p-6 space-y-6">
               <div className="flex items-center gap-3">
-                <span className="text-xl text-indigo-400">💳</span>
-                <h3 className="text-lg font-semibold text-white">Order Summary</h3>
+                <span className="text-xl text-[var(--brand)]">💳</span>
+                <h3 className="text-lg font-semibold text-primary">Order Summary</h3>
               </div>
 
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-indigo-100/70">Order ID</span>
-                  <span className="text-white font-mono text-xs">{order.id.slice(-12)}</span>
+                  <span className="text-muted">Order ID</span>
+                  <span className="text-primary font-mono text-xs">{order.id.slice(-12)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-indigo-100/70">Date</span>
-                  <span className="text-white">{new Date(order.createdAt).toLocaleDateString()}</span>
+                  <span className="text-muted">Date</span>
+                  <span className="text-primary">{new Date(order.createdAt).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-indigo-100/70">Status</span>
+                  <span className="text-muted">Status</span>
                   <span className={`font-medium ${
-                    order.status === 'paid' ? 'text-green-200' :
-                    order.status === 'pending' ? 'text-yellow-200' :
-                    'text-gray-200'
+                    order.status === 'paid' ? 'text-[color:var(--brand)]' :
+                    order.status === 'pending' ? 'text-[var(--accent)]' :
+                    'text-muted'
                   }`}>
                     {order.status.toUpperCase()}
                   </span>
                 </div>
 
-                <hr className="border-white/10" />
+                <hr className="border-ghost-10" />
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-indigo-100/70">Subtotal</span>
-                    <span className="text-white">{formatPrice(order.subtotal)}</span>
+                    <span className="text-muted">Subtotal</span>
+                    <span className="text-primary">{formatPrice(order.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-indigo-100/70">Shipping</span>
-                    <span className="text-white">{order.shippingAmount ? formatPrice(order.shippingAmount) : 'Free'}</span>
+                    <span className="text-muted">Shipping</span>
+                    <span className="text-primary">{order.shippingAmount ? formatPrice(order.shippingAmount) : 'Free'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-indigo-100/70">Tax</span>
-                    <span className="text-white">{formatPrice(order.taxAmount)}</span>
+                    <span className="text-muted">Tax</span>
+                    <span className="text-primary">{formatPrice(order.taxAmount)}</span>
                   </div>
-                  <hr className="border-white/10" />
+                  <hr className="border-ghost-10" />
                   <div className="flex justify-between text-lg font-semibold">
-                    <span className="text-white">Total</span>
-                    <span className="text-white">{formatPrice(order.total)}</span>
+                    <span className="text-primary">Total</span>
+                    <span className="text-primary">{formatPrice(order.total)}</span>
                   </div>
-                  <div className="text-xs text-center text-indigo-100/60">
+                  <div className="text-xs text-center text-subtle">
                     {order.currency.toUpperCase()}
                   </div>
                 </div>
               </div>
 
               {order.shippingOption && (
-                <div className="border-t border-white/10 pt-4">
+                <div className="border-t border-ghost-10 pt-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-lg text-indigo-400">🚚</span>
+                    <span className="text-lg text-[var(--brand)]">🚚</span>
                     <div className="text-sm">
-                      <div className="font-medium text-white">{order.shippingOption.name}</div>
-                      <div className="text-indigo-100/70">{formatPrice(order.shippingOption.amount)}</div>
+                      <div className="font-medium text-primary">{order.shippingOption.name}</div>
+                      <div className="text-muted">{formatPrice(order.shippingOption.amount)}</div>
                     </div>
                   </div>
                 </div>

@@ -19,14 +19,16 @@
     "db:migrate": "pnpm --filter @apps/api prisma:migrate",
     "db:seed": "pnpm --filter @apps/api prisma:seed",
     "first-run": "node scripts/run-script.mjs migrate-and-seed",
-    "dev": "pnpm -r --parallel dev",
-  "stop": "pnpm --filter @apps/api run dev:stop",
+    "dev": "concurrently \"pnpm --filter @apps/api dev\" \"pnpm --filter @apps/web dev\" \"pnpm --filter @apps/recs dev\"",
+    "dev:stop": "npx kill-port 3000 4000 5000 || echo 'kill-port failed; on Windows run: netstat -ano | Select-String \":4000\" and Stop-Process -Id <pid>'",
+    "stop": "pnpm run dev:stop",
     "dev:recs": "node scripts/run-recs-dev.mjs",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
     "postinstall": "pnpm -r --if-present prisma:generate || true"
   },
   "devDependencies": {
+    "concurrently": "^8.2.1",
     "dotenv": "^16.4.5",
     "tsx": "^4.20.6"
   }

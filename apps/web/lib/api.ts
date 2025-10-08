@@ -2,37 +2,15 @@ import { authHeaders } from './auth';
 import { getSessionId } from './session';
 
 const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE;
-const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '::1', '[::1]']);
 
 function resolveApiBase(): string {
-  if (typeof window === 'undefined') {
-    return configuredApiBase || '/api';
+  // Prefer an explicit NEXT_PUBLIC_API_BASE when provided. Otherwise use a
+  // same-origin proxy under '/api' which works in most deployments.
+  if (configuredApiBase && typeof configuredApiBase === 'string' && configuredApiBase.length) {
+    // normalize trailing slash
+    return configuredApiBase.endsWith('/') ? configuredApiBase.slice(0, -1) : configuredApiBase;
   }
-
-  if (!configuredApiBase) return '/api';
-
-  try {
-    const url = new URL(configuredApiBase, window.location.origin);
-
-    const configuredIsLocal = LOCAL_HOSTNAMES.has(url.hostname);
-    const currentIsLocal = LOCAL_HOSTNAMES.has(window.location.hostname);
-
-    if (configuredIsLocal && !currentIsLocal) {
-      return '/api';
-    }
-
-    if (url.origin === window.location.origin) {
-      return url.pathname.endsWith('/') ? url.pathname.slice(0, -1) : url.pathname || '/api';
-    }
-
-    const normalized = url.toString();
-    return normalized.endsWith('/') ? normalized.slice(0, -1) : normalized;
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('Invalid NEXT_PUBLIC_API_BASE, falling back to /api', error);
-    }
-    return '/api';
-  }
+  return '/api';
 }
 
 function withApiBase(path: string): string {

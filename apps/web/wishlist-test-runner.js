@@ -82,9 +82,9 @@ async function main() {
     log('🔄 Starting dev servers...', 'yellow');
     const devProcess = spawn('pnpm', ['run', 'dev'], {
       cwd: process.cwd(),
-      stdio: ['ignore', 'pipe', 'pipe'], // Suppress stdio to avoid cluttering output
+      stdio: 'inherit',
       shell: true,
-      detached: true,
+      // Not detached so it will receive signals and can be cleaned up
     });
 
     global.__DEV_SERVER_PROCESS__ = devProcess;
@@ -116,7 +116,11 @@ async function main() {
     // Step 5: Cleanup
     log('🧹 Shutting down servers...', 'yellow');
     if (global.__DEV_SERVER_PROCESS__) {
-      global.__DEV_SERVER_PROCESS__.kill('SIGKILL');
+      try {
+        global.__DEV_SERVER_PROCESS__.kill('SIGTERM');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!global.__DEV_SERVER_PROCESS__.killed) global.__DEV_SERVER_PROCESS__.kill('SIGKILL');
+      } catch (e) {}
     }
 
     log('✅ Wishlist testing completed!', 'green');

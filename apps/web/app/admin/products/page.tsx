@@ -103,10 +103,8 @@ export default function AdminProductsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-white">Products</h1>
-            <p className="text-indigo-100/70 mt-1">
-              Manage your product catalog
-            </p>
+            <h1 className="text-3xl font-semibold text-primary">Products</h1>
+            <p className="text-muted mt-1">Manage your product catalog</p>
           </div>
           <Link href="/admin/products/new" className="btn-primary">
             Add Product
@@ -114,8 +112,8 @@ export default function AdminProductsPage() {
         </div>
 
         {error && (
-          <Card className="p-4 border-red-500/20 bg-red-500/10">
-            <p className="text-red-200 text-sm">{error}</p>
+          <Card className="p-4 border-[var(--danger)]/20 bg-[var(--danger-10)]">
+            <p className="text-[var(--danger-100)] text-sm">{error}</p>
           </Card>
         )}
 
@@ -128,7 +126,7 @@ export default function AdminProductsPage() {
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:border-indigo-400 focus:outline-none"
+                className="w-full px-4 py-2 bg-ghost-10 border border-ghost-20 rounded-lg text-primary placeholder:text-muted focus:border-[var(--brand)] focus:outline-none"
               />
             </div>
             <Button type="submit" disabled={loading}>
@@ -140,20 +138,20 @@ export default function AdminProductsPage() {
         {/* Products Table */}
         <Card>
           <div className="p-6">
-            {loading ? (
+                {loading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 border-b border-white/10 last:border-b-0">
+                  <div key={i} className="flex items-center justify-between p-4 border-b border-ghost-10 last:border-b-0">
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 bg-white/10 rounded-lg animate-pulse"></div>
+                      <div className="w-12 h-12 bg-ghost-10 rounded-lg animate-pulse"></div>
                       <div className="space-y-2">
-                        <div className="w-48 h-4 bg-white/10 rounded animate-pulse"></div>
-                        <div className="w-32 h-3 bg-white/10 rounded animate-pulse"></div>
+                        <div className="w-48 h-4 bg-ghost-10 rounded animate-pulse"></div>
+                        <div className="w-32 h-3 bg-ghost-10 rounded animate-pulse"></div>
                       </div>
                     </div>
                     <div className="flex items-center gap-8">
                       {Array.from({ length: 3 }).map((_, j) => (
-                        <div key={j} className="w-16 h-4 bg-white/10 rounded animate-pulse"></div>
+                        <div key={j} className="w-16 h-4 bg-ghost-10 rounded animate-pulse"></div>
                       ))}
                     </div>
                   </div>
@@ -162,7 +160,7 @@ export default function AdminProductsPage() {
             ) : products?.products.length ? (
               <div className="space-y-0">
                 {/* Table Header */}
-                <div className="flex items-center justify-between p-4 border-b border-white/10 font-medium text-white">
+                <div className="flex items-center justify-between p-4 border-b border-ghost-10 font-medium text-primary">
                   <div className="flex-1">Product</div>
                   <div className="w-20 text-center">Stock</div>
                   <div className="w-24 text-center">Price</div>
@@ -174,40 +172,40 @@ export default function AdminProductsPage() {
                 {products.products.map((product) => (
                   <div
                     key={product.id}
-                    className="flex items-center justify-between p-4 border-b border-white/10 last:border-b-0 hover:bg-white/5"
+                    className="flex items-center justify-between p-4 border-b border-ghost-10 last:border-b-0 hover:bg-ghost-5"
                   >
                     <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 h-12 bg-indigo-500/20 rounded-lg flex items-center justify-center">
-                        <span className="text-indigo-400 text-sm font-bold">
-                          {product.title.charAt(0).toUpperCase()}
-                        </span>
+              <div className="w-12 h-12 bg-[color:var(--brand)]/20 rounded-lg flex items-center justify-center">
+                <span className="text-[color:var(--brand)] text-sm font-bold">
+                            {product.title.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-primary">{product.title}</h3>
+                          <p className="text-sm text-muted">
+                            {product.brand}    {product.stock} in stock
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-medium text-white">{product.title}</h3>
-                        <p className="text-sm text-indigo-100/60">
-                          {product.brand} • {product.stock} in stock
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="w-20 text-center">
+                      <div className="w-20 text-center">
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         product.stock === 0
-                          ? 'bg-red-500/20 text-red-400'
+                          ? 'bg-[var(--danger-10)] text-[var(--danger-100)]'
                           : product.stock < 10
-                          ? 'bg-orange-500/20 text-orange-400'
-                          : 'bg-green-500/20 text-green-400'
+                          ? 'bg-[color:var(--accent)]/20 text-[color:var(--accent)]'
+                          : 'bg-[color:var(--brand)]/20 text-[color:var(--brand)]'
                       }`}>
                         {product.stock}
                       </span>
                     </div>
 
-                    <div className="w-24 text-center font-medium text-white">
+                    <div className="w-24 text-center font-medium text-primary">
                       {formatPrice(product.price)}
                     </div>
 
                     <div className="w-32 text-center">
-                      <span className="px-2 py-1 text-xs bg-indigo-500/20 text-indigo-400 rounded">
+                      <span className="px-2 py-1 text-xs bg-[var(--brand)]/20 text-[var(--brand)] rounded">
                         {product.category.name}
                       </span>
                     </div>
@@ -216,20 +214,20 @@ export default function AdminProductsPage() {
                       <Button size="sm" variant="secondary">
                         Edit
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300">
-                        Delete
-                      </Button>
+                          <Button size="sm" variant="ghost" className="text-[var(--danger-100)] hover:text-[var(--danger-100)]/80">
+                            Delete
+                          </Button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="text-center py-12">
+                <div className="w-16 h-16 bg-ghost-10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">📦</span>
                 </div>
-                <h3 className="text-lg font-medium text-white mb-2">No products found</h3>
-                <p className="text-indigo-100/60 mb-6">
+                <h3 className="text-lg font-medium text-primary mb-2">No products found</h3>
+                <p className="text-muted mb-6">
                   {searchTerm ? 'Try adjusting your search criteria' : 'Get started by adding your first product'}
                 </p>
                 <Link href="/admin/products/new" className="btn-primary">
@@ -241,9 +239,9 @@ export default function AdminProductsPage() {
 
           {/* Pagination */}
           {products && products.pagination.totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-white/10">
+            <div className="px-6 py-4 border-t border-ghost-10">
               <div className="flex items-center justify-between">
-                <p className="text-sm text-indigo-100/70">
+                <p className="text-sm text-muted">
                   Showing {(products.pagination.page - 1) * products.pagination.limit + 1} to{' '}
                   {Math.min(products.pagination.page * products.pagination.limit, products.pagination.total)}{' '}
                   of {products.pagination.total} products
@@ -302,28 +300,28 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   const { logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-      <div className="border-b border-white/10">
+    <div className="min-h-screen bg-gradient-to-br from-[color:var(--brand-dark)] via-[color:var(--brand)] to-[color:var(--brand-dark)]">
+    <div className="border-b border-ghost-10">
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
               <Link href="/admin" className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 text-lg font-semibold text-white shadow-lg shadow-indigo-600/40">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[color:var(--brand)] via-[color:var(--brand-dark)] to-[color:var(--brand-dark)] text-lg font-semibold text-primary shadow-lg shadow-[color:var(--brand-dark)]/40">
                   AC
                 </span>
                 <div className="leading-tight">
-                  <span className="block text-sm font-semibold text-white">Admin Console</span>
+                  <span className="block text-sm font-semibold text-primary">Admin Console</span>
                 </div>
               </Link>
 
               <nav className="flex items-center gap-6">
-                <Link href="/admin" className="text-indigo-200 hover:text-white transition">
+                <Link href="/admin" className="text-muted hover:text-primary transition">
                   Dashboard
                 </Link>
-                <Link href="/admin/products" className="text-indigo-200 hover:text-white transition">
+                <Link href="/admin/products" className="text-muted hover:text-primary transition">
                   Products
                 </Link>
-                <Link href="/admin/orders" className="text-indigo-200 hover:text-white transition">
+                <Link href="/admin/orders" className="text-muted hover:text-primary transition">
                   Orders
                 </Link>
               </nav>
@@ -331,7 +329,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
             <button
               onClick={logout}
-              className="text-indigo-200 hover:text-white transition text-sm"
+              className="text-[var(--text-primary)] hover:text-primary transition text-sm"
             >
               Sign Out
             </button>

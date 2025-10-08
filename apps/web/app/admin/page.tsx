@@ -127,14 +127,14 @@ export default function AdminDashboard() {
   // Show loading while user data is being fetched
   if (initializing || (!user && token)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-        <div className="container py-8 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[color:var(--brand-dark)] via-[color:var(--brand)] to-[color:var(--brand-dark)]">
+  <div className="container py-8 flex items-center justify-center">
           <Card className="p-8 text-center">
-            <div className="w-8 h-8 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-indigo-400">⚡</span>
+            <div className="w-8 h-8 bg-[color:var(--brand)]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-primary">⚡</span>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Loading Admin Panel</h2>
-            <p className="text-indigo-100/70">Verifying admin access...</p>
+            <h2 className="text-xl font-semibold text-primary mb-2">Loading Admin Panel</h2>
+            <p className="text-muted">Verifying admin access...</p>
           </Card>
         </div>
       </div>
@@ -143,14 +143,14 @@ export default function AdminDashboard() {
 
   if (!user || user.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+      <div className="min-h-screen bg-gradient-to-br from-[color:var(--brand-dark)] via-[color:var(--brand)] to-[color:var(--brand-dark)]">
         <div className="container py-8 flex items-center justify-center">
           <Card className="p-8 text-center">
-            <h2 className="text-2xl font-semibold text-white mb-4">Access Denied</h2>
-            <p className="text-indigo-100/70 mb-6">
+            <h2 className="text-2xl font-semibold text-primary mb-4">Access Denied</h2>
+            <p className="text-muted mb-6">
               You don't have permission to access the admin panel.
             </p>
-            <Link href="/" className="btn-primary">
+             <Link href="/" className="btn-primary">
               Back to Store
             </Link>
           </Card>
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <Card key={i} className="p-6">
-                <div className="h-16 bg-white/10 rounded-lg animate-pulse"></div>
+                <div className="h-16 bg-ghost-10 rounded-lg animate-pulse"></div>
               </Card>
             ))}
           </div>
@@ -180,8 +180,8 @@ export default function AdminDashboard() {
     return (
       <AdminLayout>
         <Card className="p-8 text-center">
-          <h2 className="text-xl font-semibold text-white mb-4">Error Loading Dashboard</h2>
-          <p className="text-red-200 mb-6">{error}</p>
+          <h2 className="text-xl font-semibold text-primary mb-4">Error Loading Dashboard</h2>
+          <p className="text-[var(--danger-100)] mb-6">{error}</p>
           <button
             onClick={fetchDashboardStats}
             className="btn-primary"
@@ -196,21 +196,21 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-white">Dashboard</h1>
-            <p className="text-indigo-100/70 mt-1">
+            <h1 className="text-3xl font-semibold text-primary">Dashboard</h1>
+            <p className="text-muted mt-1">
               Overview of your store performance
             </p>
           </div>
-          <div className="text-sm text-indigo-100/70">
+              <div className="text-sm text-[color:var(--text-muted)]">
             Last updated: {new Date().toLocaleTimeString()}
           </div>
         </div>
 
         {error && (
-          <Card className="p-4 border-red-500/20 bg-red-500/10">
-            <p className="text-red-200 text-sm">{error}</p>
+          <Card className="p-4 border-[color:var(--danger)]/20 bg-[color:var(--danger-10)]">
+            <p className="text-[var(--danger-100)] text-sm">{error}</p>
           </Card>
         )}
 
@@ -219,23 +219,11 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-indigo-100/70">Total Revenue</p>
-                <p className="text-2xl font-bold text-white">${stats?.revenue.total}</p>
+                <p className="text-sm font-medium text-muted">Total Revenue</p>
+                <p className="text-2xl font-bold text-primary">${stats?.revenue.total}</p>
               </div>
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <span className="text-green-400 text-sm">$</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-indigo-100/70">This Month</p>
-                <p className="text-2xl font-bold text-white">${stats?.revenue.thisMonth}</p>
-              </div>
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <span className="text-blue-400 text-sm">¥</span>
+              <div className="p-2 bg-[color:var(--brand)]/20 rounded-lg">
+                <span className="text-[color:var(--brand)] text-sm">$</span>
               </div>
             </div>
           </Card>
@@ -243,11 +231,11 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-indigo-100/70">This Week</p>
-                <p className="text-2xl font-bold text-white">${stats?.revenue.thisWeek}</p>
+                <p className="text-sm font-medium text-muted">This Month</p>
+                <p className="text-2xl font-bold text-primary">${stats?.revenue.thisMonth}</p>
               </div>
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <span className="text-purple-400 text-sm">€</span>
+              <div className="p-2 bg-[color:var(--brand-dark)]/20 rounded-lg">
+                <span className="text-[color:var(--brand-dark)] text-sm">¥</span>
               </div>
             </div>
           </Card>
@@ -255,11 +243,23 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-indigo-100/70">Today</p>
-                <p className="text-2xl font-bold text-white">${stats?.revenue.today}</p>
+                <p className="text-sm font-medium text-muted">This Week</p>
+                <p className="text-2xl font-bold text-primary">${stats?.revenue.thisWeek}</p>
               </div>
-              <div className="p-2 bg-orange-500/20 rounded-lg">
-                <span className="text-orange-400 text-sm">£</span>
+              <div className="p-2 bg-[color:var(--accent)]/20 rounded-lg">
+                <span className="text-[color:var(--accent)] text-sm">€</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted">Today</p>
+                <p className="text-2xl font-bold text-primary">${stats?.revenue.today}</p>
+              </div>
+              <div className="p-2 bg-ghost-10 rounded-lg">
+                <span className="text-muted text-sm">£</span>
               </div>
             </div>
           </Card>
@@ -270,14 +270,14 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-indigo-100/70">Total Orders</p>
-                <p className="text-2xl font-bold text-white">{stats?.orders.total}</p>
-                <p className="text-xs text-indigo-100/60 mt-1">
+                <p className="text-sm font-medium text-muted">Total Orders</p>
+                <p className="text-2xl font-bold text-primary">{stats?.orders.total}</p>
+                <p className="text-xs text-muted mt-1">
                   {stats?.orders.thisMonth} this month
                 </p>
               </div>
-              <div className="p-2 bg-indigo-500/20 rounded-lg">
-                <span className="text-indigo-400 text-sm">📦</span>
+              <div className="p-2 bg-[color:var(--brand)]/20 rounded-lg">
+                <span className="text-[color:var(--brand)] text-sm">📦</span>
               </div>
             </div>
           </Card>
@@ -285,14 +285,14 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-indigo-100/70">Paid Orders</p>
-                <p className="text-2xl font-bold text-white">{stats?.orders.paid}</p>
-                <p className="text-xs text-green-400 mt-1">
+                <p className="text-sm font-medium text-muted">Paid Orders</p>
+                <p className="text-2xl font-bold text-primary">{stats?.orders.paid}</p>
+                <p className="text-xs text-muted mt-1">
                   Pending: {stats?.orders.pending}
                 </p>
               </div>
-              <div className="p-2 bg-emerald-500/20 rounded-lg">
-                <span className="text-emerald-400 text-sm">✓</span>
+              <div className="p-2 bg-[color:var(--brand)]/20 rounded-lg">
+                <span className="text-[color:var(--brand)] text-sm">✓</span>
               </div>
             </div>
           </Card>
@@ -300,14 +300,14 @@ export default function AdminDashboard() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-indigo-100/70">Customers</p>
-                <p className="text-2xl font-bold text-white">{stats?.customers.total}</p>
-                <p className="text-xs text-indigo-100/60 mt-1">
+                <p className="text-sm font-medium text-muted">Customers</p>
+                <p className="text-2xl font-bold text-primary">{stats?.customers.total}</p>
+                <p className="text-xs text-muted mt-1">
                   +{stats?.customers.thisMonth} this month
                 </p>
               </div>
-              <div className="p-2 bg-pink-500/20 rounded-lg">
-                <span className="text-pink-400 text-sm">👥</span>
+              <div className="p-2 bg-ghost-10 rounded-lg">
+                <span className="text-muted text-sm">👥</span>
               </div>
             </div>
           </Card>
@@ -316,14 +316,14 @@ export default function AdminDashboard() {
             <Link href="/admin/inventory" className="block h-full hover:opacity-90 transition-opacity">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-indigo-100/70">Inventory Items</p>
-                  <p className="text-2xl font-bold text-white">{stats?.inventory.totalProducts || 0}</p>
-                  <p className="text-xs text-indigo-100/60 mt-1">
+                  <p className="text-sm font-medium text-muted">Inventory Items</p>
+                  <p className="text-2xl font-bold text-primary">{stats?.inventory.totalProducts || 0}</p>
+                  <p className="text-xs text-muted mt-1">
                     {stats?.inventory.lowStockCount || 0} low stock
                   </p>
                 </div>
-                <div className="p-2 bg-amber-500/20 rounded-lg">
-                  <span className="text-amber-400 text-sm">📊</span>
+                <div className="p-2 bg-ghost-10 rounded-lg">
+                  <span className="text-muted text-sm">📊</span>
                 </div>
               </div>
             </Link>
@@ -333,14 +333,14 @@ export default function AdminDashboard() {
             <Link href="/admin/inventory" className="block h-full hover:opacity-90 transition-opacity">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-indigo-100/70">Out of Stock</p>
-                  <p className="text-2xl font-bold text-red-400">{stats?.inventory.outOfStockCount || 0}</p>
-                  <p className="text-xs text-indigo-100/60 mt-1">
+                  <p className="text-sm font-medium text-muted">Out of Stock</p>
+                  <p className="text-2xl font-bold text-[var(--danger-100)]">{stats?.inventory.outOfStockCount || 0}</p>
+                  <p className="text-xs text-muted mt-1">
                     Need restocking
                   </p>
                 </div>
-                <div className="p-2 bg-red-500/20 rounded-lg">
-                  <span className="text-red-400 text-sm">🚨</span>
+                <div className="p-2 bg-[var(--danger-10)] rounded-lg">
+                  <span className="text-[var(--danger-100)] text-sm">🚨</span>
                 </div>
               </div>
             </Link>
@@ -350,14 +350,14 @@ export default function AdminDashboard() {
             <Link href="/admin/inventory" className="block h-full hover:opacity-90 transition-opacity">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-indigo-100/70">Stock Value</p>
-                  <p className="text-2xl font-bold text-white">${((stats?.inventory.totalValue || 0) / 100).toFixed(0)}</p>
-                  <p className="text-xs text-indigo-100/60 mt-1">
+                  <p className="text-sm font-medium text-muted">Stock Value</p>
+                  <p className="text-2xl font-bold text-primary">${((stats?.inventory.totalValue || 0) / 100).toFixed(0)}</p>
+                  <p className="text-xs text-muted mt-1">
                     Total inventory value
                   </p>
                 </div>
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <span className="text-green-400 text-sm">$</span>
+                <div className="p-2 bg-ghost-10 rounded-lg">
+                  <span className="text-muted text-sm">$</span>
                 </div>
               </div>
             </Link>
@@ -367,31 +367,31 @@ export default function AdminDashboard() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Recent Orders */}
           <Card className="lg:col-span-2 p-6">
-            <h3 className="text-xl font-semibold text-white mb-6">Recent Orders</h3>
+            <h3 className="text-xl font-semibold text-primary mb-6">Recent Orders</h3>
             {stats?.recentOrders.length ? (
               <div className="space-y-4">
                 {stats.recentOrders.map((order) => (
                   <div
                     key={order.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-white/5"
+                    className="flex items-center justify-between p-4 rounded-lg border border-ghost-10 bg-ghost-5"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                        <span className="text-sm text-indigo-400">📦</span>
+                      <div className="w-10 h-10 rounded-full bg-[color:var(--brand)]/20 flex items-center justify-center">
+                        <span className="text-sm text-[color:var(--brand)]">📦</span>
                       </div>
                       <div>
-                        <p className="font-medium text-white">Order #{order.id.slice(-8)}</p>
-                        <p className="text-sm text-indigo-100/60">
+                        <p className="font-medium text-primary">Order #{order.id.slice(-8)}</p>
+                        <p className="text-sm text-muted">
                           {formatDate(order.createdAt)} • {order.itemCount} items
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-white">${order.total}</p>
+                      <div className="text-right">
+                      <p className="font-medium text-primary">${order.total}</p>
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         order.status === 'paid'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-yellow-500/20 text-yellow-400'
+                          ? 'bg-[color:var(--brand)]/20 text-[color:var(--brand)]'
+                          : 'bg-[color:var(--accent)]/20 text-[color:var(--accent)]'
                       }`}>
                         {order.status}
                       </span>
@@ -400,25 +400,25 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-indigo-100/60 text-center py-8">No orders yet</p>
+              <p className="text-[color:var(--text-muted)] text-center py-8">No orders yet</p>
             )}
           </Card>
 
           {/* Alerts */}
           <Card className="p-6">
-            <h3 className="text-xl font-semibold text-white mb-6">Alerts</h3>
+            <h3 className="text-xl font-semibold text-primary mb-6">Alerts</h3>
             {stats?.alerts.lowStock.length ? (
               <div className="space-y-4">
                 {stats.alerts.lowStock.map((item, index) => (
                   <div
                     key={index}
-                    className="p-4 rounded-lg border border-orange-500/20 bg-orange-500/10"
+                    className="p-4 rounded-lg border border-[color:var(--accent)]/20 bg-[color:var(--accent)]/10"
                   >
                     <div className="flex items-start gap-3">
-                      <span className="text-orange-400 text-sm mt-0.5">⚠️</span>
+                      <span className="text-[color:var(--accent)] text-sm mt-0.5">⚠️</span>
                       <div>
-                        <p className="font-medium text-white">{item.title}</p>
-                        <p className="text-sm text-orange-200 mt-1">
+                        <p className="font-medium text-primary">{item.title}</p>
+                        <p className="text-sm text-[color:var(--accent)] mt-1">
                           {item.lowStockVariants.length} variant{item.lowStockVariants.length !== 1 ? 's' : ''} low on stock
                         </p>
                       </div>
@@ -427,10 +427,10 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="p-4 rounded-lg border border-green-500/20 bg-green-500/10">
+              <div className="p-4 rounded-lg border border-[var(--surface-border)] bg-ghost-10">
                 <div className="flex items-center gap-3">
-                  <span className="text-green-400 text-sm">✓</span>
-                  <p className="font-medium text-green-200">All products well stocked</p>
+                  <span className="text-muted text-sm">✓</span>
+                  <p className="font-medium text-muted">All products well stocked</p>
                 </div>
               </div>
             )}
@@ -450,49 +450,49 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-      <div className="border-b border-white/10">
+    <div className="min-h-screen bg-gradient-to-br from-[color:var(--brand-dark)] via-[color:var(--brand)] to-[color:var(--brand-dark)]">
+  <div className="border-b border-ghost-10">
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
               <Link href="/admin" className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 text-lg font-semibold text-white shadow-lg shadow-indigo-600/40">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[color:var(--brand)] to-[color:var(--brand-dark)] text-lg font-semibold text-primary shadow-lg shadow-[color:var(--brand)]/40">
                   AC
                 </span>
                 <div className="leading-tight">
-                  <span className="block text-sm font-semibold text-white">Admin Console</span>
+                  <span className="block text-sm font-semibold text-primary">Admin Console</span>
                 </div>
               </Link>
 
             <nav className="flex items-center gap-6">
-                <span className="text-indigo-200 transition">
+                <span className="text-[color:var(--brand)] transition">
                   Dashboard
                 </span>
-                <Link href="/admin/products" className="text-indigo-200 hover:text-white transition">
+                <Link href="/admin/products" className="text-[color:var(--brand)] hover:text-primary transition">
                   Products
                 </Link>
-                <Link href="/admin/inventory" className="text-indigo-200 hover:text-white transition">
+                <Link href="/admin/inventory" className="text-[color:var(--brand)] hover:text-primary transition">
                   Inventory
                 </Link>
-                <Link href="/admin/orders" className="text-indigo-200 hover:text-white transition">
+                <Link href="/admin/orders" className="text-[color:var(--brand)] hover:text-primary transition">
                   Orders
                 </Link>
               </nav>
             </div>
 
-            <div className="flex items-center gap-4">
-              <span className="text-indigo-200 text-sm">
+              <div className="flex items-center gap-4">
+              <span className="text-[color:var(--brand)] text-sm">
                 Welcome, {user?.email?.split('@')[0]} (Admin)
               </span>
               <Link
                 href="/"
-                className="text-indigo-200 hover:text-white transition text-sm"
+                className="text-[color:var(--brand)] hover:text-primary transition text-sm"
               >
                 ← Back to Store
               </Link>
               <button
                 onClick={handleLogout}
-                className="text-indigo-200 hover:text-white transition text-sm"
+                className="text-[color:var(--brand)] hover:text-primary transition text-sm"
               >
                 Sign Out
               </button>

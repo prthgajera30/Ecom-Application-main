@@ -153,19 +153,19 @@ export default function AdminInventoryPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'inStock': return 'text-green-400';
-      case 'lowStock': return 'text-yellow-400';
-      case 'outOfStock': return 'text-red-400';
-      default: return 'text-gray-400';
+      case 'inStock': return 'text-[color:var(--brand)]';
+      case 'lowStock': return 'text-[var(--accent)]';
+      case 'outOfStock': return 'text-[var(--danger-100)]';
+      default: return 'text-muted';
     }
   };
 
   const getStatusBg = (status: string) => {
     switch (status) {
-      case 'inStock': return 'bg-green-500/20 border-green-500/20';
-      case 'lowStock': return 'bg-yellow-500/20 border-yellow-500/20';
-      case 'outOfStock': return 'bg-red-500/20 border-red-500/20';
-      default: return 'bg-gray-500/20 border-gray-500/20';
+      case 'inStock': return 'bg-[color:var(--brand)]/20 border-[color:var(--brand)]/20';
+      case 'lowStock': return 'bg-[var(--accent)]/20 border-[var(--accent)]/20';
+      case 'outOfStock': return 'bg-[var(--danger)]/20 border-[var(--danger)]/20';
+      default: return 'bg-ghost-10 border-ghost-10';
     }
   };
 
@@ -175,11 +175,11 @@ export default function AdminInventoryPage() {
       <AdminLayout>
         <div className="flex items-center justify-center py-12">
           <Card className="p-8 text-center">
-            <div className="w-8 h-8 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-indigo-400">⚡</span>
-            </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Loading Inventory</h2>
-            <p className="text-indigo-100/70">Verifying admin access...</p>
+            <div className="w-8 h-8 bg-[var(--brand)]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-[var(--brand)]">⚡</span>
+              </div>
+                  <h2 className="text-xl font-semibold text-primary mb-2">Loading Inventory</h2>
+              <p className="text-muted">Verifying admin access...</p>
           </Card>
         </div>
       </AdminLayout>
@@ -190,8 +190,8 @@ export default function AdminInventoryPage() {
     return (
       <AdminLayout>
         <Card className="p-8 text-center">
-          <h2 className="text-2xl font-semibold text-white mb-4">Access Denied</h2>
-          <p className="text-indigo-100/70 mb-6">
+              <h2 className="text-2xl font-semibold text-primary mb-4">Access Denied</h2>
+          <p className="text-muted mb-6">
             You don't have permission to access the admin panel.
           </p>
           <Link href="/" className="btn-primary">Back to Store</Link>
@@ -205,8 +205,8 @@ export default function AdminInventoryPage() {
       <div className="space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-white">Inventory Management</h1>
-            <p className="text-indigo-100/70 mt-1">
+              <h1 className="text-3xl font-semibold text-primary">Inventory Management</h1>
+              <p className="text-muted mt-1">
               Monitor and manage your product inventory
             </p>
           </div>
@@ -218,23 +218,11 @@ export default function AdminInventoryPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-indigo-100/70">Total Products</p>
-                  <p className="text-2xl font-bold text-white">{overview.totalProducts}</p>
+                  <p className="text-sm font-medium text-muted">Total Products</p>
+                  <p className="text-2xl font-bold text-primary">{overview.totalProducts}</p>
                 </div>
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <span className="text-blue-400 text-sm">📦</span>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-indigo-100/70">Low Stock Items</p>
-                  <p className="text-2xl font-bold text-yellow-400">{overview.lowStockCount}</p>
-                </div>
-                <div className="p-2 bg-yellow-500/20 rounded-lg">
-                  <span className="text-yellow-400 text-sm">⚠️</span>
+                <div className="p-2 bg-[var(--brand)]/20 rounded-lg">
+                  <span className="text-[var(--brand)] text-sm">📦</span>
                 </div>
               </div>
             </Card>
@@ -242,11 +230,11 @@ export default function AdminInventoryPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-indigo-100/70">Out of Stock</p>
-                  <p className="text-2xl font-bold text-red-400">{overview.outOfStockCount}</p>
+                  <p className="text-sm font-medium text-muted">Low Stock Items</p>
+                  <p className="text-2xl font-bold text-accent">{overview.lowStockCount}</p>
                 </div>
-                <div className="p-2 bg-red-500/20 rounded-lg">
-                  <span className="text-red-400 text-sm">❌</span>
+                <div className="p-2 bg-accent/20 rounded-lg">
+                  <span className="text-accent text-sm">⚠️</span>
                 </div>
               </div>
             </Card>
@@ -254,11 +242,23 @@ export default function AdminInventoryPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-indigo-100/70">Inventory Value</p>
-                  <p className="text-2xl font-bold text-white">${overview.totalValue.toFixed(2)}</p>
+                  <p className="text-sm font-medium text-muted">Out of Stock</p>
+                  <p className="text-2xl font-bold text-[var(--danger-100)]">{overview.outOfStockCount}</p>
                 </div>
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <span className="text-green-400 text-sm">$</span>
+                <div className="p-2 bg-[var(--danger)]/20 rounded-lg">
+                  <span className="text-[var(--danger-100)] text-sm">❌</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted">Inventory Value</p>
+                  <p className="text-2xl font-bold text-primary">${overview.totalValue.toFixed(2)}</p>
+                </div>
+                <div className="p-2 bg-[color:var(--brand)]/20 rounded-lg">
+                  <span className="text-[color:var(--brand)] text-sm">$</span>
                 </div>
               </div>
             </Card>
@@ -268,17 +268,17 @@ export default function AdminInventoryPage() {
         {/* Low Stock Alerts */}
         {overview?.lowStockProducts && overview.lowStockProducts.length > 0 && (
           <Card className="p-6">
-            <h3 className="text-xl font-semibold text-white mb-4">⚠️ Low Stock Alerts</h3>
+              <h3 className="text-xl font-semibold text-primary mb-4">⚠️ Low Stock Alerts</h3>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {overview.lowStockProducts.slice(0, 6).map((product) => (
                 <div
                   key={product.productId}
-                  className="p-4 rounded-lg border border-yellow-500/20 bg-yellow-500/10"
+                  className="p-4 rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/10"
                 >
-                  <p className="font-medium text-white truncate">
+                  <p className="font-medium text-primary truncate">
                     Product #{product.productId.slice(-8)}
                   </p>
-                  <p className="text-sm text-yellow-200">
+                  <p className="text-sm text-[var(--accent)]">
                     Available: {product.availableStock} (Threshold: {product.threshold})
                   </p>
                 </div>
@@ -297,13 +297,13 @@ export default function AdminInventoryPage() {
                   placeholder="Search products..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-indigo-100/50 focus:border-indigo-400 focus:outline-none"
+                      className="w-full px-4 py-2 bg-ghost-10 border border-ghost-20 rounded-lg text-primary placeholder:text-muted focus:border-[var(--brand)] focus:outline-none"
                 />
               </div>
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value as any)}
-                className="px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:border-indigo-400 focus:outline-none"
+                    className="px-4 py-2 bg-ghost-10 border border-ghost-20 rounded-lg text-primary focus:border-[var(--brand)] focus:outline-none"
               >
                 <option value="all">All Products</option>
                 <option value="inStock">In Stock</option>
@@ -322,49 +322,49 @@ export default function AdminInventoryPage() {
 
         {/* Products Table */}
         <Card className="p-6">
-          <h3 className="text-xl font-semibold text-white mb-6">Product Inventory</h3>
+          <h3 className="text-xl font-semibold text-primary mb-6">Product Inventory</h3>
 
           {loading ? (
             <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-16 bg-white/10 rounded-lg animate-pulse"></div>
+                {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-16 bg-ghost-10 rounded-lg animate-pulse"></div>
               ))}
             </div>
           ) : products.length === 0 ? (
-            <p className="text-indigo-100/60 text-center py-8">No products found</p>
+            <p className="text-muted text-center py-8">No products found</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-3 px-2 text-indigo-100/70 font-medium">Product</th>
-                    <th className="text-center py-3 px-2 text-indigo-100/70 font-medium">Total</th>
-                    <th className="text-center py-3 px-2 text-indigo-100/70 font-medium">Available</th>
-                    <th className="text-center py-3 px-2 text-indigo-100/70 font-medium">Reserved</th>
-                    <th className="text-center py-3 px-2 text-indigo-100/70 font-medium">Status</th>
-                    <th className="text-center py-3 px-2 text-indigo-100/70 font-medium">Actions</th>
+                  <tr className="border-b border-ghost-10">
+                    <th className="text-left py-3 px-2 text-muted font-medium">Product</th>
+                    <th className="text-center py-3 px-2 text-muted font-medium">Total</th>
+                    <th className="text-center py-3 px-2 text-muted font-medium">Available</th>
+                    <th className="text-center py-3 px-2 text-muted font-medium">Reserved</th>
+                    <th className="text-center py-3 px-2 text-muted font-medium">Status</th>
+                    <th className="text-center py-3 px-2 text-muted font-medium">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-ghost-10">
                   {products.map((product) => (
-                    <tr key={product._id} className="hover:bg-white/5">
+                    <tr key={product._id} className="hover:bg-ghost-5">
                       <td className="py-4 px-2">
                         <div>
-                          <p className="font-medium text-white truncate max-w-xs">
+                          <p className="font-medium text-primary truncate max-w-xs">
                             {product.title}
                           </p>
-                          <p className="text-sm text-indigo-100/60">
+                          <p className="text-sm text-muted">
                             ID: {product._id.slice(-8)}
                           </p>
                         </div>
                       </td>
-                      <td className="py-4 px-2 text-center text-white">
+                      <td className="py-4 px-2 text-center text-primary">
                         {product.inventory.totalStock}
                       </td>
-                      <td className="py-4 px-2 text-center text-white">
+                      <td className="py-4 px-2 text-center text-primary">
                         {product.inventory.availableStock}
                       </td>
-                      <td className="py-4 px-2 text-center text-indigo-100/60">
+                      <td className="py-4 px-2 text-center text-muted">
                         {product.inventory.reservedStock}
                       </td>
                       <td className="py-4 px-2 text-center">
@@ -377,14 +377,14 @@ export default function AdminInventoryPage() {
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleStockAdjustment(product._id, 1, 'manual_adjustment')}
-                            className="px-2 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-sm"
+                            className="px-2 py-1 bg-[color:var(--brand)]/20 text-[color:var(--brand)] rounded hover:bg-[color:var(--brand)]/30 text-sm"
                             title="Add 1 to stock"
                           >
                             +1
                           </button>
                           <button
                             onClick={() => handleStockAdjustment(product._id, -1, 'manual_adjustment')}
-                            className="px-2 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-sm"
+                            className="px-2 py-1 bg-[var(--danger)]/20 text-[var(--danger-100)] rounded hover:bg-[var(--danger)]/30 text-sm"
                             title="Remove 1 from stock"
                           >
                             -1
@@ -400,8 +400,8 @@ export default function AdminInventoryPage() {
         </Card>
 
         {error && (
-          <Card className="p-4 border-red-500/20 bg-red-500/10">
-            <p className="text-red-200 text-sm">{error}</p>
+          <Card className="p-4 border-[var(--danger)]/20 bg-[var(--danger-10)]">
+            <p className="text-[var(--danger-100)] text-sm">{error}</p>
           </Card>
         )}
       </div>
@@ -418,47 +418,47 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
-      <div className="border-b border-white/10">
+    <div className="min-h-screen bg-gradient-to-br from-[color:var(--brand-dark)] via-[color:var(--brand)] to-[color:var(--brand-dark)]">
+    <div className="border-b border-ghost-10">
         <div className="container py-4">
           <div className="flex items-center justify-between">
             <Link href="/admin" className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 text-lg font-semibold text-white shadow-lg shadow-indigo-600/40">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[color:var(--brand)] via-[color:var(--brand-dark)] to-[color:var(--brand-dark)] text-lg font-semibold text-primary shadow-lg shadow-[color:var(--brand)]/40">
                 AC
               </span>
-              <div className="leading-tight">
-                <span className="block text-sm font-semibold text-white">Admin Console</span>
+                <div className="leading-tight">
+                <span className="block text-sm font-semibold text-primary">Admin Console</span>
               </div>
             </Link>
 
             <nav className="flex items-center gap-6">
-              <Link href="/admin" className="text-indigo-200 hover:text-white transition">
+              <Link href="/admin" className="text-[color:var(--text-muted)] hover:text-primary transition">
                 Dashboard
               </Link>
-              <Link href="/admin/products" className="text-indigo-200 hover:text-white transition">
+              <Link href="/admin/products" className="text-[color:var(--text-muted)] hover:text-primary transition">
                 Products
               </Link>
-              <span className="text-white transition">
+              <span className="text-primary transition">
                 Inventory
               </span>
-              <Link href="/admin/orders" className="text-indigo-200 hover:text-white transition">
+              <Link href="/admin/orders" className="text-[color:var(--text-muted)] hover:text-primary transition">
                 Orders
               </Link>
             </nav>
 
             <div className="flex items-center gap-4">
-              <span className="text-indigo-200 text-sm">
+              <span className="text-[color:var(--text-muted)] text-sm">
                 Welcome, {user?.email?.split('@')[0]} (Admin)
               </span>
               <Link
                 href="/"
-                className="text-indigo-200 hover:text-white transition text-sm"
+                className="text-[color:var(--text-muted)] hover:text-primary transition text-sm"
               >
                 ← Back to Store
               </Link>
               <button
                 onClick={handleLogout}
-                className="text-indigo-200 hover:text-white transition text-sm"
+                className="text-[color:var(--text-muted)] hover:text-primary transition text-sm"
               >
                 Sign Out
               </button>
