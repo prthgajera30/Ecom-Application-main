@@ -97,7 +97,7 @@ export function ProductCard({
             )}
             {badgeLabel && (
               <div
-                className={cn('absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-semibold text-primary')}
+                className={cn('absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-semibold text-[color:var(--text-primary)]')}
                 style={{ background: badgeColors[badgeColor] }}
               >
                 {badgeLabel}
@@ -123,7 +123,7 @@ export function ProductCard({
       ) : (
   <div className={cn('flex flex-1 flex-col justify-between', variant === 'default' && 'space-y-3 p-5')}>
             <div className="space-y-1">
-            <h3 className={cn('font-semibold text-primary line-clamp-2', 'text-base')}>{product.title}</h3>
+            <h3 className={cn('font-semibold text-[color:var(--text-primary)] line-clamp-2', 'text-base')}>{product.title}</h3>
             <p className={cn('text-sm text-muted')}>
               ${(price / 100).toFixed(2)}
             </p>

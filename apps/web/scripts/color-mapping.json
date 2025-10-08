@@ -35,4 +35,13 @@
   "border-yellow-400": "border-[color:var(--accent)]",
   "border-indigo-300": "border-[color:var(--brand)]",
   "border-gray-200": "border-[color:var(--surface-border)]"
+
+  ,
+  "text-primary": "text-[color:var(--text-primary)]",
+  "text-muted": "text-muted",
+  "bg-ghost-10": "bg-ghost-10",
+  "bg-ghost-20": "bg-ghost-20",
+  "border-ghost-10": "border-[color:var(--surface-border)]",
+  "hover:bg-ghost-10": "hover:bg-ghost-10",
+  "hover:border-[color:var(--brand)]/60": "hover:border-[color:var(--brand)]/60"
 }
