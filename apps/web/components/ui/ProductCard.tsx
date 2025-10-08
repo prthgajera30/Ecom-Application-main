@@ -77,10 +77,12 @@ export function ProductCard({
           variant === 'category' ? 'h-32' :
           'h-44'
         }`}>
-          {product.images?.[0] ? (
+            {product.images?.[0] ? (
             <img
               src={product.images[0]}
               alt={product.title}
+              loading="eager"
+              fetchPriority="high"
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             />
           ) : (
