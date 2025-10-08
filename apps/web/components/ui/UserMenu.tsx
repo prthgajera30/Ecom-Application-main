@@ -7,6 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { useCartState } from '../../context/CartContext';
 import { Button, ButtonLink } from './Button';
 import { Card } from './Card';
+import { cn } from '../../lib/cn';
 
 export function UserMenu() {
   const { user, logout } = useAuth();
@@ -72,7 +73,7 @@ export function UserMenu() {
             {user.email?.split('@')[0]}
           </span>
         </div>
-        <span className={`text-subtle transition-transform text-sm ${isOpen ? 'rotate-180 inline-block' : 'inline-block'}`}>
+        <span className={cn('text-subtle transition-transform text-sm', isOpen ? 'rotate-180 inline-block' : 'inline-block')}>
           ▼
         </span>
       </button>

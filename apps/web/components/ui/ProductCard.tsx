@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from './Button';
 import { WishlistButton } from './WishlistButton';
+import { cn } from '../../lib/cn';
 
 interface ProductVariant {
   variantId?: string;
@@ -76,15 +77,11 @@ export function ProductCard({
     // else: no-op if no handler provided
   };
   const CardContent = (
-    <div key={product._id} data-testid="product-card" className={`card group overflow-hidden ${variant === 'category' ? 'flex h-full flex-col' : ''}`}>
+    <div key={product._id} data-testid="product-card" className={cn('card group overflow-hidden', variant === 'category' && 'flex h-full flex-col')}>
       {/* Image/title link only - avoids nesting interactive controls inside anchors */}
       <div className="block">
         <Link href={`/product/${product.slug}`} className="block">
-          <div className={`relative overflow-hidden ${
-            variant === 'featured' ? 'h-52' :
-            variant === 'category' ? 'h-32' :
-            'h-44'
-          }`}>
+          <div className={cn('relative overflow-hidden', variant === 'featured' ? 'h-52' : variant === 'category' ? 'h-32' : 'h-44')}>
             {product.images?.[0] ? (
               <img
                 src={product.images[0]}
@@ -94,9 +91,7 @@ export function ProductCard({
                 className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
               />
               ) : (
-              <div className={`flex h-full items-center justify-center text-xs text-muted ${
-                variant === 'category' ? '' : 'bg-surface-muted'
-              }`} role="img" aria-label="No image">
+              <div className={cn('flex h-full items-center justify-center text-xs text-muted', variant === 'category' ? undefined : 'bg-surface-muted')} role="img" aria-label="No image">
                 No image
               </div>
             )}
@@ -126,9 +121,9 @@ export function ProductCard({
           <h3 className="text-lg font-semibold text-primary line-clamp-1">{product.title}</h3>
         </div>
       ) : (
-        <div className={`flex flex-1 flex-col justify-between ${variant === 'default' ? 'space-y-3 p-5' : ''}`}>
+  <div className={cn('flex flex-1 flex-col justify-between', variant === 'default' && 'space-y-3 p-5')}>
             <div className="space-y-1">
-            <h3 className={`font-semibold text-primary line-clamp-2 ${variant === 'category' ? 'text-base' : 'text-base'}`}>{product.title}</h3>
+            <h3 className={cn('font-semibold text-primary line-clamp-2', 'text-base')}>{product.title}</h3>
             <p className={`text-sm text-muted`}>
               ${(price / 100).toFixed(2)}
             </p>
