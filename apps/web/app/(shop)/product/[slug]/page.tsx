@@ -19,6 +19,7 @@ import { WishlistButton } from '../../../../components/ui/WishlistButton';
 import { ProductReviews } from '../../../../components/ProductReviews';
 import { apiGet, apiPost, ApiError } from '../../../../lib/api';
 import { useCartState } from '../../../../context/CartContext';
+import { cn } from '@/lib/utils';
 
 type ProductVariant = {
   variantId?: string;
@@ -360,9 +361,10 @@ export default function ProductDetailPage() {
                   <button
                     key={image}
                     type="button"
-                    className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border transition duration-200 xs:h-20 xs:w-20 xs:rounded-2xl ${
-                      isSelected ? 'border-ghost-20 ring-2 ring-[color:var(--brand)]/80' : 'border-ghost-10 hover:border-[color:var(--brand)]/60'
-                    }`}
+                      className={cn(
+                        'h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border transition duration-200 xs:h-20 xs:w-20 xs:rounded-2xl',
+                        isSelected ? 'border-ghost-20 ring-2 ring-[color:var(--brand)]/80' : 'border-ghost-10 hover:border-[color:var(--brand)]/60'
+                      )}
                     onClick={() => setActiveImage(image)}
                   >
                     <img src={image} alt="Product preview" loading="lazy" decoding="async" className="h-full w-full object-cover" />
