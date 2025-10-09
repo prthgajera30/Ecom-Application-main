@@ -17,7 +17,20 @@ export default function RegisterPage() {
     setMsg('');
     try {
       await register(email, password);
-      router.push('/');
+      const defaultTarget = '/';
+      let target = defaultTarget;
+      try {
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          const next = params.get('next');
+          if (next) target = next;
+        }
+      } catch (err) {}
+      if (typeof window !== 'undefined') {
+        window.location.assign(target);
+      } else {
+        router.replace(target);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'We couldn’t create your account right now. Please try again.';
       setMsg(message);

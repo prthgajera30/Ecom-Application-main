@@ -31,6 +31,7 @@ export default function CartPage() {
   const { items, products, subtotal, itemCount, loading, pending, error, updateItem, removeItem, beginCheckout } = cart;
   const [nudges, setNudges] = useState<RecommendationItem[]>([]);
   const [inlineErrors, setInlineErrors] = useState<Record<string, string>>({});
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<string,string>>({});
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -56,6 +57,8 @@ const handleQtyChange = async (item: CartItem, qty: number) => {
   });
   try {
     await updateItem(item.productId, qty, { variantId: item.variantId ?? null });
+    // After successful update, sync draft to authoritative qty
+    setQuantityDrafts((current) => ({ ...current, [key]: String(qty) }));
   } catch (err) {
     const message = err instanceof ApiError ? err.message : 'Failed to update quantity.';
     setInlineErrors((current) => ({ ...current, [key]: message }));
@@ -196,8 +199,19 @@ const handleRemove = async (item: CartItem) => {
               </button>
               <input
                 className="w-14 rounded-xl border border-ghost-10 bg-ghost-10 text-center text-sm text-primary focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[color:var(--brand)]/40"
-                value={item.qty}
-                onChange={(e) => handleQtyChange(item, parseInt(e.target.value || '0', 10))}
+                value={quantityDrafts[lineId] ?? String(item.qty)}
+                onChange={(e) => {
+                  // Allow only digits while typing
+                  const raw = e.target.value;
+                  const sanitized = raw.replace(/[^0-9]/g, '');
+                  setQuantityDrafts((current) => ({ ...current, [lineId]: sanitized }));
+                }}
+                onBlur={async (e) => {
+                  const raw = (e.target as HTMLInputElement).value.trim();
+                  const qty = raw ? Math.max(0, parseInt(raw, 10)) : 0;
+                  // If parsed qty differs from current item.qty, update server
+                  if (qty !== item.qty) await handleQtyChange(item, qty);
+                }}
                 inputMode="numeric"
                 pattern="[0-9]*"
                 aria-label={`Quantity for ${product?.title || 'item'}`}

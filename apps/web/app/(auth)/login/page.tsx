@@ -17,12 +17,24 @@ export default function LoginPage() {
     setMsg('');
     try {
       await login(email, password);
-      // Use a full navigation to ensure E2E waits (Playwright waits for load when a full navigation occurs)
-      if (typeof window !== 'undefined') {
-        window.location.assign('/profile');
-      } else {
-        router.replace('/profile');
-      }
+        // After successful login navigate. Prefer a `next` query param if present.
+        const defaultTarget = '/';
+        let target = defaultTarget;
+        try {
+          if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const next = params.get('next');
+            if (next) target = next;
+          }
+        } catch (err) {
+          // ignore and use default
+        }
+        // Use a full navigation to ensure E2E waits (Playwright waits for load when a full navigation occurs)
+        if (typeof window !== 'undefined') {
+          window.location.assign(target);
+        } else {
+          router.replace(target);
+        }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'We couldn’t sign you in. Please try again.';
       setMsg(message);

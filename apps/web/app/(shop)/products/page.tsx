@@ -86,6 +86,8 @@ function ProductsPageContent() {
   const [attributeFilters, setAttributeFilters] = useState<Record<string, string[]>>({});
   const [priceRange, setPriceRange] = useState<{ min?: number; max?: number }>({});
   const [priceDraft, setPriceDraft] = useState<{ min: string; max: string }>({ min: '', max: '' });
+  const minInputRef = useRef<HTMLInputElement | null>(null);
+  const maxInputRef = useRef<HTMLInputElement | null>(null);
   const [categorySearch, setCategorySearch] = useState('');
   const [attributeSearchTerms, setAttributeSearchTerms] = useState<Record<string, string>>({});
   const categorySearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -539,22 +541,39 @@ function FiltersPanel({
           <div className="flex items-center gap-2">
             <label className="flex-1">
               <span className="text-xs text-subtle">Min</span>
-              <input
-                value={priceDraft.min}
-                onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
-                placeholder="$0.00"
-                inputMode="numeric"
-              />
+                  <input
+                    ref={(el) => { minInputRef.current = el; }}
+                    defaultValue={priceDraft.min}
+                    onInput={(e) => {
+                      const raw = (e.target as HTMLInputElement).value;
+                      const sanitized = raw.replace(/[^0-9]/g, '');
+                      // Update the actual input value if sanitization changed it
+                      const input = minInputRef.current;
+                      if (input && input.value !== sanitized) input.value = sanitized;
+                      setPriceDraft((prev) => ({ ...prev, min: sanitized }));
+                    }}
+                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
+                    placeholder="0"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                  />
             </label>
             <label className="flex-1">
               <span className="text-xs text-subtle">Max</span>
               <input
-                value={priceDraft.max}
-                onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
+                ref={(el) => { maxInputRef.current = el; }}
+                defaultValue={priceDraft.max}
+                onInput={(e) => {
+                  const raw = (e.target as HTMLInputElement).value;
+                  const sanitized = raw.replace(/[^0-9]/g, '');
+                  const input = maxInputRef.current;
+                  if (input && input.value !== sanitized) input.value = sanitized;
+                  setPriceDraft((prev) => ({ ...prev, max: sanitized }));
+                }}
                 className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
-                placeholder="$500.00"
+                placeholder="500"
                 inputMode="numeric"
+                pattern="[0-9]*"
               />
             </label>
           </div>
