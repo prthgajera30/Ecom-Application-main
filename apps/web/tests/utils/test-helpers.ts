@@ -12,11 +12,11 @@ import { Page, Locator, expect } from '@playwright/test';
 export const TEST_USERS = {
   default: {
     email: 'user@example.com',
-    password: 'password123',
+    password: 'user123',
   },
   admin: {
     email: 'admin@example.com',
-    password: 'adminpass123',
+    password: 'admin123',
   },
   guest: {
     email: 'guest@test.com',

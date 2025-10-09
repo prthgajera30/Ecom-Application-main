@@ -35,6 +35,13 @@ export function UserMenu() {
   const handleLogout = () => {
     logout();
     setIsOpen(false);
+    // After logging out, navigate back to the homepage to match test expectations
+    try {
+      if (typeof window !== 'undefined') window.location.assign('/');
+      else router.push('/');
+    } catch (err) {
+      // ignore - navigation might not be available in some test harnesses
+    }
   };
 
   const startCheckout = async () => {
@@ -57,18 +64,19 @@ export function UserMenu() {
   return (
     <div className="relative" ref={menuRef}>
       <button
+        data-testid="user-menu"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-xl border border-[var(--surface-border)] bg-surface-strong px-3 py-2 text-sm font-medium text-primary transition hover:bg-surface-muted"
+        className="flex items-center gap-2 rounded-xl border border-[var(--surface-border)] bg-surface-strong px-3 py-2 text-sm font-medium text-[var(--text-primary)] transition hover:bg-surface-muted"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
             <div className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[color:var(--brand)] to-[color:var(--brand-dark)]">
-            <span className="text-sm font-bold text-primary">
+            <span className="text-sm font-bold fixed-white">
               {user.email?.charAt(0).toUpperCase()}
             </span>
           </div>
-          <span className="hidden sm:inline text-xs text-subtle">
+          <span className="hidden sm:inline text-xs text-[var(--text-subtle)]">
             {user.email?.split('@')[0]}
           </span>
         </div>
@@ -83,10 +91,10 @@ export function UserMenu() {
             <div className="space-y-1">
               {/* User Info Header */}
               <div className="border-b border-surface px-3 py-3">
-                <div className="text-sm font-medium text-primary truncate">
+                <div className="text-sm font-medium text-[var(--text-primary)] truncate">
                   {user.email}
                 </div>
-                <div className="text-xs text-muted capitalize">
+                <div className="text-xs text-[var(--text-muted)] capitalize">
                   {user.role} account
                 </div>
               </div>

@@ -111,6 +111,16 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl space-y-8">
+      {/* Orders Button */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => window.location.href = '/orders'}
+          className="inline-block rounded-full bg-primary px-4 py-2 text-white font-semibold hover:bg-primary-dark transition"
+          data-testid="orders-btn"
+        >
+          Orders
+        </button>
+      </div>
       {/* Page Header */}
       <div className="space-y-2">
     <h1 className="text-3xl font-semibold text-primary">My Profile</h1>

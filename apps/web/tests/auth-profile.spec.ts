@@ -9,7 +9,7 @@ test.describe('Profile Management', () => {
     // Wait for form to be ready
     await page.waitForSelector('input[name="email"]');
     await page.locator('input[name="email"]').fill('user@example.com');
-    await page.locator('input[name="password"]').fill('password123');
+    await page.locator('input[name="password"]').fill('user123');
     await page.locator('button:has-text("Sign in")').click();
     await page.waitForLoadState('networkidle');
 
@@ -99,7 +99,7 @@ test.describe('Profile Management', () => {
       await changePasswordLink.click();
 
       // Fill current password
-      await page.fill('[name="currentPassword"]', 'password123');
+      await page.fill('[name="currentPassword"]', 'user123');
 
       // Fill new password
       await page.fill('[name="newPassword"]', 'newpassword456');

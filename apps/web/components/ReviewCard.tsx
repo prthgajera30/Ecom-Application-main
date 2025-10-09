@@ -27,11 +27,14 @@ export interface Review {
     response: string;
     createdAt: string;
   }>;
+  markedByCurrentUser?: boolean;
 }
 
 interface ReviewCardProps {
   review: Review;
   onMarkHelpful?: (reviewId: string) => void;
+  isMarkingHelpful?: boolean;
+  alreadyMarked?: boolean;
   onRespond?: (reviewId: string, response: string) => void;
   currentUserId?: string;
   isAdmin?: boolean;
@@ -44,7 +47,10 @@ export function ReviewCard({
   onRespond,
   currentUserId,
   isAdmin,
-  showResponses = true
+  showResponses = true,
+  isMarkingHelpful = false
+  ,
+  alreadyMarked = false
 }: ReviewCardProps) {
   const [isResponding, setIsResponding] = useState(false);
   const [responseText, setResponseText] = useState('');
@@ -145,11 +151,12 @@ export function ReviewCard({
                 variant="ghost"
                 size="sm"
                 onClick={() => onMarkHelpful(review.id)}
-                    className="flex items-center space-x-1 text-muted hover:text-[color:var(--brand)]"
+                disabled={!!isMarkingHelpful || !!alreadyMarked}
+                className="flex items-center space-x-1 text-muted hover:text-[color:var(--brand)]"
               >
                 <span className="text-subtle text-sm">👍</span>
                 <span className="text-sm">
-                  Helpful ({review.helpfulCount})
+                  {alreadyMarked ? `Marked (${review.helpfulCount})` : (isMarkingHelpful ? 'Marking…' : `Helpful (${review.helpfulCount})`)}
                 </span>
               </Button>
             )}

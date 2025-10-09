@@ -100,6 +100,20 @@ router.get('/products/:id/reviews', async (req, res) => {
       return res.status(404).json({ error: 'NOT_FOUND' });
     }
 
+    // If an Authorization header is present, try to decode it to get userId
+    let userId = (req as any).user?.userId || (req as any).user?.id;
+    try {
+      if (!userId && typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ')) {
+        const token = req.headers.authorization.slice(7);
+        const secret = process.env.JWT_SECRET || 'change_me';
+        const decoded = jwt.verify(token, secret) as any;
+        userId = decoded?.userId || decoded?.id;
+      }
+    } catch (err) {
+      // ignore token errors; proceed as anonymous
+      userId = userId;
+    }
+
     const parseFilters = reviewFiltersSchema.safeParse(req.query);
     if (!parseFilters.success) {
       return res.status(400).json({ error: 'VALIDATION', details: parseFilters.error.flatten() });
@@ -129,7 +143,7 @@ router.get('/products/:id/reviews', async (req, res) => {
           filters.status = undefined;
       }
     }
-  const reviews = await reviewService.getProductReviews(productId, filters as ServiceReviewFilters);
+  const reviews = await reviewService.getProductReviews(productId, filters as ServiceReviewFilters, userId);
     res.json(reviews);
   } catch (error) {
     console.error('Error fetching reviews:', error);
@@ -143,7 +157,7 @@ router.post('/products/:id/reviews', async (req, res) => {
     const productId = String(req.params.id);
   // May be undefined for anonymous reviews; if an Authorization header is present
   // decode it (but do not enforce auth) so we can associate the review with the user.
-  let userId = (req as any).user?.id;
+  let userId = (req as any).user?.userId || (req as any).user?.id;
   try {
     if (!userId && typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ')) {
       const token = req.headers.authorization.slice(7);
@@ -233,10 +247,10 @@ router.post('/products/:id/reviews', async (req, res) => {
 });
 
 // Mark review as helpful
-router.post('/:id/helpful', requireAuth, async (req, res) => {
+router.post('/reviews/:id/helpful', requireAuth, async (req, res) => {
   try {
     const reviewId = String(req.params.id);
-  const userId = (req as any).user!.id;
+  const userId = (req as any).user!.userId || (req as any).user!.id;
 
     const wasMarked = await reviewService.markReviewHelpful(reviewId, userId);
 
@@ -254,6 +268,8 @@ router.post('/:id/helpful', requireAuth, async (req, res) => {
   }
 });
 
+// NOTE: Removed GET /marked - use markedByCurrentUser on review items or login payload instead.
+
 // Admin routes for review moderation
 router.get('/admin/pending', requireAdmin, async (req, res) => {
   try {
@@ -268,11 +284,11 @@ router.get('/admin/pending', requireAdmin, async (req, res) => {
   }
 });
 
-router.patch('/:id/status', requireAdmin, async (req, res) => {
+router.patch('/reviews/:id/status', requireAdmin, async (req, res) => {
   try {
     const reviewId = String(req.params.id);
     const { status } = req.body;
-  const adminId = (req as any).user!.id;
+  const adminId = (req as any).user!.userId || (req as any).user!.id;
 
     if (!['published', 'rejected', 'hidden'].includes(status)) {
       return res.status(400).json({ error: 'INVALID_STATUS' });
@@ -286,11 +302,11 @@ router.patch('/:id/status', requireAdmin, async (req, res) => {
   }
 });
 
-router.post('/:id/responses', requireAdmin, async (req, res) => {
+router.post('/reviews/:id/responses', requireAdmin, async (req, res) => {
   try {
     const reviewId = String(req.params.id);
     const { response } = req.body;
-  const adminId = (req as any).user!.id;
+  const adminId = (req as any).user!.userId || (req as any).user!.id;
   const adminName = (req as any).user!.email; // Using email as display name
 
     if (!response || typeof response !== 'string' || response.trim().length === 0) {
@@ -311,10 +327,10 @@ router.post('/:id/responses', requireAdmin, async (req, res) => {
 });
 
 // Delete review (soft delete)
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/reviews/:id', requireAuth, async (req, res) => {
   try {
     const reviewId = String(req.params.id);
-  const userId = (req as any).user!.id;
+  const userId = (req as any).user!.userId || (req as any).user!.id;
 
     const deleted = await reviewService.deleteReview(reviewId, userId);
 

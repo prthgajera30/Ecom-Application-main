@@ -18,6 +18,7 @@ import ordersRoutes from './routes/orders';
 import recsRoutes from './routes/recs';
 import reviewsRoutes from './routes/reviews';
 import wishlistRoutes from './routes/wishlist';
+import testOnlyRoutes from './routes/test-only';
 import addressRoutes from './routes/address';
 import paymentMethodRoutes from './routes/payment-methods';
 import adminRoutes from './routes/admin';
@@ -38,7 +39,11 @@ app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json({ type: ['application/json','application/*+json'] }));
 
 const authLimiter = rateLimit({ windowMs: 60_000, max: 20 });
-app.use('/api/auth', authLimiter);
+// Apply auth rate limiting only in production. Local dev and test runs (including Playwright)
+// may perform repeated auth requests and should not be rate-limited by default.
+if (process.env.NODE_ENV === 'production') {
+  app.use('/api/auth', authLimiter);
+}
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
@@ -52,6 +57,8 @@ app.use('/api', ordersRoutes);
 app.use('/api', recsRoutes);
 app.use('/api', reviewsRoutes);
 app.use('/api', wishlistRoutes);
+// Test-only utilities (guarded by NODE_ENV or TEST_SECRET)
+app.use('/api', testOnlyRoutes);
 app.use('/api', addressRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
 app.use('/api/admin', adminRoutes);

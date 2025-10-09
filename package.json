@@ -25,7 +25,8 @@
     "dev:recs": "node scripts/run-recs-dev.mjs",
     "build": "pnpm -r --if-present build",
     "lint": "pnpm -r --if-present lint",
-    "postinstall": "pnpm -r --if-present prisma:generate || true"
+    "postinstall": "pnpm -r --if-present prisma:generate || true",
+  "test:web": "pnpm --filter @apps/web test --"
   },
   "devDependencies": {
     "concurrently": "^8.2.1",

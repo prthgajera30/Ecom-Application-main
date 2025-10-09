@@ -5,7 +5,7 @@ test.describe('Reviews System', () => {
     // Login for authenticated review features
     await page.goto('http://localhost:3000/login');
     await page.locator('input[type="email"]').fill('user@example.com');
-    await page.locator('input[type="password"]').fill('password123');
+    await page.locator('input[type="password"]').fill('user123');
     await page.locator('button:has-text("Sign in")').click();
     await page.waitForLoadState('networkidle');
   });

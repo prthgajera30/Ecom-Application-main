@@ -9,6 +9,9 @@ import { InventoryService } from '../services/inventory';
 const router = Router();
 const secret = process.env.STRIPE_SECRET_KEY || 'sk_test_xxx';
 const isStripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY !== 'sk_test_xxx');
+const isTestStub = process.env.TEST_STUB_CHECKOUT === '1' || process.env.NODE_ENV === 'test';
+// In-memory store for simulated checkout sessions in test/stub mode
+const testStubResults = new Map<string, any>();
 const stripe = new Stripe(secret);
 
 type SessionCartItem = {
@@ -275,7 +278,7 @@ async function handleCheckoutCompleted(
 }
 
 router.post('/checkout/create-session', async (req, res) => {
-  if (!isStripeConfigured) {
+  if (!isStripeConfigured && !isTestStub) {
     return res.status(503).json({ error: 'STRIPE_NOT_CONFIGURED', message: 'Stripe test keys are not configured. Set STRIPE_SECRET_KEY before attempting checkout.' });
   }
   const parse = createSchema.safeParse(req.body || {});
@@ -365,17 +368,48 @@ router.post('/checkout/create-session', async (req, res) => {
   }
 
   try {
-    const checkoutSession = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: lineItems,
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      client_reference_id: sessionId,
-      customer_email: userEmail,
-      metadata,
-    });
+    if (!isTestStub) {
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        line_items: lineItems,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        client_reference_id: sessionId,
+        customer_email: userEmail,
+        metadata,
+      });
 
-    return res.json({ url: checkoutSession.url });
+      return res.json({ url: checkoutSession.url });
+    }
+
+    // Test/stub mode: simulate a Stripe checkout session and finalize immediately.
+    const fakeId = `stub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const fakePaymentIntent = `pi_${fakeId}`;
+    // Approximate total from lineItems
+    const amountTotal = lineItems.reduce((acc, li) => acc + ((li.price_data?.unit_amount ?? 0) as number) * (li.quantity ?? 1), 0);
+    const simulatedStripeSession: any = {
+      id: fakeId,
+      client_reference_id: sessionId,
+      metadata: { ...(metadata || {}) },
+      payment_intent: fakePaymentIntent,
+      payment_status: 'paid',
+      currency: parse.data.currency,
+      amount_total: amountTotal,
+      customer_email: userEmail,
+    };
+
+    // Immediately handle checkout as completed (simulate webhook)
+    try {
+      const result = await handleCheckoutCompleted(simulatedStripeSession, req);
+      // store simulated result for finalize endpoint
+      testStubResults.set(fakeId, result || { cartCleared: true, status: 'paid' });
+    } catch (err) {
+      console.error('Test stub: failed to simulate checkout completion', err);
+    }
+
+    // Return a local success URL so Playwright won't navigate to Stripe
+    const localSuccess = `${origin}/checkout/success?session_id=${fakeId}`;
+    return res.json({ url: localSuccess });
   } catch (err: any) {
     // If checkout creation fails, release any reserved stock
     for (const item of cartItems) {
@@ -391,7 +425,7 @@ router.post('/checkout/create-session', async (req, res) => {
 });
 
 router.post('/checkout/finalize', async (req, res) => {
-  if (!isStripeConfigured) {
+  if (!isStripeConfigured && !isTestStub) {
     return res.status(503).json({ error: 'STRIPE_NOT_CONFIGURED' });
   }
   const parse = finalizeSchema.safeParse(req.body || {});
@@ -400,6 +434,12 @@ router.post('/checkout/finalize', async (req, res) => {
   }
 
   try {
+    // Handle test/stub finalize early
+    if (isTestStub && testStubResults.has(parse.data.checkoutSessionId)) {
+      const result = testStubResults.get(parse.data.checkoutSessionId);
+      return res.json({ success: true, ...result, status: result.status ?? 'paid' });
+    }
+
     const stripeSession = await stripe.checkout.sessions.retrieve(parse.data.checkoutSessionId, {
       expand: ['payment_intent'],
     });

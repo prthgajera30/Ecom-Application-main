@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import ToastShelf from '../components/ToastShelf';
 import { AuthProvider } from '../context/AuthContext';
 import { ToastProvider } from '../context/ToastContext';
+import { SignInModalProvider } from '../context/SignInModalContext';
 import { CartProvider } from '../context/CartContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import { WishlistProvider } from '../context/WishlistContext';
@@ -17,8 +18,8 @@ const themeScript = `(() => {
     const storageKey = 'pulse-theme';
     const root = document.documentElement;
     const stored = window.localStorage.getItem(storageKey);
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = stored === 'light' || stored === 'dark' ? stored : prefersDark ? 'dark' : 'light';
+    // Default to dark unless user previously selected a theme.
+    const theme = stored === 'light' || stored === 'dark' ? stored : 'dark';
     root.dataset.theme = theme;
   } catch (error) {
     document.documentElement.dataset.theme = 'dark';
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <ToastProvider>
             <AuthProvider>
+              <SignInModalProvider>
               <CartProvider>
                 <WishlistProvider>
                   <ProfileProvider>
@@ -53,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </ProfileProvider>
                 </WishlistProvider>
               </CartProvider>
+              </SignInModalProvider>
             </AuthProvider>
           </ToastProvider>
         </ThemeProvider>

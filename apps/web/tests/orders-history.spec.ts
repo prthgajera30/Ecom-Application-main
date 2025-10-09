@@ -5,7 +5,7 @@ test.describe('Order Management - History & Details', () => {
     // Login before each test
     await page.goto('http://localhost:3000/login');
     await page.locator('input[type="email"]').fill('user@example.com');
-    await page.locator('input[type="password"]').fill('password123');
+    await page.locator('input[type="password"]').fill('user123');
     await page.locator('button:has-text("Sign in")').click();
     await page.waitForLoadState('networkidle');
   });
@@ -16,46 +16,21 @@ test.describe('Order Management - History & Details', () => {
     await page.waitForLoadState('networkidle');
 
     // Should show order history heading
-    await expect(page.getByRole('heading', { name: /order history|my orders/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /order history|my orders|your orders/i })).toBeVisible();
 
     // Look for order items
-    const orderItems = page.locator('[data-testid="order-item"]').or(
-      page.locator('.order-card')
-    );
-
-    const orderCount = await orderItems.count();
-    if (orderCount > 0) {
-      // If orders exist, verify they display correctly
-      const firstOrder = orderItems.first();
-
-      // Should show order number/ID
-      const orderNumber = firstOrder.locator('[data-testid="order-number"]').or(
-        firstOrder.locator('text=/Order #|Order ID/i')
-      );
-      await expect(orderNumber).toBeVisible();
-
-      // Should show order date
-      const orderDate = firstOrder.locator('[data-testid="order-date"]').or(
-        firstOrder.locator('text=/date|placed/i')
-      );
-      await expect(orderDate).toBeVisible();
-
-      // Should show order status
-      const orderStatus = firstOrder.locator('[data-testid="order-status"]').or(
-        firstOrder.locator('text=/status|pending|shipped|delivered/i')
-      );
-      await expect(orderStatus).toBeVisible();
-
-      // Should show order total
-      const orderTotal = firstOrder.locator('[data-testid="order-total"]').or(
-        firstOrder.locator('text=/total|\\$/i')
-      );
-      await expect(orderTotal).toBeVisible();
-    } else {
-      // If no orders, should show empty state
-      const emptyState = page.locator('text=/no orders|no history|empty/i');
-      await expect(emptyState).toBeVisible();
-    }
+      const orderCards = page.locator('.card').filter({ hasText: /Order #/i });
+      const orderCount = await orderCards.count();
+      if (orderCount > 0) {
+        const firstOrder = orderCards.first();
+        await expect(firstOrder.locator('text=/Order #/i')).toBeVisible();
+        await expect(firstOrder.locator('text=/paid|pending|shipped|delivered/i')).toBeVisible();
+  await expect(firstOrder.locator('text=/ at /i')).toBeVisible();
+    await expect(firstOrder.locator('.text-lg.font-semibold.text-primary')).toBeVisible();
+      } else {
+        const emptyState = page.locator('text=/no orders|no history|empty/i');
+        await expect(emptyState).toBeVisible();
+      }
   });
 
   test('clicking order expands to show order details', async ({ page }) => {
@@ -332,17 +307,12 @@ test.describe('Order Management - History & Details', () => {
     await page.waitForLoadState('networkidle');
 
     // Click order history link/button
-    const orderHistoryLink = page.locator('text="View Order History"').or(
-      page.locator('a:has-text("Orders")')
-    ).or(
-      page.locator('[href*="orders"]')
-    );
-
-    await orderHistoryLink.click();
+    // Select the first matching 'Orders' link to avoid strict mode violation
+  await page.click('[data-testid="orders-btn"]');
     await page.waitForLoadState('networkidle');
 
     // Should navigate to orders page
     await expect(page.url()).toContain('/orders');
-    await expect(page.getByRole('heading', { name: /order history|my orders/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /order history|my orders|your orders/i })).toBeVisible();
   });
 });

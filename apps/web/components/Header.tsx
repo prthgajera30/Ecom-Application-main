@@ -25,6 +25,14 @@ const quickLinks = [
 ];
 
 export default function Header() {
+  // Wishlist counter
+  const { wishlist } = require('../context/WishlistContext').useWishlist();
+  const wishlistCount = wishlist.length;
+  const desktopWishlistBadge = wishlistCount > 0 ? (
+    <span data-testid="wishlist-count-desktop" className="ml-2 inline-flex min-w-[1.5rem] items-center justify-center rounded-full bg-[color:var(--brand)]/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--text-primary)]">
+      {wishlistCount}
+    </span>
+  ) : null;
   const { user, logout } = useAuth();
   const router = useRouter();
   const { push } = useToast();
@@ -120,13 +128,13 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--surface-border)] bg-[color:var(--surface-solid)] backdrop-blur-2xl transition-colors">
       <div className="container flex items-center justify-between gap-3 py-3 sm:py-4">
-        <Link href="/" className="group flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[color:var(--brand)] via-[color:var(--brand-dark)] to-[color:var(--brand-dark)] text-lg font-semibold text-primary shadow-lg shadow-[color:var(--brand)]/40 transition-transform group-hover:scale-105">
+          <Link href="/" className="group flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[color:var(--brand)] via-[color:var(--brand-dark)] to-[color:var(--brand-dark)] text-lg font-semibold fixed-white shadow-lg shadow-[color:var(--brand)]/40 transition-transform group-hover:scale-105">
             PC
           </span>
           <div className="leading-tight max-sm:hidden">
-            <span className="block text-sm font-semibold text-primary sm:text-base">Pulse Commerce</span>
-            <span className="block text-[11px] text-muted sm:text-xs">Realtime personalization suite</span>
+            <span className="block text-sm font-semibold text-[var(--text-primary)] sm:text-base">Pulse Commerce</span>
+            <span className="block text-[11px] text-[var(--text-muted)] sm:text-xs">Realtime personalization suite</span>
           </div>
         </Link>
 
@@ -136,16 +144,17 @@ export default function Header() {
               key={link.href}
               href={link.href}
               className={`flex items-center gap-1 transition-colors ${
-                isActive(link.href) ? 'text-[var(--text-primary)]' : 'text-subtle hover:text-[var(--text-primary)]'
-              }`}
+                  isActive(link.href) ? 'text-[var(--text-primary)]' : 'text-subtle hover:text-[var(--text-primary)]'
+                }`}
             >
               <span>{link.label}</span>
               {link.href === '/cart' && desktopCartBadge}
+              {link.href === '/wishlist' && desktopWishlistBadge}
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
           <ThemeToggle className="hidden md:inline-flex" />
                 <ButtonLink href="/cart" variant="secondary" size="sm" className="relative md:hidden">
             Cart
@@ -193,12 +202,12 @@ export default function Header() {
       </div>
 
       <div className="border-t border-[var(--surface-border)] bg-[color:var(--surface-solid)] md:hidden">
-        <div className="container flex items-center gap-2 overflow-x-auto py-2 text-sm font-medium text-subtle">
+            <div className="container flex items-center gap-2 overflow-x-auto py-2 text-sm font-medium text-subtle">
           {navLinks.map((link) => (
             <Link
               key={`mobile-${link.href}`}
               href={link.href}
-              className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 transition ${
+                  className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 transition ${
                   isActive(link.href) ? 'bg-ghost-10 text-[var(--text-primary)]' : 'hover:text-[var(--text-primary)]'
                 }`}
             >

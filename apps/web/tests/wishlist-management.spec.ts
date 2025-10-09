@@ -5,7 +5,7 @@ test.describe('Wishlist Management', () => {
     // Login before each test
     await page.goto('http://localhost:3000/login');
     await page.locator('input[type="email"]').fill('user@example.com');
-    await page.locator('input[type="password"]').fill('password123');
+    await page.locator('input[type="password"]').fill('user123');
     await page.locator('button:has-text("Sign in")').click();
     await page.waitForLoadState('networkidle');
   });
@@ -144,15 +144,15 @@ test.describe('Wishlist Management', () => {
     await page.goto('http://localhost:3000/wishlist');
     await page.waitForLoadState('networkidle');
 
-    // Should show wishlist heading
-    await expect(page.getByRole('heading', { name: /wishlist|saved items/i })).toBeVisible();
+  // Should show wishlist heading
+  await expect(page.locator('[data-testid="wishlist-heading"]')).toBeVisible();
 
     const wishlistItems = page.locator('[data-testid="wishlist-item"]');
     const itemCount = await wishlistItems.count();
 
     if (itemCount === 0) {
       // Should show empty wishlist message
-      await expect(page.locator('text=/wishlist is empty|no saved items/i')).toBeVisible();
+      await expect(page.locator('[data-testid="wishlist-empty-msg"]')).toBeVisible();
 
       // Should have "Continue Shopping" or browse button
       const browseButton = page.locator('button:has-text("Continue Shopping")').or(
@@ -237,7 +237,7 @@ test.describe('Wishlist Management', () => {
       // Wishlist should be cleared
       await page.waitForTimeout(500);
       await expect(page.locator('[data-testid="wishlist-item"]')).toHaveCount(0);
-      await expect(page.locator('text=/wishlist is empty/i')).toBeVisible();
+  await expect(page.locator('[data-testid="wishlist-empty-msg"]')).toBeVisible();
     }
   });
 

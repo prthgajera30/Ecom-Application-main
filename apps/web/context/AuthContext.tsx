@@ -51,8 +51,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    if (!ok) { setUser(null); identifyUser(null); setInitializing(false); return; }
+    if (!ok) { console.debug('AuthContext.refresh: /auth/me not ok', { status: res.status }); setUser(null); identifyUser(null); setInitializing(false); return; }
     const u = await res.json();
+    console.debug('AuthContext.refresh: got user', u);
     setUser(u);
     identifyUser(u?.id ?? null);
     setInitializing(false);
@@ -88,7 +89,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(message);
     }
     const data = await res.json();
+  console.debug('AuthContext.login: login response', data);
     storeToken(data.token);
+    // Persist marked review ids returned by the server to localStorage (server is source of truth)
+    try {
+      const markedFromServer = Array.isArray(data.marked) ? data.marked : [];
+      const mapped: Record<string, boolean> = {};
+      markedFromServer.forEach((id: string) => { mapped[id] = true; });
+      if (typeof window !== 'undefined') localStorage.setItem('markedReviews', JSON.stringify(mapped));
+      // Notify same-window listeners that markedReviews changed
+      try { window.dispatchEvent(new CustomEvent('markedReviews:changed', { detail: mapped })); } catch (err) {}
+    } catch (err) {
+      // ignore
+    }
     await refresh();
   }, [refresh]);
 
@@ -121,6 +134,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const data = await res.json();
     storeToken(data.token);
+    try {
+      const markedFromServer = Array.isArray(data.marked) ? data.marked : [];
+      const mapped: Record<string, boolean> = {};
+      markedFromServer.forEach((id: string) => { mapped[id] = true; });
+      if (typeof window !== 'undefined') localStorage.setItem('markedReviews', JSON.stringify(mapped));
+      try { window.dispatchEvent(new CustomEvent('markedReviews:changed', { detail: mapped })); } catch (err) {}
+    } catch (err) {
+      // ignore
+    }
     await refresh();
   }, [refresh]);
 
@@ -130,7 +152,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     setUser(null);
     identifyUser(null);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('markedReviews');
+        window.dispatchEvent(new CustomEvent('markedReviews:changed', { detail: {} }));
+      }
+    } catch (err) {}
   }, []);
+
 
   return (
     <AuthContext.Provider value={{ user, token, initializing, login, register, logout, refresh }}>

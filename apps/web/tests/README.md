@@ -111,7 +111,7 @@ npx playwright test --config=playwright.mobile.config.ts
 
 ### Test Users
 - **Email**: `user@example.com`
-- **Password**: `password123`
+- **Password**: `user123`
 - **Guest Email**: `guest@example.com`
 
 ### Seeded Data Requirements
@@ -207,7 +207,7 @@ test.describe('Feature Name', () => {
 async function loginUser(page: Page, email: string = 'user@example.com') {
   await page.goto('/login');
   await page.fill('[name="email"]', email);
-  await page.fill('[name="password"]', 'password123');
+  await page.fill('[name="password"]', 'user123');
   await page.click('button:has-text("Sign In")');
   await page.waitForLoadState('networkidle');
 }

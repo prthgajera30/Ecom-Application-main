@@ -4,6 +4,9 @@ import { Card } from './ui/Card';
 import { ReviewCard, Review } from './ReviewCard';
 import { ReviewForm } from './ReviewForm';
 import { useAuth } from '../context/AuthContext';
+import { ApiError } from '../lib/api';
+import { useToast } from '../context/ToastContext';
+import { useSignInModal } from '../context/SignInModalContext';
 
 interface ReviewSummary {
   average: number;
@@ -47,6 +50,8 @@ interface ProductReviewsProps {
 export function ProductReviews({ productId, api, onUpdateSummary }: ProductReviewsProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const { push } = useToast();
+  const { open: openSignIn } = useSignInModal();
   const [summary, setSummary] = useState<ReviewSummary | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,12 +67,67 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
     sortOrder: 'desc'
   });
   const reviewFormRef = useRef<HTMLDivElement>(null);
+  const [markingHelpful, setMarkingHelpful] = useState<Record<string, boolean>>({});
+  const [alreadyMarked, setAlreadyMarked] = useState<Record<string, boolean>>(() => {
+    try {
+      if (typeof window === 'undefined') return {};
+      // migrate from sessionStorage if present
+      const sessionKey = sessionStorage.getItem('markedReviews');
+      if (sessionKey && !localStorage.getItem('markedReviews')) {
+        localStorage.setItem('markedReviews', sessionKey);
+        try { sessionStorage.removeItem('markedReviews'); } catch (e) {}
+      }
+      const s = localStorage.getItem('markedReviews');
+      return s ? JSON.parse(s) : {};
+    } catch (err) {
+      return {};
+    }
+  });
 
-  // Load summary and initial reviews
+  // We rely on the reviews API to include `markedByCurrentUser` on each review
+  // and merge that information into localStorage when reviews load.
+
+  // Cross-tab and same-window sync: listen for changes to localStorage markedReviews key
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key !== 'markedReviews') return;
+      try {
+        const value = e.newValue ? JSON.parse(e.newValue) : {};
+        setAlreadyMarked(value || {});
+      } catch (err) {
+        // ignore parse errors
+      }
+    };
+
+    const customHandler = (ev: any) => {
+      try {
+        const value = ev?.detail || (typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('markedReviews') || '{}') : {});
+        setAlreadyMarked(value || {});
+      } catch (err) {}
+    };
+
+    window.addEventListener('storage', handler);
+    window.addEventListener('markedReviews:changed', customHandler as EventListener);
+    return () => {
+      window.removeEventListener('storage', handler);
+      window.removeEventListener('markedReviews:changed', customHandler as EventListener);
+    };
+  }, []);
+
+  // Load summary and initial reviews. Also reload when the signed-in user changes
   useEffect(() => {
     loadSummary();
+    // Reset and load reviews for the current user context
     loadReviews(true);
-  }, [productId]);
+    // Also refresh local marked state from storage (in case AuthContext overwrote it)
+    try {
+      const s = typeof window !== 'undefined' ? localStorage.getItem('markedReviews') : null;
+      const parsed = s ? JSON.parse(s) : {};
+      setAlreadyMarked(parsed || {});
+    } catch (err) {
+      // ignore
+    }
+  }, [productId, user?.id]);
 
   // Auto-scroll to review form when it opens
   useEffect(() => {
@@ -101,6 +161,23 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
 
       const result = await api.getProductReviews(productId, currentFilters);
 
+      // Merge server-side `markedByCurrentUser` flags into local alreadyMarked
+      try {
+        const serverMarked: Record<string, boolean> = {};
+        (result.items || []).forEach((it: any) => {
+          if (it?.markedByCurrentUser) serverMarked[it.id] = true;
+        });
+        if (Object.keys(serverMarked).length > 0) {
+          setAlreadyMarked(prev => {
+            const merged = { ...(prev || {}), ...serverMarked };
+            try { if (typeof window !== 'undefined') localStorage.setItem('markedReviews', JSON.stringify(merged)); } catch (e) {}
+            return merged;
+          });
+        }
+      } catch (err) {
+        // ignore
+      }
+
       if (reset) {
         setReviews(result.items);
       } else {
@@ -133,17 +210,59 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
   };
 
   const handleMarkHelpful = async (reviewId: string) => {
+  if (markingHelpful[reviewId] || alreadyMarked[reviewId]) return;
+
+    // Optimistic update
+    setMarkingHelpful(prev => ({ ...prev, [reviewId]: true }));
+    setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, helpfulCount: (r.helpfulCount ?? 0) + 1 } : r));
+
     try {
       await api.markReviewHelpful(reviewId);
 
-      // Update the review in the list
-      setReviews(prev => prev.map(review =>
-        review.id === reviewId
-          ? { ...review, helpfulCount: review.helpfulCount + 1 }
-          : review
-      ));
-    } catch (error) {
-      console.error('Error marking review helpful:', error);
+      // Persist the marked state for this session
+      setAlreadyMarked(prev => {
+        const next = { ...prev, [reviewId]: true };
+        try {
+          if (typeof window !== 'undefined') localStorage.setItem('markedReviews', JSON.stringify(next));
+        } catch (e) {
+          // ignore storage errors
+        }
+        return next;
+      });
+
+      push({ variant: 'success', title: 'Marked helpful', description: 'Thanks — your feedback was saved.' });
+
+    } catch (err) {
+      // Revert optimistic update
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, helpfulCount: Math.max(0, (r.helpfulCount ?? 1) - 1) } : r));
+
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          push({ variant: 'error', title: 'Sign in required', description: 'Please sign in to mark reviews as helpful.' });
+        } else if (err.status === 409) {
+          // Already marked by server - mark locally and inform user
+          setAlreadyMarked(prev => {
+            const next = { ...prev, [reviewId]: true };
+            try {
+              if (typeof window !== 'undefined') localStorage.setItem('markedReviews', JSON.stringify(next));
+            } catch (e) {
+              // ignore
+            }
+            return next;
+          });
+          push({ variant: 'info', title: 'Already marked', description: 'You have already marked this review as helpful.' });
+        } else {
+          push({ variant: 'error', title: 'Unable to mark', description: err.message || 'Unable to mark this review as helpful right now.' });
+        }
+      } else {
+        push({ variant: 'error', title: 'Unable to mark', description: 'An unexpected error occurred.' });
+      }
+    } finally {
+      setMarkingHelpful(prev => {
+        const next = { ...prev };
+        delete next[reviewId];
+        return next;
+      });
     }
   };
 
@@ -329,7 +448,9 @@ export function ProductReviews({ productId, api, onUpdateSummary }: ProductRevie
               <ReviewCard
                 key={review.id}
                 review={review}
-                onMarkHelpful={handleMarkHelpful}
+                onMarkHelpful={user ? handleMarkHelpful : () => openSignIn()}
+                isMarkingHelpful={!!markingHelpful[review.id]}
+                alreadyMarked={!!alreadyMarked[review.id]}
                 onRespond={isAdmin ? handleAddResponse : undefined}
                 currentUserId={user?.id}
                 isAdmin={isAdmin}

@@ -102,9 +102,11 @@ export default function Page() {
   const [connected, setConnected] = useState<boolean>(false);
   const [featured, setFeatured] = useState<Product[]>([]);
   const [lightningDeals, setLightningDeals] = useState<Product[]>([]);
+  const [lightningLoading, setLightningLoading] = useState<boolean>(true);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [recommended, setRecommended] = useState<Recommendation[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState<boolean>(true);
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [categoryProducts, setCategoryProducts] = useState<Record<string, Product[]>>({});
   const [categoryLoading, setCategoryLoading] = useState(false);
@@ -132,21 +134,25 @@ export default function Page() {
     apiGet<{ items: Product[] }>('/products?limit=6')
       .then((d) => setFeatured(d.items || []))
       .catch(() => setFeatured([]));
+    setLightningLoading(true);
     apiGet<{ items: Product[] }>('/products?limit=4&sort=price_asc')
       .then((d) => setLightningDeals(d.items || []))
-      .catch(() => setLightningDeals([]));
+      .catch(() => setLightningDeals([]))
+      .finally(() => setLightningLoading(false));
     apiGet<{ items: Product[] }>('/products?limit=4&sort=popular')
       .then((d) => setBestSellers(d.items || []))
       .catch(() => setBestSellers([]));
     apiGet<{ items: Recommendation[] }>('/recommendations?k=6')
       .then((d) => setRecommended(d.items || []))
       .catch(() => setRecommended([]));
+    setCategoriesLoading(true);
     apiGet<Category[]>('/categories')
       .then((items) => {
         setCategories(items);
         if (items.length && !activeCategory) setActiveCategory(items[0]._id);
       })
-      .catch(() => setCategories([]));
+      .catch(() => setCategories([]))
+      .finally(() => setCategoriesLoading(false));
 
     const socket = getSocket();
     const onConnect = () => setConnected(true);
@@ -395,18 +401,25 @@ export default function Page() {
           </div>
           <div className="flex flex-wrap gap-2">
             <div data-testid="category-nav">
-              {categories.slice(0, 6).map((category) => (
+              {categoriesLoading ? (
+                // simple skeleton buttons
+                Array.from({ length: 6 }).map((_, i) => (
+                  <div key={`cat-skel-${i}`} className="h-8 w-24 rounded-full bg-ghost-10 animate-pulse" />
+                ))
+              ) : (
+                categories.slice(0, 6).map((category) => (
                   <button
-                  key={category._id}
-                  type="button"
-                  onClick={() => handleCategorySelect(category._id)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                    activeCategory === category._id ? 'bg-surface-solid text-[var(--text-primary)] shadow shadow-[color:var(--brand)]/30' : 'bg-ghost-10 text-muted hover:bg-ghost-20'
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
+                    key={category._id}
+                    type="button"
+                    onClick={() => handleCategorySelect(category._id)}
+                    className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                      activeCategory === category._id ? 'bg-surface-solid text-[var(--text-primary)] shadow shadow-[color:var(--brand)]/30' : 'bg-ghost-10 text-muted hover:bg-ghost-20'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -449,7 +462,7 @@ export default function Page() {
         </div>
       </section>
 
-      {lightningDeals.length > 0 && (
+      {(lightningDeals.length > 0 || lightningLoading) && (
         <section className="space-y-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -459,19 +472,25 @@ export default function Page() {
             <ButtonLink href="/products?sort=price_asc" variant="secondary">View all deals</ButtonLink>
           </div>
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            {lightningDeals.map((product) => (
-              <ProductCard
-                key={product._id}
-                product={product}
-                variant="default"
-                badgeLabel="Hot deal"
-                badgeColor="amber"
-                onQuickAdd={quickAdd}
-                pendingItems={pending}
-                errors={productErrors}
-              />
-            ))}
-          </div>
+              {lightningLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={`deal-skel-${i}`} className="h-56 w-full rounded-2xl bg-ghost-10 animate-pulse" />
+                ))
+              ) : (
+                lightningDeals.map((product) => (
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    variant="default"
+                    badgeLabel="Hot deal"
+                    badgeColor="amber"
+                    onQuickAdd={quickAdd}
+                    pendingItems={pending}
+                    errors={productErrors}
+                  />
+                ))
+              )}
+            </div>
         </section>
       )}
 
@@ -547,8 +566,7 @@ export default function Page() {
                       <img
                         src={product.images[0]}
                         alt={product.title}
-                        loading="lazy"
-                        decoding="async"
+                        loading="eager"
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (

@@ -89,8 +89,7 @@ export function ProductCard({
               <img
                 src={product.images[0]}
                 alt={product.title}
-                loading="lazy"
-                decoding="async"
+                loading={variant === 'category' ? 'lazy' : 'eager'}
                 className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
               />
               ) : (
@@ -128,7 +127,7 @@ export function ProductCard({
       ) : (
         <div className={`flex flex-1 flex-col justify-between ${variant === 'default' ? 'space-y-3 p-5' : ''}`}>
             <div className="space-y-1">
-            <h3 className={`font-semibold text-primary line-clamp-2 ${variant === 'category' ? 'text-base' : 'text-base'}`}>{product.title}</h3>
+            <h3 data-testid="product-name" className={`font-semibold text-primary line-clamp-2 ${variant === 'category' ? 'text-base' : 'text-base'}`}>{product.title}</h3>
             <p className={`text-sm text-muted`}>
               ${(price / 100).toFixed(2)}
             </p>

@@ -116,7 +116,7 @@ export class ReviewService {
     };
   }
 
-  async getProductReviews(productId: string, filters: ReviewFilters = {}) {
+  async getProductReviews(productId: string, filters: ReviewFilters = {}, userId?: string) {
     const { limit = 10, offset = 0, status, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
 
     const where: any = {
@@ -152,13 +152,27 @@ export class ReviewService {
       take: limit
     });
 
+    // If a userId is provided, fetch that user's helpful votes for these reviews
+    let markedSet = new Set<string>();
+    if (userId && reviews.length > 0) {
+      try {
+        const reviewIds = reviews.map((r: any) => r.id);
+        const votes = await prisma.reviewHelpful.findMany({ where: { userId, reviewId: { in: reviewIds } }, select: { reviewId: true } });
+  // Found helpful votes for the user (silent)
+        votes.forEach(v => markedSet.add(v.reviewId));
+      } catch (err) {
+        console.error('Error fetching user helpful votes:', err);
+      }
+    }
+
     const enhancedReviews = reviews.map((review: any) => ({
       ...review,
       createdAt: review.createdAt.toISOString(),
       updatedAt: review.updatedAt.toISOString(),
       reviewedAt: review.reviewedAt?.toISOString(),
       // Ensure authorName is properly set from user data if needed
-      authorName: review.user?.name || review.authorName
+      authorName: review.user?.name || review.authorName,
+      markedByCurrentUser: markedSet.has(review.id)
     }));
 
     return {
@@ -296,6 +310,19 @@ export class ReviewService {
     } catch (error) {
       console.error('Error marking review helpful:', error);
       return false;
+    }
+  }
+
+  async getMarkedReviewIds(userId: string): Promise<string[]> {
+    try {
+      const votes = await prisma.reviewHelpful.findMany({
+        where: { userId },
+        select: { reviewId: true }
+      });
+      return votes.map(v => v.reviewId);
+    } catch (error) {
+      console.error('Error fetching marked review ids:', error);
+      return [];
     }
   }
 

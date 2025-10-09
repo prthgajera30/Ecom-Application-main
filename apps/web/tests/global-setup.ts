@@ -1,34 +1,36 @@
 import { test as setup } from '@playwright/test';
 import { spawn } from 'node:child_process';
-import { promisify } from 'node:util';
 
-const sleep = promisify(setTimeout);
-
+// Start Next dev and poll the URL until it responds with 200.
 setup('start dev server', async ({}) => {
-  console.log('Starting dev server...');
+  console.log('Starting dev server (global-setup)...');
 
-  // Start the web server
   const server = spawn('npx', ['next', 'dev', '-p', '3000'], {
     cwd: process.cwd() + '/apps/web',
     stdio: 'inherit',
-    shell: true
+    shell: true,
   });
 
-  // Give it time to start
-  await sleep(5000);
+  const start = Date.now();
+  const timeout = 120_000; // 2 minutes
+  const url = 'http://localhost:3000';
 
-  // Test if server is responding
-  try {
-    const response = await fetch('http://localhost:3000');
-    if (!response.ok) {
-      throw new Error('Server not ready');
+  while (Date.now() - start < timeout) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        console.log('Dev server started successfully');
+        (global as any).__SERVER_PROCESS__ = server;
+        return;
+      }
+    } catch (e) {
+      // ignore, server not ready yet
     }
-    console.log('Dev server started successfully');
-  } catch (error) {
-    console.error('Server startup check failed:', error);
-    throw error;
+    await new Promise((r) => setTimeout(r, 1000));
   }
 
-  // Store process reference for cleanup in global teardown
-  (global as any).__SERVER_PROCESS__ = server;
+  console.error('Dev server failed to start within timeout');
+  // kill process and throw
+  try { server.kill(); } catch (e) {}
+  throw new Error('Dev server did not become ready');
 });

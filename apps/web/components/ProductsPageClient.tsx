@@ -74,11 +74,15 @@ export default function ProductsPageClient({ initialItems = [], initialFacets = 
 
         const query = params.toString();
 
-        // Skip initial fetch if we already have initial items and this is the first render
+        // On first render, if we have initial items from SSR skip the fetch.
+        // If there are no initial items (client-only) we should fetch here.
         if (initialLoadRef.current) {
           initialLoadRef.current = false;
-          setLoading(false);
-          return;
+          if (initialItems && initialItems.length) {
+            setLoading(false);
+            return;
+          }
+          // continue to fetch when there are no initial items
         }
 
         const data = await apiGet<ProductsResponse>(`/products${query ? `?${query}` : ''}`);

@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import { authHeaders } from '../lib/auth';
 import { API_BASE } from '../lib/api';
 
 export interface Address {
@@ -90,7 +91,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const response = await fetch(`${API_BASE}/addresses`);
+  const response = await fetch(`${API_BASE}/addresses`, { headers: { ...authHeaders() } });
       if (!response.ok) {
         throw new Error('Failed to fetch addresses');
       }
@@ -113,6 +114,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders(),
         },
         body: JSON.stringify(addressData),
       });
@@ -142,6 +144,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders(),
         },
         body: JSON.stringify(addressData),
       });
@@ -169,6 +172,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(`${API_BASE}/addresses/${id}`, {
         method: 'DELETE',
+        headers: { ...authHeaders() },
       });
 
       if (!response.ok) {
@@ -193,6 +197,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const response = await fetch(`${API_BASE}/addresses/${id}/default`, {
         method: 'PATCH',
+        headers: { ...authHeaders() },
       });
 
       if (!response.ok) {

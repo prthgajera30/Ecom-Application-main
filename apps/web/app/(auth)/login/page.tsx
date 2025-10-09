@@ -17,7 +17,12 @@ export default function LoginPage() {
     setMsg('');
     try {
       await login(email, password);
-      router.push('/');
+      // Use a full navigation to ensure E2E waits (Playwright waits for load when a full navigation occurs)
+      if (typeof window !== 'undefined') {
+        window.location.assign('/profile');
+      } else {
+        router.replace('/profile');
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'We couldn’t sign you in. Please try again.';
       setMsg(message);

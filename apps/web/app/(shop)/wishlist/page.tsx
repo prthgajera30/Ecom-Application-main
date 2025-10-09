@@ -125,7 +125,7 @@ export default function WishlistPage() {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h1 className="text-3xl font-semibold text-[var(--text-primary)]">My Wishlist</h1>
+  <h1 data-testid="wishlist-heading" className="text-3xl font-semibold text-[var(--text-primary)]">My Wishlist</h1>
         <p className="text-[var(--text-muted)]">
           {wishlist.length === 0
             ? "No saved items yet. Start shopping to add favorites!"
@@ -137,7 +137,7 @@ export default function WishlistPage() {
         <div className="min-h-[40vh] flex flex-col items-center justify-center text-center space-y-6">
           <div className="text-8xl opacity-50">🤍</div>
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-[var(--text-primary)]">Your wishlist is empty</h2>
+            <h2 data-testid="wishlist-empty-msg" className="text-xl font-semibold text-[var(--text-primary)]">Your wishlist is empty</h2>
             <p className="text-[var(--text-muted)]">Discover products and save them for later shopping.</p>
           </div>
           <ButtonLink href="/products" variant="primary">
@@ -176,7 +176,7 @@ export default function WishlistPage() {
             const price = variant?.price ?? product.price;
 
             return (
-              <div key={productId} className="card group overflow-hidden">
+              <div key={productId} data-testid="wishlist-item" className="card group overflow-hidden">
                 <Link href={`/product/${product.slug}`} className="block">
                   <div className="relative h-48 overflow-hidden">
                     {product.images?.[0] ? (
@@ -211,6 +211,7 @@ export default function WishlistPage() {
                         type="button"
                         size="sm"
                         variant="ghost"
+                        data-testid="remove-wishlist"
                         onClick={(e) => {
                           e.preventDefault();
                           handleRemoveFromWishlist(productId);

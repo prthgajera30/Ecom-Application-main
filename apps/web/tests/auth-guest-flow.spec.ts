@@ -10,9 +10,10 @@ test.describe('Authentication - Guest User Flows', () => {
     await page.goto('/products');
     await page.waitForLoadState('networkidle');
 
-    // Click first "Add to Cart" button (adjust selector based on actual UI)
-    const firstProduct = page.locator('[data-testid="product-card"]').first();
-    await firstProduct.locator('button:has-text("Add to Cart")').click();
+  // Wait for products to load and click first "Add to Cart" button
+  await page.waitForSelector('[data-testid="product-card"]', { timeout: 10000 });
+  const firstProduct = page.locator('[data-testid="product-card"]').first();
+  await firstProduct.locator('button:has-text("Add to Cart")').click();
     await page.waitForTimeout(500); // Wait for cart update
 
     // Verify cart has item

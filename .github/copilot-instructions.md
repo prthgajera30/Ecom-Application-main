@@ -1,48 +1,55 @@
 ## Quick orientation for AI assistants
 
-This monorepo is an e-commerce personalization stack: a Node API (Prisma + Postgres + Mongo),
-a Next.js storefront, and an optional Python recommendation service. Use these notes to make
-targeted, low-risk edits and to run or test features locally.
+This monorepo implements an e-commerce personalization stack with three main runtimes:
+- `apps/api/` — Express + TypeScript API (Prisma + Postgres for relational data; Mongoose + Mongo for product/catalog/session data).
+- `apps/web/` — Next.js storefront (app router). Client helpers live in `apps/web/lib` and UI components under `apps/web/components`.
+- `apps/recs/` — Optional Flask recommender service (ingest and recommendation HTTP endpoints).
 
-Key directories (examples you can open):
-- `apps/api/` — Express + TypeScript API. Entry: `apps/api/src/index.ts`.
-- `apps/web/` — Next.js storefront (app dir). Client API utilities: `apps/web/lib/api.ts`.
-- `apps/recs/` — Optional Flask recommender `apps/recs/app.py` (HTTP endpoints `/ingest/events`, `/recommendations`).
-- `apps/api/prisma/` — Prisma schema and migrations. Migrations live under `apps/api/prisma/migrations/`.
-- `apps/api/src/db.ts` — Prisma client + Mongoose models (Product, Category, Session).
-- `scripts/` — repo orchestration (setup, migrate-and-seed, run-dev helpers).
+Keep changes small and focused. This doc highlights the important files, conventions, and commands an AI coding agent should know to be immediately productive.
 
-Big picture and integration points
-- API persists relational data (Orders, Users, Payments) via Prisma/Postgres and product/catalog/session data in Mongo via Mongoose (`apps/api/src/db.ts`).
-- The API calls the optional recs service via `RECS_URL` and exposes recommendation routes under `/api/recommendations` (`apps/api/src/routes/recs.ts` -> `services/recs.ts`).
-- The storefront is configured at runtime by `NEXT_PUBLIC_API_BASE` (web env) and talks to the API; changing this requires rebuilding the `web` app when producing a production bundle.
-- Real-time updates use Socket.IO (server set on `app.set('io')` in `apps/api/src/index.ts`) and room conventions like `session:{id}` and `user:{id}`.
+Key files & places to look
+- API entry: `apps/api/src/index.ts` (Socket.IO setup, route registration).
+- DB layers: `apps/api/src/db.ts` (Prisma client + Mongoose schemas for Product, Category, Session).
+- API routes: `apps/api/src/routes/*.ts` and business logic in `apps/api/src/services/`.
+- Web app entry & important utilities: `apps/web/app/page.tsx` (home), `apps/web/app/(shop)/products/page.tsx` (catalog), `apps/web/lib/api.ts` (apiGet/apiPost wrappers), and `apps/web/components/ui/ProductCard.tsx` (product rendering patterns).
+- Recs service: `apps/recs/app.py` (endpoints `/ingest/events`, `/recommendations`).
 
-Common developer workflows and important commands
-- Bootstrap (install deps, DB, migrate, seed): `pnpm run setup` (run from repo root). This script:
-  - installs workspace deps (pnpm), starts DB containers (docker compose), waits for DB, generates Prisma client and runs migrations, and seeds demo data. The seed is idempotent and controlled by `.first-run-done`.
-- Start dev mode (concurrently): `pnpm run dev` (root) — launches `apps/api` and `apps/web` (and recs if enabled via `pnpm run dev:recs`).
-- Generate/apply migrations: `pnpm --filter @apps/api prisma:migrate` and `pnpm --filter @apps/api prisma:generate`.
-- Run API tests: `cd apps/api && pnpm test` (Jest). Recs tests: `cd apps/recs && pytest`.
-- Docker compose stacks:
-  - repo root `docker-compose.yml` — helper DB-only compose used by scripts (`ecom_postgres` / `ecom_mongo`).
-  - `infra/docker-compose.yml` — full dev stack (nginx, web, api, recs).
+Big-picture & integration notes
+- Data split: relational data (Orders, Users, Payments) live in Postgres/Prisma; product catalog and session-like ephemeral data are stored in Mongo via Mongoose. See `apps/api/src/db.ts`.
+- Recommendations are optional and called via `RECS_URL`; the API exposes `/api/recommendations` (see `apps/api/src/routes/recs.ts` and `apps/api/src/services/recs.ts`).
+- Frontend talks to the API via `NEXT_PUBLIC_API_BASE` (set per-deployment). The web client uses `apps/web/lib/api.ts` — be careful with cross-origin and local hostnames (the repo contains logic to normalize the base URL).
+- Real-time flows use Socket.IO with room conventions `session:{id}` and `user:{id}` (see server setup in `apps/api/src/index.ts`).
 
-Project-specific patterns and gotchas
-- Monorepo uses pnpm workspaces and relies on `scripts/run-script.mjs` and `scripts/run-recs-dev.mjs` for deterministic dev bootstrapping.
-- Prisma + Mongoose hybrid: modifications to Prisma models require `prisma migrate` and a regenerated client; changes to Mongo models live in `apps/api/src/db.ts` and don't affect Prisma.
-- Seed: `apps/api/prisma/seed.ts` (invoked by `pnpm --filter @apps/api prisma:seed`) and `apps/api/src/seeding.ts` (runtime check). The repo uses an idempotent seed and writes `.first-run-done` to avoid reseeding.
-- Environment files: `.env`, `apps/api/.env`, and `apps/web/.env` are created from `.example` templates by `pnpm run setup`. When changing keys add them to the examples and re-run setup.
-- CI note: the workflow in `.github/workflows/ci.yml` references an upstream path `ecommerce-personalization/...` in its `cd` steps — be careful if mirroring CI runs locally; prefer running package-level scripts directly.
+Developer workflows & commands (run from repo root)
+- Bootstrap (install deps, DB, migrations, seed):
+  - pnpm run setup
+  - This runs pnpm installs, spins helper DB containers (docker compose), runs Prisma migrations, generates client, and seeds demo data (idempotent seed). Look at `scripts/migrate-and-seed.*` if you need to adapt.
+- Start local dev (concurrently):
+  - pnpm run dev  # launches API + web (and recs optionally)
+- Build the storefront (useful verification):
+  - pnpm --filter @apps/web build
+- Prisma operations (API-only):
+  - pnpm --filter @apps/api prisma:migrate
+  - pnpm --filter @apps/api prisma:generate
+- Tests:
+  - API tests: cd apps/api && pnpm test (Jest)
+  - Web e2e: pnpm --filter @apps/web test (Playwright)
 
-Where to look for examples when editing code
-- Add or change an API route: follow `apps/api/src/routes/*.ts` and use `services/*` for business logic. Use Zod for validation (see `apps/api/src/routes/recs.ts`).
-- Change product/session shapes: edit Mongoose schemas in `apps/api/src/db.ts` and update `apps/api/src/seeding.ts` to reflect demo data.
-- Add a migration: update Prisma models in `apps/api/prisma/schema.prisma`, then `pnpm --filter @apps/api prisma:migrate` and ensure the client is generated.
+Conventions & patterns worth following
+- Hybrid persistence: when changing relational models use Prisma migrations + `prisma:generate`. When changing catalog/schema for Mongo edit `apps/api/src/db.ts` and update seeds.
+- Thin API services + route layers: follow `routes/*.ts` calling into `services/*` for business logic. Routes often use Zod for validation.
+- Client API wrapper: `apps/web/lib/api.ts` centralizes fetch headers (auth, session) and error handling — change it carefully. It currently defaults to `cache: 'no-store'` for client requests.
+- UI & product patterns: product display and quick-add flows are centered in `apps/web/components/ui/ProductCard.tsx` and `apps/web/context/CartContext`. Keep interactive controls out of anchor tags and prefer the `onQuickAdd` pattern.
+- Styling: Tailwind is used across the app. Look for utility classes in components and shared `tailwind.config.ts`.
 
-Safety and low-risk edit rules for AI agents
-- Prefer edits in `apps/*` and `packages/*` that include unit tests or are small, self-contained changes.
-- When changing env names or public API shapes (routes / JSON contracts), update example env files and README where appropriate.
-- If modifying DB schemas, add migrations and run `prisma:generate` — do not assume the client will auto-update.
+Integration gotchas and tips
+- NEXT_PUBLIC_API_BASE: when switching environments, update `apps/web/.env` (or root `.env`) and rebuild the web app for production bundles.
+- Seeds & first-run: the seed runner writes `.first-run-done` to avoid reseeding. When editing `seed.ts` re-run the seeding scripts in `apps/api/prisma/` and the runtime `apps/api/src/seeding.ts` as needed.
+- CI differences: CI workflow references an upstream path in some scripts — prefer running package-specific scripts locally rather than relying on CI root paths.
 
-If anything here is unclear or you'd like specific examples (test harnesses, common refactors, or a short checklist for PRs), tell me which area to expand and I'll iterate.
+Safety rules for automated edits
+- Prefer small, self-contained changes in `apps/*` or `packages/*` that are covered by tests or simple to build.
+- If a change touches DB schemas, add a Prisma migration and run `prisma:generate`. If you change Mongo schemas, update seeds.
+- When changing public routes or JSON contracts, update example env files and `docs/API_CONTRACTS.md` where applicable.
+
+If you want, I can expand any of the above sections with specific code examples (route -> service traces, sample migration flow, or a checklist for PRs). Reply with which area to expand.

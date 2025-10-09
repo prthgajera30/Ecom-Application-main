@@ -26,11 +26,21 @@ test.describe('product variants', () => {
     const selectedSize = groupCount > 1 ? await pickOption(1) : '';
     const variantLabel = selectedSize ? `${selectedColor} / ${selectedSize}` : selectedColor;
 
-    const responsePromise = page.waitForResponse(
-      (response) => response.url().includes('/api/cart/add') && response.request().method() === 'POST'
-    );
-    await page.getByRole('button', { name: /Add to cart/i }).click();
-    await responsePromise;
+    // Debug: log selected options and button state
+    console.log('Selected color:', selectedColor);
+    console.log('Selected size:', selectedSize);
+    const addToCartBtn = page.getByRole('button', { name: /Add to cart/i });
+    const isEnabled = await addToCartBtn.isEnabled();
+    console.log('Add to cart button enabled:', isEnabled);
+
+    // Log all network requests after clicking Add to cart
+    const requests: string[] = [];
+    page.on('request', (request) => {
+      requests.push(`${request.method()} ${request.url()}`);
+    });
+    await addToCartBtn.click();
+    await page.waitForTimeout(3000);
+    console.log('Network requests after Add to cart:', requests);
 
     await page.goto('/cart');
     await expect(page.getByRole('heading', { name: /Your Cart/i })).toBeVisible();

@@ -90,7 +90,13 @@ router.post('/register', async (req, res) => {
 
   await mergeSessionCart(req, user.id);
   const token = signToken({ userId: user.id, role: user.role as any });
-  res.json({ token });
+  // Fetch marked review ids for the new user (likely empty)
+  try {
+    const marked = await (await import('../services/review')).reviewService.getMarkedReviewIds(user.id);
+    res.json({ token, marked });
+  } catch (err) {
+    res.json({ token, marked: [] });
+  }
 });
 
 router.post('/login', async (req, res) => {
@@ -103,7 +109,12 @@ router.post('/login', async (req, res) => {
   if (!ok) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
   await mergeSessionCart(req, user.id);
   const token = signToken({ userId: user.id, role: user.role as any });
-  res.json({ token });
+  try {
+    const marked = await (await import('../services/review')).reviewService.getMarkedReviewIds(user.id);
+    res.json({ token, marked });
+  } catch (err) {
+    res.json({ token, marked: [] });
+  }
 });
 
 router.get('/me', requireAuth, async (req, res) => {

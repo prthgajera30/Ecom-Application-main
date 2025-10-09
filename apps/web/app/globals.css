@@ -400,6 +400,12 @@ video {
   border-color: rgba(79, 70, 229, 0.16) !important;
 }
 
+/* helper classes that force use of theme variables even when other specificity interferes */
+.theme-text-primary { color: var(--text-primary) !important; }
+.theme-text-muted { color: var(--text-muted) !important; }
+.theme-text-subtle { color: var(--text-subtle) !important; }
+.fixed-white { color: #ffffff !important; }
+
 [data-theme='light'] .border-white\/20 {
   border-color: rgba(79, 70, 229, 0.22) !important;
 }

@@ -284,6 +284,7 @@ export default function ProductDetailPage() {
   };
 
   async function add() {
+  setAddError('DEBUG: add() called');
     if (!product) return;
     if (optionKeys.length > 0 && (!allOptionsSelected || !displayVariant)) {
       setAddError('Select available options before adding to cart.');

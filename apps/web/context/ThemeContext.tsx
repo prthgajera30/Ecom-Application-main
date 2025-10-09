@@ -21,7 +21,8 @@ const getPreferredTheme = (): Theme => {
   if (stored === 'light' || stored === 'dark') {
     return stored;
   }
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  // Default to dark unless an explicit choice is stored.
+  return 'dark';
 };
 
 const applyTheme = (theme: Theme) => {
