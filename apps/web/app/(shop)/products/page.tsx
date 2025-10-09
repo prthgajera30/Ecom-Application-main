@@ -6,8 +6,6 @@ import { apiGet } from '../../../lib/api';
 import { useCartState } from '../../../context/CartContext';
 import { ApiError } from '../../../lib/api';
 import { cn } from '../../../lib/cn';
-import { Button, ButtonLink } from '../../../components/ui/Button';
-import ProductCardSkeleton from '../../../components/ui/ProductCardSkeleton';
 
 type ProductVariant = {
   variantId?: string;
@@ -474,32 +472,36 @@ function FiltersPanel({
         {onClose && (
           <button
             type="button"
-            className="!w-auto justify-center px-4 py-1 text-xs"
-            // replaced by ButtonLink below
+            className="btn-secondary !w-auto justify-center px-4 py-1 text-xs"
             onClick={onClose}
           >
             Done
           </button>
         )}
-        <span className="text-xs text-subtle">{mergedCategories.length}</span>
       </div>
-          <label className="block text-sm text-subtle">
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-subtle">Categories</h2>
+          <span className="text-xs text-subtle">{mergedCategories.length}</span>
+        </div>
+        <label className="block text-sm text-subtle">
           <span className="sr-only">Search categories</span>
           <input
             value={categorySearch}
             onChange={(event) => setCategorySearch(event.target.value)}
             placeholder="Search categories"
-            className="w-full rounded-lg border border-ghost-10 bg-ghost-5 px-3 py-2 text-sm text-primary focus:border-[var(--brand)] focus:outline-none"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
           />
         </label>
         <div className="max-h-56 space-y-2 overflow-y-auto pr-1 text-sm text-subtle" data-filter-scrollable="true">
           {filteredCategories.length > 0 ? (
             filteredCategories.map((cat) => (
-              <label key={cat.id} className="flex items-center justify-between gap-2 rounded-xl border border-ghost-10 bg-ghost-5 px-3 py-2">
+              <label key={cat.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
-                    className="accent-[var(--brand)]"
+                    className="accent-indigo-500"
                     checked={selectedCategories.includes(cat.id)}
                     onChange={() => toggleCategory(cat.id)}
                   />
@@ -509,15 +511,16 @@ function FiltersPanel({
               </label>
             ))
           ) : mergedCategories.length === 0 ? (
-            <p className="rounded-xl border border-ghost-10 bg-ghost-5 px-3 py-2 text-xs text-subtle">
+            <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
               Categories will appear here as catalog data loads.
             </p>
-              ) : (
-            <p className="rounded-xl border border-ghost-10 bg-ghost-5 px-3 py-2 text-xs text-subtle">
+          ) : (
+            <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">
               No categories match your search.
             </p>
           )}
         </div>
+      </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -539,7 +542,7 @@ function FiltersPanel({
               <input
                 value={priceDraft.min}
                 onChange={(e) => setPriceDraft((prev) => ({ ...prev, min: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-ghost-10 bg-ghost-5 px-3 py-2 text-sm text-primary focus:border-[var(--brand)] focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
                 placeholder="$0.00"
                 inputMode="numeric"
               />
@@ -549,15 +552,13 @@ function FiltersPanel({
               <input
                 value={priceDraft.max}
                 onChange={(e) => setPriceDraft((prev) => ({ ...prev, max: e.target.value }))}
-                className="mt-1 w-full rounded-lg border border-ghost-10 bg-ghost-5 px-3 py-2 text-sm text-primary focus:border-[var(--brand)] focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
                 placeholder="$500.00"
                 inputMode="numeric"
               />
             </label>
           </div>
-          <Button onClick={applyPriceFilters} className="w-full justify-center py-2 text-xs" variant="primary">
-            Apply price range
-          </Button>
+          <button onClick={applyPriceFilters} className="btn-primary w-full justify-center py-2 text-xs">Apply price range</button>
           {facets.price.min !== undefined && facets.price.max !== undefined && (
             <p className="text-xs text-subtle">
               Available range: ${(facets.price.min / 100).toFixed(2)} – {(facets.price.max / 100).toFixed(2)}
@@ -598,7 +599,7 @@ function FiltersPanel({
                     value={attributeSearchValue}
                     onChange={(event) => handleAttributeSearchChange(facet.key, event.target.value)}
                     placeholder={`Search ${facet.key.toLowerCase()}`}
-                    className="w-full rounded-lg border border-ghost-10 bg-ghost-5 px-3 py-2 text-sm text-primary focus:border-[var(--brand)] focus:outline-none"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
                   />
                 </label>
               )}
@@ -611,7 +612,7 @@ function FiltersPanel({
               >
                 {filteredValues.length > 0 ? (
                   filteredValues.map((entry) => (
-                    <label key={entry.value} className="flex items-center justify-between gap-2 rounded-xl border border-ghost-10 bg-ghost-5 px-3 py-2">
+                    <label key={entry.value} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
@@ -624,9 +625,9 @@ function FiltersPanel({
                     </label>
                   ))
                 ) : facet.values.length === 0 ? (
-                  <p className="rounded-xl border border-ghost-10 bg-ghost-5 px-3 py-2 text-xs text-subtle">No values</p>
+                  <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">No values</p>
                 ) : (
-                  <p className="rounded-xl border border-ghost-10 bg-ghost-5 px-3 py-2 text-xs text-subtle">No values match</p>
+                  <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-subtle">No values match</p>
                 )}
               </div>
             </div>
@@ -640,7 +641,7 @@ function FiltersPanel({
             clearFilters();
             onClose?.();
           }}
-          className="w-full rounded-full border border-ghost-10 bg-ghost-5 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-subtle hover:bg-ghost-10"
+          className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-subtle hover:bg-white/10"
         >
           Clear all filters
         </button>
@@ -651,11 +652,11 @@ function FiltersPanel({
 
   return (
     <div className="space-y-8">
-  <div className="rounded-3xl border border-ghost-10 bg-ghost-5 p-5 shadow-lg shadow-[color:var(--brand)]/20 backdrop-blur sm:p-6">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-lg shadow-indigo-900/20 backdrop-blur sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-primary sm:text-4xl">Explore the catalog</h1>
-            <p className="text-sm text-muted sm:max-w-xl">
+            <h1 className="text-3xl font-semibold text-white sm:text-4xl">Explore the catalog</h1>
+            <p className="text-sm text-indigo-100/70 sm:max-w-xl">
               Discover seeded inventory, filter by specs, and surface the right products with smarter sorting.
             </p>
           </div>
@@ -669,8 +670,8 @@ function FiltersPanel({
                 }}
                 className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                   sort === option.value
-            ? 'bg-[color:var(--brand)] text-primary shadow shadow-[color:var(--brand)]/30'
-              : 'bg-ghost-10 text-muted hover:bg-ghost-20'
+                    ? 'bg-indigo-500 text-white shadow shadow-indigo-500/30'
+                    : 'bg-white/10 text-indigo-100/80 hover:bg-white/20'
                 }`}
               >
                 {option.label}
@@ -679,8 +680,8 @@ function FiltersPanel({
           </div>
         </div>
 
-            <div className="mt-5 flex flex-col gap-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-ghost-10 bg-ghost-5 px-4 py-3 shadow-inner shadow-[color:var(--brand)]/10">
+        <div className="mt-5 flex flex-col gap-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-indigo-900/10">
             <span className="text-lg">🔍</span>
             <input
               value={search}
@@ -689,7 +690,7 @@ function FiltersPanel({
                 setPage(1);
               }}
               placeholder="Search products, e.g. sneakers or bags"
-              className="w-full bg-transparent text-sm text-primary placeholder:text-muted focus:outline-none"
+              className="w-full bg-transparent text-sm text-[var(--text-primary)] placeholder:text-indigo-100/50 focus:outline-none"
             />
             {search && (
               <button
@@ -698,7 +699,7 @@ function FiltersPanel({
                   setSearch('');
                   setPage(1);
                 }}
-                className="text-xs text-muted hover:text-[var(--text-primary)]"
+                className="text-xs text-indigo-100/70 hover:text-[var(--text-primary)]"
               >
                 Clear
               </button>
@@ -706,15 +707,14 @@ function FiltersPanel({
           </div>
 
           <div className="flex gap-2 sm:hidden">
-                  <button
+            <button
               type="button"
               onClick={openMobileFilters}
-              className="flex-1 justify-center"
-              // will be replaced by ButtonLink
+              className="btn-secondary flex-1 justify-center"
             >
               Filters
-                {activeFilterCount ? (
-                <span className="ml-2 inline-flex h-6 min-w-[2rem] items-center justify-center rounded-full bg-[color:var(--brand)]/20 px-2 text-xs font-semibold text-[var(--text-primary)]">
+              {activeFilterCount ? (
+                <span className="ml-2 inline-flex h-6 min-w-[2rem] items-center justify-center rounded-full bg-indigo-500/20 px-2 text-xs font-semibold text-indigo-100">
                   {activeFilterCount}
                 </span>
               ) : null}
@@ -730,13 +730,13 @@ function FiltersPanel({
                   setSort(event.target.value);
                   setPage(1);
                 }}
-                className="w-full rounded-full border border-ghost-10 bg-ghost-5 px-4 py-2 text-sm text-[var(--text-primary)] focus:border-[var(--brand)] focus:outline-none"
+                className="w-full rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-[var(--text-primary)] focus:border-indigo-400 focus:outline-none"
               >
                 {sortOptions.map((option) => (
                   <option
                     key={option.value}
                     value={option.value}
-                    className="bg-[var(--surface-solid)] text-[var(--text-primary)]"
+                    className="bg-[color:var(--surface-solid)] text-[var(--text-primary)]"
                   >
                     {option.label}
                   </option>
@@ -752,7 +752,7 @@ function FiltersPanel({
               <button
                 key={badge.label}
                 onClick={badge.onRemove}
-                className="inline-flex flex-shrink-0 items-center gap-2 rounded-full border border-ghost-10 bg-ghost-5 px-3 py-1 text-[var(--text-primary)] hover:bg-ghost-10"
+                className="inline-flex flex-shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[var(--text-primary)] hover:bg-white/10"
               >
                 <span>{badge.label}</span>
                 <span aria-hidden>✕</span>
@@ -770,7 +770,7 @@ function FiltersPanel({
 
       <div className="lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
         <aside className="hidden lg:block">
-            <div className="sticky top-28 space-y-6 rounded-3xl border border-ghost-10 bg-ghost-5 p-6 shadow-lg shadow-[color:var(--brand)]/20">
+            <div className="sticky top-28 space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20">
             <FiltersPanel
               mergedCategories={mergedCategories}
               categorySearch={categorySearch}
@@ -801,19 +801,17 @@ function FiltersPanel({
             </span>
             <div className="flex items-center gap-2">
               <button
-                className="px-3 py-1 text-xs"
-                // replaced by Button
+                className="btn-secondary px-3 py-1 text-xs"
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={page === 1}
               >
                 Prev
               </button>
-              <span className="rounded-full bg-ghost-10 px-6 py-1 text-xs text-muted">
+              <span className="rounded-full bg-white/10 px-6 py-1 text-xs text-indigo-100/80">
                 Page {page} of {totalPages}
               </span>
               <button
-                className="px-3 py-1 text-xs"
-                // replaced by Button
+                className="btn-secondary px-3 py-1 text-xs"
                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                 disabled={page >= totalPages}
               >
@@ -825,7 +823,13 @@ function FiltersPanel({
           <div data-testid="product-grid" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {loading
               ? Array.from({ length: 6 }).map((_, idx) => (
-                  <ProductCardSkeleton key={idx} />
+                  <div key={idx} className="card animate-pulse overflow-hidden">
+                    <div className="h-48 w-full bg-white/10" />
+                    <div className="space-y-2 p-5">
+                      <div className="h-4 w-2/3 rounded-full bg-white/10" />
+                      <div className="h-4 w-1/4 rounded-full bg-white/10" />
+                    </div>
+                  </div>
                 ))
                 : items.map((product) => {
                   const variant = getDefaultVariant(product);
@@ -840,40 +844,37 @@ function FiltersPanel({
                             <img
                               src={product.images[0]}
                               alt={product.title}
-                              loading="lazy"
-                              decoding="async"
                               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                             />
                           ) : (
-                            <div className="flex h-full items-center justify-center bg-[var(--surface-strong)]" role="img" aria-label="No image">No image</div>
+                            <div className="flex h-full items-center justify-center bg-slate-800">No image</div>
                           )}
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--surface-strong)] via-transparent" />
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-transparent" />
                         </div>
                         <div className="space-y-2 p-5">
-                          <h3 className="text-lg font-semibold text-primary line-clamp-1">{product.title}</h3>
+                          <h3 className="text-lg font-semibold text-white line-clamp-1">{product.title}</h3>
                           {product.brand && (
-                            <p className="text-xs uppercase tracking-wide text-subtle">{product.brand}</p>
+                            <p className="text-xs uppercase tracking-wide text-indigo-100/60">{product.brand}</p>
                           )}
-                          <p className="text-sm text-muted">${(displayPrice / 100).toFixed(2)}</p>
+                          <p className="text-sm text-indigo-100/70">${(displayPrice / 100).toFixed(2)}</p>
                           {rating?.average && (
-                            <p className="text-xs text-subtle">
+                            <p className="text-xs text-indigo-100/60">
                               ★ {rating.average.toFixed(1)}
                               {rating.count ? ` (${rating.count})` : ''}
                             </p>
                           )}
                         </div>
                       </Link>
-                      <div className="border-t border-ghost-10 bg-ghost-5 p-4">
+                      <div className="border-t border-white/10 bg-white/5 p-4">
                         <button
-                          className="w-full justify-center disabled:opacity-60"
-                          // replaced by Button
+                          className="btn-primary w-full justify-center disabled:opacity-60"
                           onClick={() => add(product)}
                           disabled={pendingAdd}
                         >
-                          {pendingAdd ? 'Adding…' : 'Add to Cart'}
+                          {pendingAdd ? 'Adding…' : 'Add to cart'}
                         </button>
                         {errorsByProduct[product._id] && (
-                          <p className="mt-2 rounded-full bg-[var(--danger-10)] px-3 py-2 text-xs text-[var(--danger-100)]">
+                          <p className="mt-2 rounded-full bg-rose-500/15 px-3 py-2 text-xs text-rose-100">
                             {errorsByProduct[product._id]}
                           </p>
                         )}
@@ -884,7 +885,7 @@ function FiltersPanel({
           </div>
 
           {!loading && items.length === 0 && (
-            <div className="rounded-3xl border border-ghost-10 bg-ghost-5 p-10 text-center text-muted">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-indigo-100/70">
               No products matched your filters yet. Try adjusting filters or clearing them to explore the full catalog.
             </div>
           )}
@@ -899,7 +900,7 @@ function FiltersPanel({
             className="absolute inset-0 z-0 bg-black/60 backdrop-blur-sm"
             onClick={closeMobileFilters}
           />
-          <div className="relative z-10 ml-auto flex h-full w-full max-w-sm flex-col overflow-hidden rounded-l-3xl border-l border-[var(--surface-border)] bg-[var(--surface-solid)] shadow-2xl shadow-slate-950/40">
+          <div className="relative z-10 ml-auto flex h-full w-full max-w-sm flex-col overflow-hidden rounded-l-3xl border-l border-[var(--surface-border)] bg-[color:var(--surface-solid)] shadow-2xl shadow-slate-950/40">
             <div className="flex-1 overflow-y-auto px-5 py-6">
               <FiltersPanel
                 onClose={closeMobileFilters}
@@ -933,34 +934,34 @@ function FiltersPanel({
 function ProductsPageSkeleton() {
   return (
     <div className="space-y-8">
-  <div className="rounded-3xl border border-ghost-10 bg-ghost-5 p-6 shadow-lg shadow-[color:var(--brand)]/20 backdrop-blur">
-  <div className="h-8 w-2/3 animate-pulse rounded-full bg-ghost-10" />
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-indigo-900/20 backdrop-blur">
+        <div className="h-8 w-2/3 animate-pulse rounded-full bg-white/10" />
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="h-10 w-full animate-pulse rounded-2xl bg-ghost-10 sm:max-w-xs" />
-          <div className="hidden h-8 w-48 animate-pulse rounded-full bg-ghost-10 sm:block" />
+          <div className="h-10 w-full animate-pulse rounded-2xl bg-white/10 sm:max-w-xs" />
+          <div className="hidden h-8 w-48 animate-pulse rounded-full bg-white/10 sm:block" />
         </div>
         <div className="mt-4 flex gap-2 sm:hidden">
-          <div className="h-9 flex-1 animate-pulse rounded-full bg-ghost-10" />
-          <div className="h-9 w-32 animate-pulse rounded-full bg-ghost-10" />
+          <div className="h-9 flex-1 animate-pulse rounded-full bg-white/10" />
+          <div className="h-9 w-32 animate-pulse rounded-full bg-white/10" />
         </div>
       </div>
       <div className="lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)] lg:items-start lg:gap-8">
         <div className="hidden lg:block">
-          <div className="space-y-4 rounded-3xl border border-ghost-10 bg-ghost-5 p-6">
+          <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
             {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="h-10 animate-pulse rounded-xl bg-ghost-10" />
+              <div key={idx} className="h-10 animate-pulse rounded-xl bg-white/10" />
             ))}
           </div>
         </div>
         <div className="space-y-6">
-          <div className="h-8 w-40 animate-pulse rounded-full bg-ghost-10" />
+          <div className="h-8 w-40 animate-pulse rounded-full bg-white/10" />
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {Array.from({ length: 6 }).map((_, idx) => (
               <div key={idx} className="card animate-pulse overflow-hidden">
-                <div className="h-48 w-full bg-ghost-10" />
+                <div className="h-48 w-full bg-white/10" />
                 <div className="space-y-2 p-5">
-                  <div className="h-4 w-2/3 rounded-full bg-ghost-10" />
-                  <div className="h-4 w-1/4 rounded-full bg-ghost-10" />
+                  <div className="h-4 w-2/3 rounded-full bg-white/10" />
+                  <div className="h-4 w-1/4 rounded-full bg-white/10" />
                 </div>
               </div>
             ))}
@@ -973,7 +974,7 @@ function ProductsPageSkeleton() {
 
 export default function ProductsPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<ProductsPageSkeleton />}>
       <ProductsPageContent />
     </Suspense>
   );
