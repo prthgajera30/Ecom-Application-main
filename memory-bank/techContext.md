@@ -82,7 +82,7 @@ pnpm run db:seed
 - **Frontend**: <2s initial page load, <1s subsequent navigation
 - **API**: <500ms average response time for catalog operations
 - **Database**: Optimized queries, proper indexing, connection pooling
-- **Images**: CDN delivery, format optimization, lazy loading
+- **Images**: CDN delivery, format optimization
 
 ### Security Constraints
 - **Authentication**: JWT with secure storage, password complexity requirements

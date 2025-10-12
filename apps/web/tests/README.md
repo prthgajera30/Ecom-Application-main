@@ -39,7 +39,7 @@ This directory contains comprehensive End-to-End (E2E) tests for the ecommerce a
 
 ### **Phase 2: Enhanced Features** ✅
 #### Product Discovery Tests
-- **`catalog-browse.spec.ts`** (9 tests): Homepage display, pagination, sorting, responsive design, lazy loading
+- **`catalog-browse.spec.ts`** (9 tests): Homepage display, pagination, sorting, responsive design.
 
 #### Social Commerce Tests
 - **`orders-history.spec.ts`** (10 tests): Order display, details expansion, search/filtering, status tracking, reordering, tracking info

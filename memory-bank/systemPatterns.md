@@ -199,7 +199,7 @@ const requireAuth = (allowedRoles: UserRole[]) =>
 ### Frontend Optimization
 - Static generation for product catalog pages
 - Image optimization with Next.js Image component
-- Code splitting and lazy loading
+- Code splitting
 
 ### Caching Strategy
 - HTTP caching headers for static assets
