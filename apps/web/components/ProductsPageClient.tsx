@@ -5,6 +5,7 @@ import { apiGet, ApiError } from '../lib/api';
 import { useCartState } from '../context/CartContext';
 import { cn } from '../lib/cn';
 import { Button, ButtonLink } from './ui/Button';
+import { ProductCard } from './ui/ProductCard';
 import ProductCardSkeleton from 'components/ui/ProductCardSkeleton';
 
 // Types copied from original page for compatibility
@@ -170,32 +171,17 @@ export default function ProductsPageClient({ initialItems = [], initialFacets = 
 
         <div className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 text-sm text-subtle"><span>Showing {items.length} result{items.length === 1 ? '' : 's'}</span></div>
-          <div data-testid="product-grid" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {loading ? Array.from({ length: 6 }).map((_, idx) => (<ProductCardSkeleton key={idx} />)) : items.map((product) => {
-              const variantObj = getDefaultVariant(product);
-              const displayPrice = variantObj?.price ?? product.price;
-              const pendingKey = variantObj?.variantId ? `add:${product._id}::${variantObj.variantId}` : `add:${product._id}`;
-              const pendingAdd = Boolean(pending[pendingKey]);
-              return (
-                <div key={product._id} data-testid="product-card" className="card group overflow-hidden">
-                  <Link href={`/product/${product.slug}`} className="block">
-                    <div className="relative h-48 overflow-hidden">
-                      {product.images?.[0] ? (<img src={product.images[0]} alt={product.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />) : (<div className="flex h-full items-center justify-center bg-[var(--surface-strong)]" role="img" aria-label="No image">No image</div>)}
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--surface-strong)] via-transparent" />
-                    </div>
-                    <div className="space-y-2 p-5">
-                      <h3 className="text-lg font-semibold text-primary line-clamp-1">{product.title}</h3>
-                      {product.brand && (<p className="text-xs uppercase tracking-wide text-subtle">{product.brand}</p>)}
-                      <p className="text-sm text-muted">${(displayPrice / 100).toFixed(2)}</p>
-                    </div>
-                  </Link>
-                  <div className="border-t border-ghost-10 bg-ghost-5 p-4">
-                    <button className="w-full justify-center disabled:opacity-60" onClick={() => add(product)} disabled={pendingAdd}>{pendingAdd ? 'Adding…' : 'Add to Cart'}</button>
-                    {errorsByProduct[product._id] && (<p className="mt-2 rounded-full bg-[var(--danger-10)] px-3 py-2 text-xs text-[var(--danger-100)]">{errorsByProduct[product._id]}</p>)}
-                  </div>
-                </div>
-              );
-            })}
+          <div data-testid="product-grid" className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            {loading ? Array.from({ length: 6 }).map((_, idx) => (<ProductCardSkeleton key={idx} />)) : items.map((product) => (
+              <ProductCard
+                key={product._id}
+                product={product}
+                variant="default"
+                onQuickAdd={(productId, variant) => add(items.find(p => p._id === productId)!)}
+                pendingItems={pending}
+                errors={errorsByProduct}
+              />
+            ))}
           </div>
         </div>
       </div>

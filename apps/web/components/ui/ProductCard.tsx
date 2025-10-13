@@ -81,16 +81,15 @@ export function ProductCard({
       <div className="block">
         <Link href={`/product/${product.slug}`} className="block">
           <div className={`relative overflow-hidden ${
-            variant === 'featured' ? 'h-52' :
-            variant === 'category' ? 'h-32' :
-            'h-44'
+            variant === 'featured' ? 'h-60' :
+            variant === 'category' ? 'h-52' :
+            'h-52'
           }`}>
             {product.images?.[0] ? (
               <img
                 src={product.images[0]}
                 alt={product.title}
-                loading={variant === 'category' ? 'lazy' : 'eager'}
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
               />
               ) : (
               <div className={`flex h-full items-center justify-center text-xs text-muted ${
@@ -126,12 +125,14 @@ export function ProductCard({
         </div>
       ) : (
         <div className={`flex flex-1 flex-col justify-between ${variant === 'default' ? 'space-y-3 p-5' : ''}`}>
-            <div className="space-y-1">
-            <h3 data-testid="product-name" className={`font-semibold text-primary line-clamp-2 ${variant === 'category' ? 'text-base' : 'text-base'}`}>{product.title}</h3>
-            <p className={`text-sm text-muted`}>
-              ${(price / 100).toFixed(2)}
-            </p>
-          </div>
+            {variant !== 'category' && (
+              <div className="space-y-1">
+                <h3 data-testid="product-name" className="font-semibold text-primary line-clamp-1 text-base">{product.title}</h3>
+                <p className={`text-sm text-muted`}>
+                  ${(price / 100).toFixed(2)}
+                </p>
+              </div>
+            )}
           {variant !== 'category' && (
             <div className="space-y-2">
               <Button
@@ -157,6 +158,7 @@ export function ProductCard({
       )}
       {variant === 'category' && (
         <div className="flex-1 space-y-2 p-4 text-sm text-muted">
+          <h3 data-testid="product-name" className="font-semibold text-primary line-clamp-2 text-base">{product.title}</h3>
           {product.brand && (
             <div className="text-[11px] text-subtle">{product.brand}</div>
           )}

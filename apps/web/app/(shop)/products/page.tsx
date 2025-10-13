@@ -903,6 +903,28 @@ function FiltersPanel({
                 })}
           </div>
 
+          {!loading && items.length > 0 && (
+            <div className="flex items-center justify-center gap-2">
+              <button
+                className="btn-secondary px-3 py-1 text-xs"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={page === 1}
+              >
+                Prev
+              </button>
+              <span className="rounded-full bg-white/10 px-6 py-1 text-xs text-indigo-100/80">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                className="btn-secondary px-3 py-1 text-xs"
+                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                disabled={page >= totalPages}
+              >
+                Next
+              </button>
+            </div>
+          )}
+
           {!loading && items.length === 0 && (
             <div className="rounded-3xl border border-white/10 bg-white/5 p-10 text-center text-indigo-100/70">
               No products matched your filters yet. Try adjusting filters or clearing them to explore the full catalog.

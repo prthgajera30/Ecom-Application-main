@@ -19,6 +19,7 @@ RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 COPY apps/api/package.json apps/api/pnpm-lock.yaml apps/api/tsconfig.json apps/api/jest.config.js ./
 COPY packages/config ./packages/config
 COPY packages/config /usr/packages/config
+COPY kaggle ./kaggle
 
 # Try frozen lockfile first, fallback to updating if needed
 RUN pnpm install --frozen-lockfile --prefer-offline || (echo "Lockfile outdated, updating..." && pnpm install --prefer-offline)
@@ -35,6 +36,7 @@ COPY --from=build /usr/src/app/package.json ./package.json
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/src ./src
+COPY --from=build /usr/src/app/kaggle ./kaggle
 COPY apps/api/prisma ./prisma
 COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh

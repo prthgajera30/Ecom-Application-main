@@ -171,25 +171,30 @@ export default function Page() {
     if (categoryProducts[activeCategory]) return;
     setCategoryLoading(true);
     apiGet<{ items: Product[] }>(`/products?limit=4&category=${activeCategory}`)
-      .then((d) => setCategoryProducts((prev) => ({ ...prev, [activeCategory]: d.items || [] })))
+      .then((d) => {
+        setCategoryProducts((prev) => ({ ...prev, [activeCategory]: d.items || [] }));
+        // Initialize pagination to 1 since we just loaded the first page
+        setCategoryPagination((prev) => ({ ...prev, [activeCategory]: 1 }));
+      })
       .catch(() => setCategoryProducts((prev) => ({ ...prev, [activeCategory]: [] })))
       .finally(() => setCategoryLoading(false));
   }, [activeCategory, categoryProducts]);
 
-  useEffect(() => {
-    if (categories.length <= 1) return;
-    const interval = setInterval(() => {
-      if (Date.now() - rotationRef.current < 8000) return;
-      setActiveCategory((current) => {
-        if (!categories.length) return current;
-        if (!current) return categories[0]._id;
-        const index = categories.findIndex((cat) => cat._id === current);
-        const next = categories[(index + 1) % categories.length];
-        return next?._id || current;
-      });
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [categories]);
+  // Automatic category rotation disabled to prevent page jerking
+  // useEffect(() => {
+  //   if (categories.length <= 1) return;
+  //   const interval = setInterval(() => {
+  //     if (Date.now() - rotationRef.current < 8000) return;
+  //     setActiveCategory((current) => {
+  //       if (!categories.length) return current;
+  //       if (!current) return categories[0]._id;
+  //       const index = categories.findIndex((cat) => cat._id === current);
+  //       const next = categories[(index + 1) % categories.length];
+  //       return next?._id || current;
+  //     });
+  //   }, 6000);
+  //   return () => clearInterval(interval);
+  // }, [categories]);
 
   const curatedRecommendations = useMemo(
     () => recommended.filter((item): item is Recommendation & { product: NonNullable<Recommendation['product']> } => Boolean(item.product)),
@@ -228,22 +233,25 @@ export default function Page() {
   };
 
   const handleCategorySelect = (categoryId: string) => {
-    rotationRef.current = Date.now();
+    // Removed rotationRef update as automatic rotation is disabled
     setActiveCategory(categoryId);
   };
 
   const loadMoreCategoryProducts = async () => {
     if (!activeCategory || categoryLoading) return;
     setCategoryLoading(true);
-    const nextPage = (categoryPagination[activeCategory] || 0) + 1;
+    const currentPage = categoryPagination[activeCategory] || 0;
+    const nextPage = currentPage + 1;
     try {
-      const offset = nextPage * 4; // 4 products per page
-      const response = await apiGet<{ items: Product[] }>(`/products?limit=4&category=${activeCategory}&offset=${offset}`);
-      setCategoryProducts((prev) => ({
-        ...prev,
-        [activeCategory]: [...(prev[activeCategory] || []), ...response.items]
-      }));
-      setCategoryPagination((prev) => ({ ...prev, [activeCategory]: nextPage }));
+      // Use page parameter instead of offset for better API compatibility
+      const response = await apiGet<{ items: Product[] }>(`/products?limit=4&category=${activeCategory}&page=${nextPage}`);
+      if (response.items && response.items.length > 0) {
+        setCategoryProducts((prev) => ({
+          ...prev,
+          [activeCategory]: [...(prev[activeCategory] || []), ...response.items]
+        }));
+        setCategoryPagination((prev) => ({ ...prev, [activeCategory]: nextPage }));
+      }
     } catch (err) {
       // Handle error silently
     } finally {
@@ -528,12 +536,12 @@ export default function Page() {
           </div>
           <ButtonLink href="/products" variant="secondary">View all products</ButtonLink>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {featured.map((product) => (
             <ProductCard
               key={product._id}
               product={product}
-              variant="featured"
+              variant="default"
               badgeLabel="Featured"
               badgeColor="emerald"
               onQuickAdd={quickAdd}
@@ -553,51 +561,20 @@ export default function Page() {
             </div>
             <ButtonLink href="/cart" variant="secondary">Go to cart</ButtonLink>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {curatedRecommendations.map((item) => {
               const product = item.product!;
-              const variant = getDefaultVariant(product);
-              const price = variant?.price ?? product.price;
-              const addBusy = pendingAdd(product._id, variant?.variantId ?? null);
               return (
-                  <div key={product._id} className="card flex h-full flex-col overflow-hidden">
-                  <Link href={product.slug ? `/product/${product.slug}` : '#'} className="group relative block h-48 overflow-hidden">
-                    {product.images?.[0] ? (
-                      <img
-                        src={product.images[0]}
-                        alt={product.title}
-                        loading="eager"
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-[var(--surface-strong)]" role="img" aria-label="No image">No image</div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--surface-strong)] via-transparent" />
-                    <div className="absolute left-4 top-4 rounded-full bg-surface-solid px-3 py-1 text-xs font-medium text-primary">
-                      Match {(item.score ?? 0).toFixed(2)}
-                    </div>
-                  </Link>
-                  <div className="flex flex-1 flex-col justify-between space-y-3 p-5">
-                    <div className="space-y-1">
-                      <h3 className="text-lg font-semibold text-primary line-clamp-1">{product.title}</h3>
-                      <p className="text-sm text-muted">${(price / 100).toFixed(2)}</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Button
-                        type="button"
-                        className="w-full justify-center"
-                        onClick={() => quickAdd(product._id, variant)}
-                        disabled={addBusy}
-                      >
-                        {addBusy ? 'Adding…' : 'Add to Cart'}
-                      </Button>
-                      {productErrors[product._id] && (
-                        <p className="rounded-full bg-[var(--danger-10)] px-3 py-2 text-xs text-[var(--danger-100)] text-center">
-                          {productErrors[product._id]}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                <div key={product._id} className="relative">
+                  <ProductCard
+                    product={product}
+                    variant="default"
+                    badgeLabel={`Match ${(item.score ?? 0).toFixed(2)}`}
+                    badgeColor="indigo"
+                    onQuickAdd={quickAdd}
+                    pendingItems={pending}
+                    errors={productErrors}
+                  />
                 </div>
               );
             })}
