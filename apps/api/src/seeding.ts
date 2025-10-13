@@ -43,7 +43,7 @@ type SeedProduct = {
 };
 
 async function loadKaggleData(): Promise<{ categories: { name: string; slug: string }[], products: SeedProduct[] }> {
-  const csvPath = path.resolve(__dirname, '..', '..', '..', 'kaggle', 'data', 'fashion.csv');
+  const csvPath = path.resolve(process.cwd(), 'kaggle', 'data', 'fashion.csv');
   const categoriesMap = new Map<string, { name: string; slug: string }>();
   const products: SeedProduct[] = [];
 
