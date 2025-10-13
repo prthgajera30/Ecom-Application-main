@@ -256,3 +256,5 @@ packages/
 ```
 
 Happy hacking!
+
+docker compose -f infra/docker-compose.prod.yml up -d --build
